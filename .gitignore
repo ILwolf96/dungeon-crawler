@@ -30,3 +30,8 @@
 *.exe
 *.out
 *.app
+
+# Visual Studio CMake build directories & user files
+out/
+.vs/
+CMakeSettings.json
