@@ -31,7 +31,15 @@
 *.out
 *.app
 
-# Visual Studio CMake build directories & user files
-out/
+# Visual Studio files & databases
 .vs/
-CMakeSettings.json
+*.user
+*.suo
+*.sln
+
+# CMake build directories & caches
+out/
+build/
+CMakeCache.txt
+CMakeFiles/
+cmake-build-*/
