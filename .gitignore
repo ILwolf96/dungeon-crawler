@@ -32,14 +32,14 @@
 *.app
 
 # Visual Studio files & databases
-.vs/
+**/.vs/
 *.user
 *.suo
 *.sln
 
 # CMake build directories & caches
-out/
-build/
+**/out/
+**/build/
 CMakeCache.txt
 CMakeFiles/
 cmake-build-*/
