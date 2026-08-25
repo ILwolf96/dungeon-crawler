@@ -44,7 +44,7 @@ add_executable(
     src/main.cpp
     src/Game.cpp
     src/Renderer.cpp
-)
+ "include/Map.h" "include/Player.h" "src/Map.cpp" "src/Player.cpp")
 
 target_include_directories(
     dungeon-crawler
