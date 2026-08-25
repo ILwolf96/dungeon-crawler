@@ -39,7 +39,7 @@ add_executable(
     dungeon-crawler
     "dungeon-crawler.cpp"
     "dungeon-crawler.h"
-)
+ "include/Game.h" "include/Renderer.h" "src/Renderer.cpp" "src/Game.cpp" "src/main.cpp")
 
 target_link_libraries(
     dungeon-crawler
