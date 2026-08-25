@@ -3,6 +3,17 @@
 #
 cmake_minimum_required (VERSION 3.8)
 
+include(FetchContent)
+
+FetchContent_Declare(
+    raylib
+    GIT_REPOSITORY https://github.com/raysan5/raylib.git
+    GIT_TAG 6.0
+    GIT_SHALLOW TRUE
+)
+
+FetchContent_MakeAvailable(raylib)
+
 # Enable Hot Reload for MSVC compilers if supported.
 if (POLICY CMP0141)
   cmake_policy(SET CMP0141 NEW)
@@ -25,6 +36,7 @@ target_link_libraries(
     dungeon-crawler
     PRIVATE
         configparser
+        raylib
 )
 
 if (CMAKE_VERSION VERSION_GREATER 3.12)
