@@ -10,9 +10,22 @@ if (POLICY CMP0141)
 endif()
 
 project ("dungeon-crawler")
-
+add_subdirectory(config-parser)
 # Add source to this project's executable.
-add_executable (dungeon-crawler "dungeon-crawler.cpp" "dungeon-crawler.h"  "config-parser/include/config/IConfigParser.h" "config-parser/include/config/ConfigData.h" "config-parser/include/config/IniParser.h" "config-parser/include/config/JsonParser.h" "config-parser/include/config/ParserFactory.h" "src/IniParser.cpp" "src/JsonParser.cpp" "src/ParserFactory.cpp")
+
+#add_executable (dungeon-crawler "dungeon-crawler.cpp" "dungeon-crawler.h"  "config-parser/include/config/IConfigParser.h" "config-parser/include/config/ConfigData.h" "config-parser/include/config/IniParser.h" "config-parser/include/config/JsonParser.h" "config-parser/include/config/ParserFactory.h" "src/IniParser.cpp" "src/JsonParser.cpp" "src/ParserFactory.cpp")
+
+add_executable(
+    dungeon-crawler
+    "dungeon-crawler.cpp"
+    "dungeon-crawler.h"
+)
+
+target_link_libraries(
+    dungeon-crawler
+    PRIVATE
+        configparser
+)
 
 if (CMAKE_VERSION VERSION_GREATER 3.12)
   set_property(TARGET dungeon-crawler PROPERTY CXX_STANDARD 20)
