@@ -12,7 +12,7 @@ endif()
 project ("dungeon-crawler")
 
 # Add source to this project's executable.
-add_executable (dungeon-crawler "dungeon-crawler.cpp" "dungeon-crawler.h")
+add_executable (dungeon-crawler "dungeon-crawler.cpp" "dungeon-crawler.h"  "config-parser/include/config/IConfigParser.h" "config-parser/include/config/ConfigData.h" "config-parser/include/config/IniParser.h" "config-parser/include/config/JsonParser.h" "config-parser/include/config/ParserFactory.h" "src/IniParser.cpp" "src/JsonParser.cpp" "src/ParserFactory.cpp")
 
 if (CMAKE_VERSION VERSION_GREATER 3.12)
   set_property(TARGET dungeon-crawler PROPERTY CXX_STANDARD 20)
