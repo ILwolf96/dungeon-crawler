@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 3.15)
 project(config-parser LANGUAGES CXX)
 
 add_library(configparser STATIC
+    src/ConfigData.cpp
     src/IniParser.cpp
     src/JsonParser.cpp
     src/ParserFactory.cpp
