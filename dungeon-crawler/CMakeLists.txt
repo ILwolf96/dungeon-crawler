@@ -37,9 +37,21 @@ add_subdirectory(config-parser)
 
 add_executable(
     dungeon-crawler
-    "dungeon-crawler.cpp"
-    "dungeon-crawler.h"
- "include/Game.h" "include/Renderer.h" "src/Renderer.cpp" "src/Game.cpp" "src/main.cpp")
+
+    #"dungeon-crawler.cpp"
+    #"dungeon-crawler.h"
+
+    src/main.cpp
+    src/Game.cpp
+    src/Renderer.cpp
+)
+
+target_include_directories(
+    dungeon-crawler
+    PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
+
 
 target_link_libraries(
     dungeon-crawler
