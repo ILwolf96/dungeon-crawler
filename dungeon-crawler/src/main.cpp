@@ -8,6 +8,8 @@ int main()
     dungeon::Game game;
     dungeon::Renderer renderer;
 
+    game.load("data/dungeon.ini");
+
     InitWindow(
         640,
         360,
