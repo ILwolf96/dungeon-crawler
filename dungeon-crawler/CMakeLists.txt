@@ -46,6 +46,12 @@ add_executable(
     src/Renderer.cpp
  "include/Map.h" "include/Player.h" "src/Map.cpp" "src/Player.cpp")
 
+ set_target_properties(
+    dungeon-crawler
+    PROPERTIES
+        VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+)
+
 target_include_directories(
     dungeon-crawler
     PRIVATE

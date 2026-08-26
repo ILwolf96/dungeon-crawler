@@ -3,12 +3,17 @@
 
 #include "raylib.h"
 
-int main()
+int main(int argc, char** argv)
 {
     dungeon::Game game;
     dungeon::Renderer renderer;
 
-    game.load("data/dungeon.ini");
+    if (argc < 2)
+    {
+        return 1;
+    }
+
+    game.load(argv[1]);
 
     InitWindow(
         640,
