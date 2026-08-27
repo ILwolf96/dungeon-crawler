@@ -46,10 +46,18 @@ add_executable(
     src/Renderer.cpp
  "include/Map.h" "include/Player.h" "src/Map.cpp" "src/Player.cpp")
 
- set_target_properties(
-    dungeon-crawler
-    PROPERTIES
-        VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+ #set_target_properties(
+ #  dungeon-crawler
+ #   PROPERTIES
+ #       VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+#)
+
+add_custom_command(
+    TARGET dungeon-crawler
+    POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+        "${CMAKE_CURRENT_SOURCE_DIR}/data"
+        "$<TARGET_FILE_DIR:dungeon-crawler>/data"
 )
 
 target_include_directories(
