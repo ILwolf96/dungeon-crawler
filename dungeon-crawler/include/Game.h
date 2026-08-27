@@ -3,6 +3,7 @@
 #include "Map.h"
 #include "Player.h"
 
+#include <string>
 #include <string_view>
 
 namespace dungeon
@@ -25,6 +26,15 @@ namespace dungeon
         void handleAction(Action action);
 
         [[nodiscard]]
+        int windowWidth() const noexcept;
+
+        [[nodiscard]]
+        int windowHeight() const noexcept;
+
+        [[nodiscard]]
+        const std::string& title() const noexcept;
+
+        [[nodiscard]]
         const Map& map() const noexcept;
 
         [[nodiscard]]
@@ -33,5 +43,9 @@ namespace dungeon
     private:
         Map m_map;
         Player m_player;
+
+        int m_windowWidth{ 640 };
+        int m_windowHeight{ 360 };
+        std::string m_title{ "Dungeon Crawler" };
     };
 }

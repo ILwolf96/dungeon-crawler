@@ -2,6 +2,7 @@
 
 #include "config/ParserFactory.h"
 
+#include <stdexcept>
 #include <string>
 #include <utility>
 
@@ -17,6 +18,21 @@ namespace dungeon
     {
         auto parser = config::makeParser(filePath);
         const config::ConfigData data = parser->parse(filePath);
+
+        const int windowWidth =
+            std::stoi(data.getValue("window", "width"));
+
+        const int windowHeight =
+            std::stoi(data.getValue("window", "height"));
+
+        const std::string title =
+            data.getValue("window", "title");
+
+        if (windowWidth <= 0 || windowHeight <= 0)
+        {
+            throw std::runtime_error(
+                "Window width and height must be greater than zero.");
+        }
 
         const int startX =
             std::stoi(data.getValue("player", "start_x"));
@@ -40,6 +56,10 @@ namespace dungeon
 
             grid.push_back(data.getValue("map", key));
         }
+
+        m_windowWidth = windowWidth;
+        m_windowHeight = windowHeight;
+        m_title = title;
 
         m_map.setGrid(std::move(grid));
         m_player.setPosition(startX, startY);
@@ -76,6 +96,21 @@ namespace dungeon
         {
             m_player.setPosition(targetX, targetY);
         }
+    }
+
+    int Game::windowWidth() const noexcept
+    {
+        return m_windowWidth;
+    }
+
+    int Game::windowHeight() const noexcept
+    {
+        return m_windowHeight;
+    }
+
+    const std::string& Game::title() const noexcept
+    {
+        return m_title;
     }
 
     const Map& Game::map() const noexcept

@@ -3,6 +3,9 @@
 
 #include "raylib.h"
 
+#include <iostream>
+#include <exception>
+
 namespace
 {
     dungeon::Action pollAction()
@@ -35,18 +38,34 @@ int main(int argc, char** argv)
 {
     if (argc < 2)
     {
+        std::cerr
+            << "Error: No configuration file was provided.\n"
+            << "Usage: dungeon-crawler <config-file>\n";
+
         return 1;
     }
 
     dungeon::Game game;
     dungeon::Renderer renderer;
 
-    game.load(argv[1]);
+    try
+    {
+        game.load(argv[1]);
+    }
+    catch (const std::exception& error)
+    {
+        std::cerr
+            << "Error: Failed to load configuration.\n"
+            << error.what()
+            << '\n';
+
+        return 1;
+    }
 
     InitWindow(
-        640,
-        360,
-        "Dungeon Crawler");
+        game.windowWidth(),
+        game.windowHeight(),
+        game.title().c_str());
 
     SetTargetFPS(60);
 
