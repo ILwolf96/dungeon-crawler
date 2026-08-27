@@ -1,7 +1,9 @@
 #include "Game.h"
+
+#include "config/ParserFactory.h"
+
 #include <string>
 #include <utility>
-#include "config/ParserFactory.h"
 
 namespace dungeon
 {
@@ -31,7 +33,10 @@ namespace dungeon
 
         for (std::size_t row = 0; row < height; ++row)
         {
-            const std::string key = std::string("row_") + (row < 10 ? "0" : "") + std::to_string(row);
+            const std::string key =
+                std::string("row_") +
+                (row < 10 ? "0" : "") +
+                std::to_string(row);
 
             grid.push_back(data.getValue("map", key));
         }
@@ -40,9 +45,37 @@ namespace dungeon
         m_player.setPosition(startX, startY);
     }
 
-    void Game::update()
+    void Game::handleAction(Action action)
     {
-        // Game-state updates will be implemented here.
+        int targetX = m_player.x();
+        int targetY = m_player.y();
+
+        switch (action)
+        {
+        case Action::MoveUp:
+            --targetY;
+            break;
+
+        case Action::MoveDown:
+            ++targetY;
+            break;
+
+        case Action::MoveLeft:
+            --targetX;
+            break;
+
+        case Action::MoveRight:
+            ++targetX;
+            break;
+
+        case Action::None:
+            return;
+        }
+
+        if (m_map.isWalkable(targetX, targetY))
+        {
+            m_player.setPosition(targetX, targetY);
+        }
     }
 
     const Map& Game::map() const noexcept
