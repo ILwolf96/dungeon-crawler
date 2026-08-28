@@ -1,10 +1,13 @@
 #pragma once
 
+#include "Enemy.h"
 #include "Map.h"
 #include "Player.h"
 
+#include <memory>
 #include <string>
 #include <string_view>
+#include <vector>
 
 namespace dungeon
 {
@@ -40,9 +43,14 @@ namespace dungeon
         [[nodiscard]]
         const Player& player() const noexcept;
 
+        [[nodiscard]]
+        const std::vector<std::unique_ptr<Enemy>>& enemies() const noexcept;
+
     private:
         Map m_map;
         Player m_player;
+
+        std::vector<std::unique_ptr<Enemy>> m_enemies;
 
         int m_windowWidth{ 640 };
         int m_windowHeight{ 360 };

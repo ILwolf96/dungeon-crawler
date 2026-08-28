@@ -122,4 +122,10 @@ namespace dungeon
     {
         return m_player;
     }
+
+    const std::vector<std::unique_ptr<Enemy>>& Game::enemies() const noexcept
+    {
+        return m_enemies;
+    }
+
 }
