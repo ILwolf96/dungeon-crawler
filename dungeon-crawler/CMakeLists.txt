@@ -44,7 +44,7 @@ add_executable(
     src/main.cpp
     src/Game.cpp
     src/Renderer.cpp
- "include/Map.h" "include/Player.h" "src/Map.cpp" "src/Player.cpp")
+ "include/Map.h" "include/Player.h" "src/Map.cpp" "src/Player.cpp" "include/Enemy.h" "src/Enemy.cpp" "include/Skeleton.h" "src/Skeleton.cpp" "include/Goblin.h" "src/Goblin.cpp" "include/Dragon.h" "src/Dragon.cpp")
 
  #set_target_properties(
  #  dungeon-crawler
