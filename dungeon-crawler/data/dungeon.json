@@ -17,5 +17,29 @@
     "row_04": "#.......#",
     "row_05": "#.......#",
     "row_06": "#########"
+  },
+  "enemy.001": {
+    "type": "goblin",
+    "x": 4,
+    "y": 2,
+    "max_hp": 12,
+    "attack": 4,
+    "defense": 2
+  },
+  "enemy.002": {
+    "type": "skeleton",
+    "x": 6,
+    "y": 4,
+    "max_hp": 16,
+    "attack": 5,
+    "defense": 3
+  },
+  "enemy.003": {
+    "type": "dragon",
+    "x": 7,
+    "y": 3,
+    "max_hp": 36,
+    "attack": 11,
+    "defense": 6
   }
 }

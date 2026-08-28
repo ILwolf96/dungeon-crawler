@@ -2,6 +2,7 @@
 
 #include "config/ParserFactory.h"
 
+#include "EnemyFactory.h"
 #include <stdexcept>
 #include <string>
 #include <utility>
