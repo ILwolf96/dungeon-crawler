@@ -1,11 +1,82 @@
 #include "Game.h"
 
+#include "EnemyFactory.h"
 #include "config/ParserFactory.h"
 
-#include "EnemyFactory.h"
 #include <stdexcept>
 #include <string>
+#include <string_view>
 #include <utility>
+
+namespace
+{
+    constexpr std::string_view EnemySectionPrefix = "enemy.";
+
+    bool isEnemySection(std::string_view sectionName)
+    {
+        return sectionName.starts_with(EnemySectionPrefix);
+    }
+
+    int getRequiredInt(
+        const config::ConfigData& data,
+        std::string_view section,
+        std::string_view key)
+    {
+        const std::string sectionName(section);
+        const std::string keyName(key);
+
+        if (!data.hasValue(sectionName, keyName))
+        {
+            throw std::runtime_error(
+                "Missing configuration value: " +
+                sectionName + "." +
+                keyName);
+        }
+
+        try
+        {
+            return std::stoi(
+                data.getValue(sectionName, keyName));
+        }
+        catch (const std::exception&)
+        {
+            throw std::runtime_error(
+                "Invalid integer value for: " +
+                sectionName + "." +
+                keyName);
+        }
+    }
+
+    std::string getRequiredString(
+        const config::ConfigData& data,
+        std::string_view section,
+        std::string_view key)
+    {
+        const std::string sectionName(section);
+        const std::string keyName(key);
+
+        if (!data.hasValue(sectionName, keyName))
+        {
+            throw std::runtime_error(
+                "Missing configuration value: " +
+                sectionName + "." +
+                keyName);
+        }
+
+        const std::string value =
+            data.getValue(sectionName, keyName);
+
+        if (value.empty())
+        {
+            throw std::runtime_error(
+                "Configuration value cannot be empty: " +
+                sectionName + "." +
+                keyName);
+        }
+
+        return value;
+    }
+}
 
 namespace dungeon
 {
@@ -21,13 +92,13 @@ namespace dungeon
         const config::ConfigData data = parser->parse(filePath);
 
         const int windowWidth =
-            std::stoi(data.getValue("window", "width"));
+            getRequiredInt(data, "window", "width");
 
         const int windowHeight =
-            std::stoi(data.getValue("window", "height"));
+            getRequiredInt(data, "window", "height");
 
         const std::string title =
-            data.getValue("window", "title");
+            getRequiredString(data, "window", "title");
 
         if (windowWidth <= 0 || windowHeight <= 0)
         {
@@ -36,14 +107,20 @@ namespace dungeon
         }
 
         const int startX =
-            std::stoi(data.getValue("player", "start_x"));
+            getRequiredInt(data, "player", "start_x");
 
         const int startY =
-            std::stoi(data.getValue("player", "start_y"));
+            getRequiredInt(data, "player", "start_y");
 
         const std::size_t height =
             static_cast<std::size_t>(
-                std::stoul(data.getValue("map", "height")));
+                getRequiredInt(data, "map", "height"));
+
+        if (height == 0)
+        {
+            throw std::runtime_error(
+                "Map height must be greater than zero.");
+        }
 
         Map::Grid grid;
         grid.reserve(height);
@@ -55,15 +132,78 @@ namespace dungeon
                 (row < 10 ? "0" : "") +
                 std::to_string(row);
 
-            grid.push_back(data.getValue("map", key));
+            grid.push_back(
+                getRequiredString(data, "map", key));
+        }
+
+        m_map.setGrid(std::move(grid));
+
+        if (!m_map.isWalkable(startX, startY))
+        {
+            throw std::runtime_error(
+                "Player starting position is not walkable.");
+        }
+
+        m_player.setPosition(startX, startY);
+
+        m_enemies.clear();
+
+        for (const auto& [sectionName, sectionData] :
+            data.sections())
+        {
+            if (!isEnemySection(sectionName))
+            {
+                continue;
+            }
+
+            const std::string type =
+                getRequiredString(data, sectionName, "type");
+
+            const int x =
+                getRequiredInt(data, sectionName, "x");
+
+            const int y =
+                getRequiredInt(data, sectionName, "y");
+
+            const int maxHp =
+                getRequiredInt(data, sectionName, "max_hp");
+
+            const int attack =
+                getRequiredInt(data, sectionName, "attack");
+
+            const int defense =
+                getRequiredInt(data, sectionName, "defense");
+
+            if (!m_map.isWalkable(x, y))
+            {
+                throw std::runtime_error(
+                    "Enemy '" +
+                    sectionName +
+                    "' is positioned on a non-walkable tile.");
+            }
+
+            if (x == m_player.x() && y == m_player.y())
+            {
+                throw std::runtime_error(
+                    "Enemy '" +
+                    sectionName +
+                    "' cannot occupy the player's starting position.");
+            }
+
+            auto enemy = EnemyFactory::create(
+                type,
+                maxHp,
+                attack,
+                defense,
+                x,
+                y);
+
+            m_enemies.push_back(std::move(enemy));
         }
 
         m_windowWidth = windowWidth;
         m_windowHeight = windowHeight;
         m_title = title;
-
-        m_map.setGrid(std::move(grid));
-        m_player.setPosition(startX, startY);
     }
 
     void Game::handleAction(Action action)
@@ -128,5 +268,4 @@ namespace dungeon
     {
         return m_enemies;
     }
-
 }
