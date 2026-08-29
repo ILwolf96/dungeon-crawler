@@ -4,10 +4,10 @@
 
 namespace dungeon
 {
-    class Skeleton final : public Enemy
+    class Troll final : public Enemy
     {
     public:
-        Skeleton(
+        Troll(
             int maxHp,
             const CombatStats& stats,
             int x,

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "CombatStats.h"
 #include "Enemy.h"
 
 #include <memory>
@@ -14,8 +15,7 @@ namespace dungeon
         static std::unique_ptr<Enemy> create(
             std::string_view type,
             int maxHp,
-            int attack,
-            int defense,
+            const CombatStats& stats,
             int x,
             int y);
     };

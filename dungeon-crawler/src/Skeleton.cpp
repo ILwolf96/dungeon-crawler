@@ -4,11 +4,10 @@ namespace dungeon
 {
     Skeleton::Skeleton(
         int maxHp,
-        int attack,
-        int defense,
+        const CombatStats& stats,
         int x,
         int y)
-        : Enemy(maxHp, attack, defense, x, y)
+        : Enemy(maxHp, stats, x, y)
     {
     }
 

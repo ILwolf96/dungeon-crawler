@@ -1,10 +1,13 @@
 #pragma once
 
+#include "CombatStats.h"
+#include "CombatTarget.h"
+
 #include <string_view>
 
 namespace dungeon
 {
-    class Enemy
+    class Enemy : public CombatTarget
     {
     public:
         virtual ~Enemy() = default;
@@ -13,32 +16,34 @@ namespace dungeon
         virtual std::string_view type() const noexcept = 0;
 
         [[nodiscard]]
-        int x() const noexcept;
+        int x() const noexcept override;
 
         [[nodiscard]]
-        int y() const noexcept;
+        int y() const noexcept override;
+
+        void setPosition(int x, int y) override;
 
         [[nodiscard]]
-        int currentHp() const noexcept;
+        int currentHp() const noexcept override;
 
         [[nodiscard]]
-        int maxHp() const noexcept;
+        int maxHp() const noexcept override;
+
+        void takeDamage(int amount) override;
 
         [[nodiscard]]
-        int attack() const noexcept;
+        bool isDefeated() const noexcept override;
 
         [[nodiscard]]
-        int defense() const noexcept;
+        const char* targetType() const noexcept override;
 
-        void setPosition(int x, int y);
-
-        void takeDamage(int amount);
+        [[nodiscard]]
+        const CombatStats& stats() const noexcept;
 
     protected:
         Enemy(
             int maxHp,
-            int attack,
-            int defense,
+            const CombatStats& stats,
             int x,
             int y);
 
@@ -49,7 +54,6 @@ namespace dungeon
         int m_currentHp;
         int m_maxHp;
 
-        int m_attack;
-        int m_defense;
+        CombatStats m_stats;
     };
 }

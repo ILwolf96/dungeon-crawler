@@ -2,7 +2,9 @@
 
 #include "Dragon.h"
 #include "Goblin.h"
+#include "Orc.h"
 #include "Skeleton.h"
+#include "Troll.h"
 
 #include <stdexcept>
 #include <string>
@@ -12,8 +14,7 @@ namespace dungeon
     std::unique_ptr<Enemy> EnemyFactory::create(
         std::string_view type,
         int maxHp,
-        int attack,
-        int defense,
+        const CombatStats& stats,
         int x,
         int y)
     {
@@ -21,8 +22,7 @@ namespace dungeon
         {
             return std::make_unique<Goblin>(
                 maxHp,
-                attack,
-                defense,
+                stats,
                 x,
                 y);
         }
@@ -31,8 +31,25 @@ namespace dungeon
         {
             return std::make_unique<Skeleton>(
                 maxHp,
-                attack,
-                defense,
+                stats,
+                x,
+                y);
+        }
+
+        if (type == "orc")
+        {
+            return std::make_unique<Orc>(
+                maxHp,
+                stats,
+                x,
+                y);
+        }
+
+        if (type == "troll")
+        {
+            return std::make_unique<Troll>(
+                maxHp,
+                stats,
                 x,
                 y);
         }
@@ -41,8 +58,7 @@ namespace dungeon
         {
             return std::make_unique<Dragon>(
                 maxHp,
-                attack,
-                defense,
+                stats,
                 x,
                 y);
         }

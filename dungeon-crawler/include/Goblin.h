@@ -9,8 +9,7 @@ namespace dungeon
     public:
         Goblin(
             int maxHp,
-            int attack,
-            int defense,
+            const CombatStats& stats,
             int x,
             int y);
 

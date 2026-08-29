@@ -168,11 +168,13 @@ namespace dungeon
             const int maxHp =
                 getRequiredInt(data, sectionName, "max_hp");
 
-            const int attack =
-                getRequiredInt(data, sectionName, "attack");
-
-            const int defense =
-                getRequiredInt(data, sectionName, "defense");
+            const CombatStats stats{
+                getRequiredInt(data, sectionName, "attacks"),
+                getRequiredInt(data, sectionName, "precision"),
+                getRequiredInt(data, sectionName, "strength"),
+                getRequiredInt(data, sectionName, "toughness"),
+                getRequiredInt(data, sectionName, "defense")
+            };
 
             if (!m_map.isWalkable(x, y))
             {
@@ -193,8 +195,7 @@ namespace dungeon
             auto enemy = EnemyFactory::create(
                 type,
                 maxHp,
-                attack,
-                defense,
+                stats,
                 x,
                 y);
 

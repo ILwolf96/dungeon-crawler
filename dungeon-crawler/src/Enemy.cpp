@@ -7,16 +7,14 @@ namespace dungeon
 {
     Enemy::Enemy(
         int maxHp,
-        int attack,
-        int defense,
+        const CombatStats& stats,
         int x,
         int y)
         : m_x(x),
         m_y(y),
         m_currentHp(maxHp),
         m_maxHp(maxHp),
-        m_attack(attack),
-        m_defense(defense)
+        m_stats(stats)
     {
         if (maxHp <= 0)
         {
@@ -24,16 +22,34 @@ namespace dungeon
                 "Enemy max HP must be greater than zero.");
         }
 
-        if (attack < 0)
+        if (stats.attacks <= 0)
         {
             throw std::invalid_argument(
-                "Enemy attack cannot be negative.");
+                "Enemy attacks must be greater than zero.");
         }
 
-        if (defense < 0)
+        if (stats.precision < 1 || stats.precision > 6)
         {
             throw std::invalid_argument(
-                "Enemy defense cannot be negative.");
+                "Enemy precision must be between 1 and 6.");
+        }
+
+        if (stats.strength < 0)
+        {
+            throw std::invalid_argument(
+                "Enemy strength cannot be negative.");
+        }
+
+        if (stats.toughness < 0)
+        {
+            throw std::invalid_argument(
+                "Enemy toughness cannot be negative.");
+        }
+
+        if (stats.defense < 1 || stats.defense > 6)
+        {
+            throw std::invalid_argument(
+                "Enemy defense must be between 1 and 6.");
         }
     }
 
@@ -47,6 +63,12 @@ namespace dungeon
         return m_y;
     }
 
+    void Enemy::setPosition(int x, int y)
+    {
+        m_x = x;
+        m_y = y;
+    }
+
     int Enemy::currentHp() const noexcept
     {
         return m_currentHp;
@@ -55,22 +77,6 @@ namespace dungeon
     int Enemy::maxHp() const noexcept
     {
         return m_maxHp;
-    }
-
-    int Enemy::attack() const noexcept
-    {
-        return m_attack;
-    }
-
-    int Enemy::defense() const noexcept
-    {
-        return m_defense;
-    }
-
-    void Enemy::setPosition(int x, int y)
-    {
-        m_x = x;
-        m_y = y;
     }
 
     void Enemy::takeDamage(int amount)
@@ -82,5 +88,20 @@ namespace dungeon
         }
 
         m_currentHp = std::max(0, m_currentHp - amount);
+    }
+
+    bool Enemy::isDefeated() const noexcept
+    {
+        return m_currentHp <= 0;
+    }
+
+    const char* Enemy::targetType() const noexcept
+    {
+        return "Enemy";
+    }
+
+    const CombatStats& Enemy::stats() const noexcept
+    {
+        return m_stats;
     }
 }

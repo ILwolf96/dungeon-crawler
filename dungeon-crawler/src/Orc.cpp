@@ -1,8 +1,8 @@
-#include "Goblin.h"
+#include "Orc.h"
 
 namespace dungeon
 {
-    Goblin::Goblin(
+    Orc::Orc(
         int maxHp,
         const CombatStats& stats,
         int x,
@@ -11,8 +11,8 @@ namespace dungeon
     {
     }
 
-    std::string_view Goblin::type() const noexcept
+    std::string_view Orc::type() const noexcept
     {
-        return "Goblin";
+        return "Orc";
     }
 }
