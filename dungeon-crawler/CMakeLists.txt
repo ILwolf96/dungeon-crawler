@@ -42,9 +42,9 @@ add_executable(
     #"dungeon-crawler.h"
 
     src/main.cpp
-    src/Game.cpp
-    src/Renderer.cpp
- "include/Map.h" "include/Player.h" "src/Map.cpp" "src/Player.cpp" "include/Enemy.h" "src/Enemy.cpp" "include/Skeleton.h" "src/Skeleton.cpp" "include/Goblin.h" "src/Goblin.cpp" "include/Dragon.h" "src/Dragon.cpp" "include/EnemyFactory.h" "src/EnemyFactory.cpp" "include/CombatStats.h" "include/CombatTarget.h" "include/Orc.h" "include/Troll.h" "src/Orc.cpp" "src/Troll.cpp" "include/IDice.h" "include/RandomDice.h" "src/RandomDice.cpp" "include/CombatRules.h" "src/CombatRules.cpp" "include/Equipment.h" "include/Weapon.h" "src/Weapon.cpp" "include/Armor.h" "src/Armor.cpp" "include/Accessory.h" "src/Accessory.cpp" "src/Equipment.cpp")
+    "src/app/Game.cpp"
+    "src/rendering/Renderer.cpp"
+ "include/world/Map.h" "include/entities/Player.h" "src/world/Map.cpp" "src/entities/Player.cpp" "include/entities/Enemy.h" "src/entities/Enemy.cpp" "include/entities/Skeleton.h" "src/entities/Skeleton.cpp" "include/entities/Goblin.h" "src/entities/Goblin.cpp" "include/entities/Dragon.h" "src/entities/Dragon.cpp" "include/entities/EnemyFactory.h" "src/entities/EnemyFactory.cpp" "include/combat/CombatStats.h" "include/combat/CombatTarget.h" "include/entities/Orc.h" "include/entities/Troll.h" "src/entities/Orc.cpp" "src/entities/Troll.cpp" "include/combat/IDice.h" "include/combat/RandomDice.h" "src/combat/RandomDice.cpp" "include/combat/CombatRules.h" "src/combat/CombatRules.cpp" "include/gear/Equipment.h" "include/gear/Weapon.h" "src/gear/Weapon.cpp" "include/gear/Armor.h" "src/gear/Armor.cpp" "include/gear/Accessory.h" "src/gear/Accessory.cpp" "src/gear/Equipment.cpp")
 
  #set_target_properties(
  #  dungeon-crawler

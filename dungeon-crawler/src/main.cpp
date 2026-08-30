@@ -1,5 +1,5 @@
-#include "Game.h"
-#include "Renderer.h"
+#include "app/Game.h"
+#include "rendering/Renderer.h"
 
 #include "raylib.h"
 

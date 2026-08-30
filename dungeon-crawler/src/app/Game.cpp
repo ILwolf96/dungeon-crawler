@@ -1,0 +1,392 @@
+#include "app/Game.h"
+#include "rendering/Renderer.h"
+#include "entities/EnemyFactory.h"
+#include "config/ParserFactory.h"
+
+#include <stdexcept>
+#include <string>
+#include <string_view>
+#include <unordered_map>
+#include <utility>
+
+namespace
+{
+    constexpr std::string_view EnemySectionPrefix = "enemy.";
+
+    bool isEnemyDefinition(std::string_view sectionName)
+    {
+        return sectionName.starts_with(EnemySectionPrefix);
+    }
+
+    int getRequiredInt(
+        const config::ConfigData& data,
+        std::string_view section,
+        std::string_view key)
+    {
+        const std::string sectionName(section);
+        const std::string keyName(key);
+
+        if (!data.hasValue(sectionName, keyName))
+        {
+            throw std::runtime_error(
+                "Missing configuration value: " +
+                sectionName + "." +
+                keyName);
+        }
+
+        try
+        {
+            return std::stoi(
+                data.getValue(sectionName, keyName));
+        }
+        catch (const std::exception&)
+        {
+            throw std::runtime_error(
+                "Invalid integer value for: " +
+                sectionName + "." +
+                keyName);
+        }
+    }
+
+    std::string getRequiredString(
+        const config::ConfigData& data,
+        std::string_view section,
+        std::string_view key)
+    {
+        const std::string sectionName(section);
+        const std::string keyName(key);
+
+        if (!data.hasValue(sectionName, keyName))
+        {
+            throw std::runtime_error(
+                "Missing configuration value: " +
+                sectionName + "." +
+                keyName);
+        }
+
+        const std::string value =
+            data.getValue(sectionName, keyName);
+
+        if (value.empty())
+        {
+            throw std::runtime_error(
+                "Configuration value cannot be empty: " +
+                sectionName + "." +
+                keyName);
+        }
+
+        return value;
+    }
+
+    char getRequiredSymbol(
+        const config::ConfigData& data,
+        std::string_view section)
+    {
+        const std::string symbol =
+            getRequiredString(data, section, "symbol");
+
+        if (symbol.size() != 1)
+        {
+            throw std::runtime_error(
+                "Enemy symbol must contain exactly one character: " +
+                std::string(section));
+        }
+
+        return symbol.front();
+    }
+}
+
+namespace dungeon
+{
+    Game::Game()
+        : m_map(),
+        m_player(0, 0)
+    {
+    }
+
+    void Game::load(std::string_view filePath)
+    {
+        auto parser = config::makeParser(filePath);
+        const config::ConfigData data = parser->parse(filePath);
+
+        // Window configuration.
+        const int windowWidth =
+            getRequiredInt(data, "window", "width");
+
+        const int windowHeight =
+            getRequiredInt(data, "window", "height");
+
+        const std::string title =
+            getRequiredString(data, "window", "title");
+
+        if (windowWidth <= 0 || windowHeight <= 0)
+        {
+            throw std::runtime_error(
+                "Window width and height must be greater than zero.");
+        }
+
+        // Map configuration.
+        const std::size_t height =
+            static_cast<std::size_t>(
+                getRequiredInt(data, "map", "height"));
+
+        if (height == 0)
+        {
+            throw std::runtime_error(
+                "Map height must be greater than zero.");
+        }
+
+        Map::Grid grid;
+        grid.reserve(height);
+
+        for (std::size_t row = 0; row < height; ++row)
+        {
+            const std::string key =
+                std::string("row_") +
+                (row < 10 ? "0" : "") +
+                std::to_string(row);
+
+            grid.push_back(
+                getRequiredString(data, "map", key));
+        }
+
+        m_map.setGrid(std::move(grid));
+
+        // Build a lookup from map symbol to enemy definition.
+        std::unordered_map<char, std::string> enemyDefinitions;
+
+        for (const auto& [sectionName, sectionData] :
+            data.sections())
+        {
+            if (!isEnemyDefinition(sectionName))
+            {
+                continue;
+            }
+
+            const char symbol =
+                getRequiredSymbol(data, sectionName);
+
+            if (symbol == '#' ||
+                symbol == '.' ||
+                symbol == 'P')
+            {
+                throw std::runtime_error(
+                    "Enemy symbol conflicts with a reserved map symbol: " +
+                    std::string(1, symbol));
+            }
+
+            if (enemyDefinitions.contains(symbol))
+            {
+                throw std::runtime_error(
+                    "Duplicate enemy symbol: " +
+                    std::string(1, symbol));
+            }
+
+            enemyDefinitions.emplace(
+                symbol,
+                sectionName);
+        }
+
+        // Locate the player and create enemies from the map.
+        bool playerFound = false;
+        m_enemies.clear();
+
+        for (std::size_t y = 0; y < m_map.height(); ++y)
+        {
+            for (std::size_t x = 0; x < m_map.width(); ++x)
+            {
+                const char tile =
+                    m_map.tileAt(
+                        static_cast<int>(x),
+                        static_cast<int>(y));
+
+                if (tile == 'P')
+                {
+                    if (playerFound)
+                    {
+                        throw std::runtime_error(
+                            "Map contains more than one player.");
+                    }
+
+                    playerFound = true;
+
+                    m_player.setPosition(
+                        static_cast<int>(x),
+                        static_cast<int>(y));
+
+                    continue;
+                }
+
+                const auto enemyDefinition =
+                    enemyDefinitions.find(tile);
+
+                if (enemyDefinition == enemyDefinitions.end())
+                {
+                    continue;
+                }
+
+                const std::string& sectionName =
+                    enemyDefinition->second;
+
+                const std::string type =
+                    sectionName.substr(EnemySectionPrefix.size());
+
+                const int maxHp =
+                    getRequiredInt(
+                        data,
+                        sectionName,
+                        "max_hp");
+
+                const CombatStats stats{
+                    getRequiredInt(
+                        data,
+                        sectionName,
+                        "attacks"),
+
+                    getRequiredInt(
+                        data,
+                        sectionName,
+                        "precision"),
+
+                    getRequiredInt(
+                        data,
+                        sectionName,
+                        "strength"),
+
+                    getRequiredInt(
+                        data,
+                        sectionName,
+                        "toughness"),
+
+                    getRequiredInt(
+                        data,
+                        sectionName,
+                        "defense")
+                };
+
+                auto enemy = EnemyFactory::create(
+                    type,
+                    maxHp,
+                    stats,
+                    static_cast<int>(x),
+                    static_cast<int>(y));
+
+                m_enemies.push_back(
+                    std::move(enemy));
+            }
+        }
+
+        if (!playerFound)
+        {
+            throw std::runtime_error(
+                "Map does not contain a player.");
+        }
+
+        // Player configuration.
+        //
+        // Strength and defense remain temporary effective values
+        // until the equipment system is implemented.
+        const int playerAttacks =
+            getRequiredInt(data, "player", "attacks");
+
+        const int playerPrecision =
+            getRequiredInt(data, "player", "precision");
+
+        const int playerToughness =
+            getRequiredInt(data, "player", "toughness");
+
+        const int playerMaxHp =
+            getRequiredInt(data, "player", "max_hp");
+
+        if (playerAttacks <= 0)
+        {
+            throw std::runtime_error(
+                "Player attacks must be greater than zero.");
+        }
+
+        if (playerPrecision < 1 || playerPrecision > 6)
+        {
+            throw std::runtime_error(
+                "Player precision must be between 1 and 6.");
+        }
+
+        if (playerToughness < 0)
+        {
+            throw std::runtime_error(
+                "Player toughness cannot be negative.");
+        }
+
+        if (playerMaxHp <= 0)
+        {
+            throw std::runtime_error(
+                "Player max HP must be greater than zero.");
+        }
+
+        m_windowWidth = windowWidth;
+        m_windowHeight = windowHeight;
+        m_title = title;
+    }
+
+    void Game::handleAction(Action action)
+    {
+        int targetX = m_player.x();
+        int targetY = m_player.y();
+
+        switch (action)
+        {
+        case Action::MoveUp:
+            --targetY;
+            break;
+
+        case Action::MoveDown:
+            ++targetY;
+            break;
+
+        case Action::MoveLeft:
+            --targetX;
+            break;
+
+        case Action::MoveRight:
+            ++targetX;
+            break;
+
+        case Action::None:
+            return;
+        }
+
+        if (m_map.isWalkable(targetX, targetY))
+        {
+            m_player.setPosition(targetX, targetY);
+        }
+    }
+
+    int Game::windowWidth() const noexcept
+    {
+        return m_windowWidth;
+    }
+
+    int Game::windowHeight() const noexcept
+    {
+        return m_windowHeight;
+    }
+
+    const std::string& Game::title() const noexcept
+    {
+        return m_title;
+    }
+
+    const Map& Game::map() const noexcept
+    {
+        return m_map;
+    }
+
+    const Player& Game::player() const noexcept
+    {
+        return m_player;
+    }
+
+    const std::vector<std::unique_ptr<Enemy>>& Game::enemies() const noexcept
+    {
+        return m_enemies;
+    }
+}
