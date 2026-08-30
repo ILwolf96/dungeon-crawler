@@ -6,13 +6,14 @@
 #include <stdexcept>
 #include <string>
 #include <string_view>
+#include <unordered_map>
 #include <utility>
 
 namespace
 {
     constexpr std::string_view EnemySectionPrefix = "enemy.";
 
-    bool isEnemySection(std::string_view sectionName)
+    bool isEnemyDefinition(std::string_view sectionName)
     {
         return sectionName.starts_with(EnemySectionPrefix);
     }
@@ -76,6 +77,23 @@ namespace
 
         return value;
     }
+
+    char getRequiredSymbol(
+        const config::ConfigData& data,
+        std::string_view section)
+    {
+        const std::string symbol =
+            getRequiredString(data, section, "symbol");
+
+        if (symbol.size() != 1)
+        {
+            throw std::runtime_error(
+                "Enemy symbol must contain exactly one character: " +
+                std::string(section));
+        }
+
+        return symbol.front();
+    }
 }
 
 namespace dungeon
@@ -91,6 +109,7 @@ namespace dungeon
         auto parser = config::makeParser(filePath);
         const config::ConfigData data = parser->parse(filePath);
 
+        // Window configuration.
         const int windowWidth =
             getRequiredInt(data, "window", "width");
 
@@ -106,12 +125,7 @@ namespace dungeon
                 "Window width and height must be greater than zero.");
         }
 
-        const int startX =
-            getRequiredInt(data, "player", "start_x");
-
-        const int startY =
-            getRequiredInt(data, "player", "start_y");
-
+        // Map configuration.
         const std::size_t height =
             static_cast<std::size_t>(
                 getRequiredInt(data, "map", "height"));
@@ -138,68 +152,174 @@ namespace dungeon
 
         m_map.setGrid(std::move(grid));
 
-        if (!m_map.isWalkable(startX, startY))
-        {
-            throw std::runtime_error(
-                "Player starting position is not walkable.");
-        }
-
-        m_player.setPosition(startX, startY);
-
-        m_enemies.clear();
+        // Build a lookup from map symbol to enemy definition.
+        std::unordered_map<char, std::string> enemyDefinitions;
 
         for (const auto& [sectionName, sectionData] :
             data.sections())
         {
-            if (!isEnemySection(sectionName))
+            if (!isEnemyDefinition(sectionName))
             {
                 continue;
             }
 
-            const std::string type =
-                getRequiredString(data, sectionName, "type");
+            const char symbol =
+                getRequiredSymbol(data, sectionName);
 
-            const int x =
-                getRequiredInt(data, sectionName, "x");
-
-            const int y =
-                getRequiredInt(data, sectionName, "y");
-
-            const int maxHp =
-                getRequiredInt(data, sectionName, "max_hp");
-
-            const CombatStats stats{
-                getRequiredInt(data, sectionName, "attacks"),
-                getRequiredInt(data, sectionName, "precision"),
-                getRequiredInt(data, sectionName, "strength"),
-                getRequiredInt(data, sectionName, "toughness"),
-                getRequiredInt(data, sectionName, "defense")
-            };
-
-            if (!m_map.isWalkable(x, y))
+            if (symbol == '#' ||
+                symbol == '.' ||
+                symbol == 'P')
             {
                 throw std::runtime_error(
-                    "Enemy '" +
-                    sectionName +
-                    "' is positioned on a non-walkable tile.");
+                    "Enemy symbol conflicts with a reserved map symbol: " +
+                    std::string(1, symbol));
             }
 
-            if (x == m_player.x() && y == m_player.y())
+            if (enemyDefinitions.contains(symbol))
             {
                 throw std::runtime_error(
-                    "Enemy '" +
-                    sectionName +
-                    "' cannot occupy the player's starting position.");
+                    "Duplicate enemy symbol: " +
+                    std::string(1, symbol));
             }
 
-            auto enemy = EnemyFactory::create(
-                type,
-                maxHp,
-                stats,
-                x,
-                y);
+            enemyDefinitions.emplace(
+                symbol,
+                sectionName);
+        }
 
-            m_enemies.push_back(std::move(enemy));
+        // Locate the player and create enemies from the map.
+        bool playerFound = false;
+        m_enemies.clear();
+
+        for (std::size_t y = 0; y < m_map.height(); ++y)
+        {
+            for (std::size_t x = 0; x < m_map.width(); ++x)
+            {
+                const char tile =
+                    m_map.tileAt(
+                        static_cast<int>(x),
+                        static_cast<int>(y));
+
+                if (tile == 'P')
+                {
+                    if (playerFound)
+                    {
+                        throw std::runtime_error(
+                            "Map contains more than one player.");
+                    }
+
+                    playerFound = true;
+
+                    m_player.setPosition(
+                        static_cast<int>(x),
+                        static_cast<int>(y));
+
+                    continue;
+                }
+
+                const auto enemyDefinition =
+                    enemyDefinitions.find(tile);
+
+                if (enemyDefinition == enemyDefinitions.end())
+                {
+                    continue;
+                }
+
+                const std::string& sectionName =
+                    enemyDefinition->second;
+
+                const std::string type =
+                    sectionName.substr(EnemySectionPrefix.size());
+
+                const int maxHp =
+                    getRequiredInt(
+                        data,
+                        sectionName,
+                        "max_hp");
+
+                const CombatStats stats{
+                    getRequiredInt(
+                        data,
+                        sectionName,
+                        "attacks"),
+
+                    getRequiredInt(
+                        data,
+                        sectionName,
+                        "precision"),
+
+                    getRequiredInt(
+                        data,
+                        sectionName,
+                        "strength"),
+
+                    getRequiredInt(
+                        data,
+                        sectionName,
+                        "toughness"),
+
+                    getRequiredInt(
+                        data,
+                        sectionName,
+                        "defense")
+                };
+
+                auto enemy = EnemyFactory::create(
+                    type,
+                    maxHp,
+                    stats,
+                    static_cast<int>(x),
+                    static_cast<int>(y));
+
+                m_enemies.push_back(
+                    std::move(enemy));
+            }
+        }
+
+        if (!playerFound)
+        {
+            throw std::runtime_error(
+                "Map does not contain a player.");
+        }
+
+        // Player configuration.
+        //
+        // Strength and defense remain temporary effective values
+        // until the equipment system is implemented.
+        const int playerAttacks =
+            getRequiredInt(data, "player", "attacks");
+
+        const int playerPrecision =
+            getRequiredInt(data, "player", "precision");
+
+        const int playerToughness =
+            getRequiredInt(data, "player", "toughness");
+
+        const int playerMaxHp =
+            getRequiredInt(data, "player", "max_hp");
+
+        if (playerAttacks <= 0)
+        {
+            throw std::runtime_error(
+                "Player attacks must be greater than zero.");
+        }
+
+        if (playerPrecision < 1 || playerPrecision > 6)
+        {
+            throw std::runtime_error(
+                "Player precision must be between 1 and 6.");
+        }
+
+        if (playerToughness < 0)
+        {
+            throw std::runtime_error(
+                "Player toughness cannot be negative.");
+        }
+
+        if (playerMaxHp <= 0)
+        {
+            throw std::runtime_error(
+                "Player max HP must be greater than zero.");
         }
 
         m_windowWidth = windowWidth;
