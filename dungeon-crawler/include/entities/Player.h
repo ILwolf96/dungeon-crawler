@@ -3,6 +3,8 @@
 #include "combat/CombatStats.h"
 #include "combat/CombatTarget.h"
 #include "gear/Equipment.h"
+#include "inventory/Inventory.h"
+
 #include <memory>
 
 namespace dungeon
@@ -35,6 +37,8 @@ namespace dungeon
 
         void takeDamage(int amount) override;
 
+        void heal(int amount);
+
         [[nodiscard]]
         bool isDefeated() const noexcept override;
 
@@ -55,6 +59,11 @@ namespace dungeon
 
         Equipment& equipment() noexcept;
 
+        [[nodiscard]]
+        const Inventory& inventory() const noexcept;
+
+        Inventory& inventory() noexcept;
+
     private:
         int m_x{ 0 };
         int m_y{ 0 };
@@ -71,5 +80,6 @@ namespace dungeon
         };
 
         Equipment m_equipment;
+        Inventory m_inventory;
     };
 }

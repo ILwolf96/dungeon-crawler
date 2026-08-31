@@ -1,7 +1,6 @@
 #include "entities/Player.h"
 
 #include <algorithm>
-#include <memory>
 #include <stdexcept>
 
 namespace dungeon
@@ -22,7 +21,8 @@ namespace dungeon
             4,
             0
         },
-        m_equipment()
+        m_equipment(),
+        m_inventory()
     {
         /*
         m_equipment.equipWeapon(
@@ -100,6 +100,7 @@ namespace dungeon
         m_baseStats = baseStats;
 
         m_equipment = Equipment();
+        m_inventory = Inventory();
 
         m_equipment.equipWeapon(
             std::move(weapon));
@@ -152,6 +153,18 @@ namespace dungeon
 
         m_currentHp =
             std::max(0, m_currentHp - amount);
+    }
+
+    void Player::heal(int amount)
+    {
+        if (amount < 0)
+        {
+            throw std::invalid_argument(
+                "Player healing cannot be negative.");
+        }
+
+        m_currentHp =
+            std::min(maxHp(), m_currentHp + amount);
     }
 
     bool Player::isDefeated() const noexcept
@@ -217,5 +230,15 @@ namespace dungeon
     Equipment& Player::equipment() noexcept
     {
         return m_equipment;
+    }
+
+    const Inventory& Player::inventory() const noexcept
+    {
+        return m_inventory;
+    }
+
+    Inventory& Player::inventory() noexcept
+    {
+        return m_inventory;
     }
 }
