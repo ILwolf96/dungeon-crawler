@@ -7,9 +7,6 @@
 
 namespace dungeon
 {
-    class Weapon;
-    class Armor;
-
     class Player final : public CombatTarget
     {
     public:

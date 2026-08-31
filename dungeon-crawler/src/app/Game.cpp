@@ -3,6 +3,7 @@
 #include "entities/EnemyFactory.h"
 #include "config/ParserFactory.h"
 
+#include "gear/GearFactory.h"
 #include <stdexcept>
 #include <string>
 #include <string_view>
@@ -283,44 +284,38 @@ namespace dungeon
         }
 
         // Player configuration.
-        //
-        // Strength and defense remain temporary effective values
-        // until the equipment system is implemented.
-        const int playerAttacks =
-            getRequiredInt(data, "player", "attacks");
-
-        const int playerPrecision =
-            getRequiredInt(data, "player", "precision");
-
-        const int playerToughness =
-            getRequiredInt(data, "player", "toughness");
-
         const int playerMaxHp =
             getRequiredInt(data, "player", "max_hp");
 
-        if (playerAttacks <= 0)
-        {
-            throw std::runtime_error(
-                "Player attacks must be greater than zero.");
-        }
+        const CombatStats playerBaseStats{
+            getRequiredInt(data, "player", "attacks"),
+            getRequiredInt(data, "player", "precision"),
+            getRequiredInt(data, "player", "strength"),
+            getRequiredInt(data, "player", "toughness"),
+            getRequiredInt(data, "player", "defense")
+        };
 
-        if (playerPrecision < 1 || playerPrecision > 6)
-        {
-            throw std::runtime_error(
-                "Player precision must be between 1 and 6.");
-        }
+        const std::string weaponId =
+            getRequiredString(data, "player", "weapon");
 
-        if (playerToughness < 0)
-        {
-            throw std::runtime_error(
-                "Player toughness cannot be negative.");
-        }
+        const std::string armorId =
+            getRequiredString(data, "player", "armor");
 
-        if (playerMaxHp <= 0)
-        {
-            throw std::runtime_error(
-                "Player max HP must be greater than zero.");
-        }
+        auto playerWeapon =
+            GearFactory::createWeapon(
+                data,
+                weaponId);
+
+        auto playerArmor =
+            GearFactory::createArmor(
+                data,
+                armorId);
+
+        m_player.initialize(
+            playerMaxHp,
+            playerBaseStats,
+            std::move(playerWeapon),
+            std::move(playerArmor));
 
         m_windowWidth = windowWidth;
         m_windowHeight = windowHeight;

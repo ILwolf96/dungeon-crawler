@@ -150,9 +150,8 @@ namespace dungeon
                 "Player damage cannot be negative.");
         }
 
-        m_currentHp = std::max(
-            0,
-            m_currentHp - amount);
+        m_currentHp =
+            std::max(0, m_currentHp - amount);
     }
 
     bool Player::isDefeated() const noexcept
@@ -174,12 +173,14 @@ namespace dungeon
     {
         CombatStats result = m_baseStats;
 
-        if (const Weapon* weapon = m_equipment.weapon())
+        if (const Weapon* weapon =
+            m_equipment.weapon())
         {
             result.strength = weapon->strength();
         }
 
-        if (const Armor* armor = m_equipment.armor())
+        if (const Armor* armor =
+            m_equipment.armor())
         {
             result.defense = armor->defense();
         }
@@ -199,7 +200,8 @@ namespace dungeon
 
     int Player::weaponDamage() const noexcept
     {
-        if (const Weapon* weapon = m_equipment.weapon())
+        if (const Weapon* weapon =
+            m_equipment.weapon())
         {
             return weapon->damage();
         }
