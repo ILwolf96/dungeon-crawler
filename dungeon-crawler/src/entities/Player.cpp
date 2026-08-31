@@ -1,14 +1,41 @@
 #include "entities/Player.h"
 
 #include <algorithm>
+#include <memory>
 #include <stdexcept>
 
 namespace dungeon
 {
+    Player::Player()
+        : Player(0, 0)
+    {
+    }
+
     Player::Player(int x, int y)
         : m_x(x),
-        m_y(y)
+        m_y(y),
+        m_currentHp(m_baseMaxHp),
+        m_baseStats{
+            2,
+            3,
+            1,
+            4,
+            0
+        },
+        m_equipment()
     {
+        m_equipment.equipWeapon(
+            std::make_unique<Weapon>(
+                "Club",
+                1,
+                3,
+                1));
+
+        m_equipment.equipArmor(
+            std::make_unique<Armor>(
+                "Gambeson",
+                1,
+                5));
     }
 
     int Player::x() const noexcept
@@ -34,7 +61,15 @@ namespace dungeon
 
     int Player::maxHp() const noexcept
     {
-        return m_maxHp;
+        int value = m_baseMaxHp;
+
+        for (const auto& accessory :
+            m_equipment.accessories())
+        {
+            value += accessory->maxHpBonus();
+        }
+
+        return value;
     }
 
     void Player::takeDamage(int amount)
@@ -45,7 +80,9 @@ namespace dungeon
                 "Player damage cannot be negative.");
         }
 
-        m_currentHp = std::max(0, m_currentHp - amount);
+        m_currentHp = std::max(
+            0,
+            m_currentHp - amount);
     }
 
     bool Player::isDefeated() const noexcept
@@ -58,8 +95,55 @@ namespace dungeon
         return "Player";
     }
 
-    const CombatStats& Player::stats() const noexcept
+    const CombatStats& Player::baseStats() const noexcept
     {
-        return m_stats;
+        return m_baseStats;
+    }
+
+    CombatStats Player::effectiveStats() const noexcept
+    {
+        CombatStats result = m_baseStats;
+
+        if (const Weapon* weapon = m_equipment.weapon())
+        {
+            result.strength = weapon->strength();
+        }
+
+        if (const Armor* armor = m_equipment.armor())
+        {
+            result.defense = armor->defense();
+        }
+
+        for (const auto& accessory :
+            m_equipment.accessories())
+        {
+            result.attacks +=
+                accessory->attacksBonus();
+
+            result.precision +=
+                accessory->precisionBonus();
+        }
+
+        return result;
+    }
+
+    int Player::weaponDamage() const noexcept
+    {
+        if (const Weapon* weapon = m_equipment.weapon())
+        {
+            return weapon->damage();
+        }
+
+        return 0;
+    }
+
+    const Equipment& Player::equipment() const noexcept
+    {
+        return m_equipment;
+    }
+
+    Equipment& Player::equipment() noexcept
+    {
+        return m_equipment;
     }
 }

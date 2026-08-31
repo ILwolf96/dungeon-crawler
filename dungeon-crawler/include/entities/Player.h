@@ -2,13 +2,14 @@
 
 #include "combat/CombatStats.h"
 #include "combat/CombatTarget.h"
+#include "gear/Equipment.h"
 
 namespace dungeon
 {
     class Player final : public CombatTarget
     {
     public:
-        Player() = default;
+        Player();
         Player(int x, int y);
 
         [[nodiscard]]
@@ -34,21 +35,34 @@ namespace dungeon
         const char* targetType() const noexcept override;
 
         [[nodiscard]]
-        const CombatStats& stats() const noexcept;
+        const CombatStats& baseStats() const noexcept;
+
+        [[nodiscard]]
+        CombatStats effectiveStats() const noexcept;
+
+        [[nodiscard]]
+        int weaponDamage() const noexcept;
+
+        [[nodiscard]]
+        const Equipment& equipment() const noexcept;
+
+        Equipment& equipment() noexcept;
 
     private:
         int m_x{ 0 };
         int m_y{ 0 };
 
         int m_currentHp{ 6 };
-        int m_maxHp{ 6 };
+        int m_baseMaxHp{ 6 };
 
-        CombatStats m_stats{
+        CombatStats m_baseStats{
             2, // attacks
             3, // precision
-            3, // strength - temporary until equipment is implemented
+            1, // strength
             4, // toughness
-            5  // defense - temporary until armor is implemented
+            0  // defense
         };
+
+        Equipment m_equipment;
     };
 }
