@@ -24,6 +24,7 @@ namespace dungeon
         },
         m_equipment()
     {
+        /*
         m_equipment.equipWeapon(
             std::make_unique<Weapon>(
                 "Club",
@@ -36,6 +37,75 @@ namespace dungeon
                 "Gambeson",
                 1,
                 5));
+        */
+    }
+
+    void Player::initialize(
+        int maxHp,
+        const CombatStats& baseStats,
+        std::unique_ptr<Weapon> weapon,
+        std::unique_ptr<Armor> armor)
+    {
+        if (maxHp <= 0)
+        {
+            throw std::invalid_argument(
+                "Player max HP must be greater than zero.");
+        }
+
+        if (baseStats.attacks <= 0)
+        {
+            throw std::invalid_argument(
+                "Player attacks must be greater than zero.");
+        }
+
+        if (baseStats.precision < 1 ||
+            baseStats.precision > 6)
+        {
+            throw std::invalid_argument(
+                "Player precision must be between 1 and 6.");
+        }
+
+        if (baseStats.strength < 0)
+        {
+            throw std::invalid_argument(
+                "Player strength cannot be negative.");
+        }
+
+        if (baseStats.toughness < 0)
+        {
+            throw std::invalid_argument(
+                "Player toughness cannot be negative.");
+        }
+
+        if (baseStats.defense < 0)
+        {
+            throw std::invalid_argument(
+                "Player defense cannot be negative.");
+        }
+
+        if (!weapon)
+        {
+            throw std::invalid_argument(
+                "Player must have a weapon.");
+        }
+
+        if (!armor)
+        {
+            throw std::invalid_argument(
+                "Player must have armor.");
+        }
+
+        m_baseMaxHp = maxHp;
+        m_currentHp = maxHp;
+        m_baseStats = baseStats;
+
+        m_equipment = Equipment();
+
+        m_equipment.equipWeapon(
+            std::move(weapon));
+
+        m_equipment.equipArmor(
+            std::move(armor));
     }
 
     int Player::x() const noexcept

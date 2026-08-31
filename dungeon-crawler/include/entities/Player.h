@@ -3,14 +3,24 @@
 #include "combat/CombatStats.h"
 #include "combat/CombatTarget.h"
 #include "gear/Equipment.h"
+#include <memory>
 
 namespace dungeon
 {
+    class Weapon;
+    class Armor;
+
     class Player final : public CombatTarget
     {
     public:
         Player();
         Player(int x, int y);
+
+        void initialize(
+            int maxHp,
+            const CombatStats& baseStats,
+            std::unique_ptr<Weapon> weapon,
+            std::unique_ptr<Armor> armor);
 
         [[nodiscard]]
         int x() const noexcept override;
