@@ -251,6 +251,12 @@ namespace dungeon
                         sectionName,
                         "max_hp");
 
+                const int tier =
+                    getRequiredInt(
+                        data,
+                        sectionName,
+                        "tier");
+
                 const CombatStats stats{
                     getRequiredInt(
                         data,
@@ -281,6 +287,7 @@ namespace dungeon
                 auto enemy = EnemyFactory::create(
                     type,
                     maxHp,
+                    tier,
                     stats,
                     static_cast<int>(x),
                     static_cast<int>(y));

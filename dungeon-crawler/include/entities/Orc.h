@@ -9,6 +9,7 @@ namespace dungeon
     public:
         Orc(
             int maxHp,
+            int tier,
             const CombatStats& stats,
             int x,
             int y);

@@ -15,6 +15,7 @@ namespace dungeon
         static std::unique_ptr<Enemy> create(
             std::string_view type,
             int maxHp,
+            int tier,
             const CombatStats& stats,
             int x,
             int y);

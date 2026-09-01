@@ -14,6 +14,7 @@ namespace dungeon
     std::unique_ptr<Enemy> EnemyFactory::create(
         std::string_view type,
         int maxHp,
+        int tier,
         const CombatStats& stats,
         int x,
         int y)
@@ -22,6 +23,7 @@ namespace dungeon
         {
             return std::make_unique<Goblin>(
                 maxHp,
+                tier,
                 stats,
                 x,
                 y);
@@ -31,6 +33,7 @@ namespace dungeon
         {
             return std::make_unique<Skeleton>(
                 maxHp,
+                tier,
                 stats,
                 x,
                 y);
@@ -40,6 +43,7 @@ namespace dungeon
         {
             return std::make_unique<Orc>(
                 maxHp,
+                tier,
                 stats,
                 x,
                 y);
@@ -49,6 +53,7 @@ namespace dungeon
         {
             return std::make_unique<Troll>(
                 maxHp,
+                tier,
                 stats,
                 x,
                 y);
@@ -58,6 +63,7 @@ namespace dungeon
         {
             return std::make_unique<Dragon>(
                 maxHp,
+                tier,
                 stats,
                 x,
                 y);

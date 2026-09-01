@@ -4,10 +4,11 @@ namespace dungeon
 {
     Orc::Orc(
         int maxHp,
+        int tier,
         const CombatStats& stats,
         int x,
         int y)
-        : Enemy(maxHp, stats, x, y)
+        : Enemy(maxHp, tier, stats, x, y)
     {
     }
 

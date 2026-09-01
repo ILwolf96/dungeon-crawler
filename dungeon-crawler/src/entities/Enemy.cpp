@@ -6,6 +6,7 @@ namespace dungeon
 {
     Enemy::Enemy(
         int maxHp,
+        int tier,
         const CombatStats& stats,
         int x,
         int y)
@@ -13,12 +14,19 @@ namespace dungeon
         m_y(y),
         m_currentHp(maxHp),
         m_maxHp(maxHp),
+        m_tier(tier),
         m_stats(stats)
     {
         if (maxHp <= 0)
         {
             throw std::invalid_argument(
                 "Enemy max HP must be greater than zero.");
+        }
+
+        if (tier <= 0)
+        {
+            throw std::invalid_argument(
+                "Enemy tier must be greater than zero.");
         }
 
         if (stats.attacks <= 0)
@@ -97,6 +105,11 @@ namespace dungeon
     const char* Enemy::targetType() const noexcept
     {
         return "Enemy";
+    }
+
+    int Enemy::tier() const noexcept
+    {
+        return m_tier;
     }
 
     const CombatStats& Enemy::stats() const noexcept

@@ -38,14 +38,18 @@ namespace dungeon
         const char* targetType() const noexcept override;
 
         [[nodiscard]]
+        CombatStats combatStats() const noexcept override;
+
+        [[nodiscard]]
         const CombatStats& stats() const noexcept;
 
         [[nodiscard]]
-        CombatStats combatStats() const noexcept override;
+        int tier() const noexcept;
 
     protected:
         Enemy(
             int maxHp,
+            int tier,
             const CombatStats& stats,
             int x,
             int y);
@@ -56,6 +60,8 @@ namespace dungeon
 
         int m_currentHp;
         int m_maxHp;
+
+        int m_tier;
 
         CombatStats m_stats;
     };
