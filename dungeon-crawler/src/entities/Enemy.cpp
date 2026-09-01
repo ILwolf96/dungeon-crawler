@@ -103,4 +103,9 @@ namespace dungeon
     {
         return m_stats;
     }
+
+    CombatStats Enemy::combatStats() const noexcept
+    {
+        return m_stats;
+    }
 }

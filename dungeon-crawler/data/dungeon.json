@@ -33,6 +33,14 @@
   },
 
 
+
+
+  "chest": {
+    "symbol": "C",
+    "tier": 1,
+    "max_hp": 1
+  },
+
   "enemy.goblin": {
     "symbol": "G",
     "tier": 2,
@@ -43,6 +51,7 @@
     "toughness": 3,
     "defense": 6
   },
+
   "enemy.skeleton": {
     "symbol": "S",
     "tier": 3,
@@ -53,6 +62,7 @@
     "toughness": 4,
     "defense": 5
   },
+
   "enemy.orc": {
     "symbol": "O",
     "tier": 4,
@@ -63,6 +73,7 @@
     "toughness": 5,
     "defense": 5
   },
+
   "enemy.troll": {
     "symbol": "T",
     "tier": 5,
@@ -73,6 +84,7 @@
     "toughness": 6,
     "defense": 4
   },
+
   "enemy.dragon": {
     "symbol": "D",
     "tier": 6,
@@ -83,14 +95,18 @@
     "toughness": 8,
     "defense": 3
   },
+
+
+
+
   "map": {
     "height": 7,
     "row_00": "#########",
     "row_01": "#.......#",
     "row_02": "#.P.G...#",
-    "row_03": "#.......#",
+    "row_03": "#.....D.#",
     "row_04": "#...S...#",
-    "row_05": "#.....O.#",
+    "row_05": "#.T...O.#",
     "row_06": "#########"
   }
 }

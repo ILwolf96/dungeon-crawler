@@ -10,18 +10,13 @@ namespace dungeon
             return false;
         }
 
-        const std::string key =
-            std::string(consumable->name());
-
-        const std::size_t currentAmount =
-            m_amounts[key];
-
-        if (currentAmount >=
-            static_cast<std::size_t>(
-                consumable->maximumAmount()))
+        if (!canAddConsumable(*consumable))
         {
             return false;
         }
+
+        const std::string key =
+            std::string(consumable->name());
 
         m_consumables.push_back(
             std::move(consumable));
@@ -84,6 +79,14 @@ namespace dungeon
         const Consumable& consumable) const noexcept
     {
         return amount(consumable) > 0;
+    }
+
+    bool Inventory::canAddConsumable(
+        const Consumable& consumable) const noexcept
+    {
+        return amount(consumable) <
+            static_cast<std::size_t>(
+                consumable.maximumAmount());
     }
 
     const std::vector<std::unique_ptr<Consumable>>&

@@ -21,6 +21,10 @@ namespace dungeon
             std::size_t index);
 
         [[nodiscard]]
+        bool canAddConsumable(
+            const Consumable& consumable) const noexcept;
+
+        [[nodiscard]]
         std::size_t amount(
             const Consumable& consumable) const noexcept;
 

@@ -164,6 +164,37 @@ namespace dungeon
                 12,
                 BLACK);
         }
+
+        const auto& chests = game.chests();
+
+        for (const auto& chest : chests)
+        {
+            const int chestCenterX =
+                MapOffsetX +
+                chest->x() * TileSize +
+                TileSize / 2;
+
+            const int chestCenterY =
+                MapOffsetY +
+                chest->y() * TileSize +
+                TileSize / 2;
+
+            DrawRectangle(
+                chestCenterX - TileSize / 3,
+                chestCenterY - TileSize / 3,
+                (TileSize * 2) / 3,
+                (TileSize * 2) / 3,
+                GOLD);
+
+            DrawText(
+                "Chest",
+                chestCenterX - MeasureText(
+                    "Chest",
+                    12) / 2,
+                chestCenterY - 6,
+                12,
+                BLACK);
+        }
     }
 
 

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "combat/CombatStats.h"
+#include "entities/Chest.h"
 #include "entities/Enemy.h"
 #include "entities/Player.h"
 #include "world/Map.h"
@@ -47,11 +48,15 @@ namespace dungeon
         [[nodiscard]]
         const std::vector<std::unique_ptr<Enemy>>& enemies() const noexcept;
 
+        [[nodiscard]]
+        const std::vector<std::unique_ptr<Chest>>& chests() const noexcept;
+
     private:
         Map m_map;
         Player m_player;
 
         std::vector<std::unique_ptr<Enemy>> m_enemies;
+        std::vector<std::unique_ptr<Chest>> m_chests;
 
         int m_windowWidth{ 640 };
         int m_windowHeight{ 360 };

@@ -182,6 +182,11 @@ namespace dungeon
         return m_baseStats;
     }
 
+    CombatStats Player::combatStats() const noexcept
+    {
+        return effectiveStats();
+    }
+
     CombatStats Player::effectiveStats() const noexcept
     {
         CombatStats result = m_baseStats;

@@ -1,5 +1,7 @@
 #pragma once
 
+#include "combat/CombatStats.h"
+
 namespace dungeon
 {
     class CombatTarget
@@ -28,5 +30,8 @@ namespace dungeon
 
         [[nodiscard]]
         virtual const char* targetType() const noexcept = 0;
+
+        [[nodiscard]]
+        virtual CombatStats combatStats() const noexcept = 0;
     };
 }

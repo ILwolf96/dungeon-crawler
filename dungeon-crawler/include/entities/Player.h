@@ -49,6 +49,9 @@ namespace dungeon
         const CombatStats& baseStats() const noexcept;
 
         [[nodiscard]]
+        CombatStats combatStats() const noexcept override;
+       
+        [[nodiscard]]
         CombatStats effectiveStats() const noexcept;
 
         [[nodiscard]]

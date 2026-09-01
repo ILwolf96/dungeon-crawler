@@ -1,6 +1,7 @@
 #include "app/Game.h"
 #include "rendering/Renderer.h"
 #include "entities/EnemyFactory.h"
+#include "entities/Chest.h"
 #include "config/ParserFactory.h"
 
 #include "gear/GearFactory.h"
@@ -169,7 +170,8 @@ namespace dungeon
 
             if (symbol == '#' ||
                 symbol == '.' ||
-                symbol == 'P')
+                symbol == 'P' ||
+                symbol == 'C')
             {
                 throw std::runtime_error(
                     "Enemy symbol conflicts with a reserved map symbol: " +
@@ -188,9 +190,10 @@ namespace dungeon
                 sectionName);
         }
 
-        // Locate the player and create enemies from the map.
+        // Locate the player and create entities from the map.
         bool playerFound = false;
         m_enemies.clear();
+        m_chests.clear();
 
         for (std::size_t y = 0; y < m_map.height(); ++y)
         {
@@ -214,6 +217,16 @@ namespace dungeon
                     m_player.setPosition(
                         static_cast<int>(x),
                         static_cast<int>(y));
+
+                    continue;
+                }
+
+                if (tile == 'C')
+                {
+                    m_chests.push_back(
+                        std::make_unique<Chest>(
+                            static_cast<int>(x),
+                            static_cast<int>(y)));
 
                     continue;
                 }
@@ -383,5 +396,10 @@ namespace dungeon
     const std::vector<std::unique_ptr<Enemy>>& Game::enemies() const noexcept
     {
         return m_enemies;
+    }
+
+    const std::vector<std::unique_ptr<Chest>>& Game::chests() const noexcept
+    {
+        return m_chests;
     }
 }
