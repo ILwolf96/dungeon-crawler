@@ -41,6 +41,12 @@ namespace dungeon
         bool escaped() const noexcept;
 
         [[nodiscard]]
+        CombatTarget& target() noexcept;
+
+        [[nodiscard]]
+        const CombatTarget& target() const noexcept;
+
+        [[nodiscard]]
         const std::vector<AttackResult>&
             lastPlayerAttacks() const noexcept;
 

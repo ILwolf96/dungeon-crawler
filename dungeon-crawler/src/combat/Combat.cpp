@@ -125,6 +125,16 @@ namespace dungeon
         return m_playerEscaped;
     }
 
+    CombatTarget& Combat::target() noexcept
+    {
+        return m_target;
+    }
+
+    const CombatTarget& Combat::target() const noexcept
+    {
+        return m_target;
+    }
+
     const std::vector<AttackResult>&
         Combat::lastPlayerAttacks() const noexcept
     {

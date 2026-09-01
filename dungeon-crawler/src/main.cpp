@@ -40,8 +40,7 @@ namespace
         return dungeon::Action::None;
     }
 
-
-
+    /**/
     // TESTING! DON"T FORGET TO UPDATE WHEN DONE!
     void runCombatDiagnostic(dungeon::Game& game)
     {
@@ -130,6 +129,7 @@ namespace
             enemies.front()->maxHp());
     }
 }
+    /*End of Test Zone*/
 
 int main(int argc, char** argv)
 {
@@ -159,7 +159,6 @@ int main(int argc, char** argv)
         return 1;
     }
 
-    // Run the diagnostic test right after loading the game configuration
     //runCombatDiagnostic(game);
 
     InitWindow(
@@ -171,10 +170,20 @@ int main(int argc, char** argv)
 
     while (!WindowShouldClose())
     {
+
+        //Test Zone
+        /*
         if (IsKeyPressed(KEY_F1))
         {
             runCombatDiagnostic(game);
         }
+        //End of Test Zone
+        */
+        if (IsKeyPressed(KEY_F1))
+        {
+            game.handleAction(dungeon::Action::Attack);
+        }
+
 
         const dungeon::Action action = pollAction();
 

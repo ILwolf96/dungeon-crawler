@@ -5,6 +5,8 @@
 #include "entities/Enemy.h"
 #include "entities/Player.h"
 #include "world/Map.h"
+#include "combat/Combat.h"
+#include "combat/RandomDice.h"
 
 #include <memory>
 #include <string>
@@ -19,7 +21,8 @@ namespace dungeon
         MoveUp,
         MoveDown,
         MoveLeft,
-        MoveRight
+        MoveRight,
+        Attack
     };
 
     class Game
@@ -29,6 +32,13 @@ namespace dungeon
 
         void load(std::string_view filePath);
         void handleAction(Action action);
+
+        bool inCombat() const noexcept;
+
+        Combat* combat() noexcept;
+        const Combat* combat() const noexcept;
+
+        void startCombat(CombatTarget& target);
 
         [[nodiscard]]
         int windowWidth() const noexcept;
@@ -58,6 +68,12 @@ namespace dungeon
         Map m_map;
         Player m_player;
 
+        CombatTarget* combatTargetAt(int x, int y) noexcept;
+        void finishCombatIfNeeded();
+        void performCombatAttack();
+
+        std::unique_ptr<Combat> m_combat;
+        RandomDice m_combatDice;
         std::vector<std::unique_ptr<Enemy>> m_enemies;
         std::vector<std::unique_ptr<Chest>> m_chests;
 

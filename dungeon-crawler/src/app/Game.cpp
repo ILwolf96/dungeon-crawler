@@ -344,6 +344,16 @@ namespace dungeon
 
     void Game::handleAction(Action action)
     {
+        if (m_combat)
+        {
+            if (action == Action::Attack)
+            {
+                performCombatAttack();
+            }
+
+            return;
+        }
+
         int targetX = m_player.x();
         int targetY = m_player.y();
 
@@ -369,9 +379,137 @@ namespace dungeon
             return;
         }
 
-        if (m_map.isWalkable(targetX, targetY))
+        if (!m_map.isWalkable(targetX, targetY))
         {
-            m_player.setPosition(targetX, targetY);
+            return;
+        }
+
+        m_player.setPosition(targetX, targetY);
+
+        CombatTarget* target = combatTargetAt(targetX, targetY);
+
+        if (target != nullptr)
+        {
+            startCombat(*target);
+        }
+    }
+
+    bool Game::inCombat() const noexcept
+    {
+        return m_combat != nullptr;
+    }
+
+    Combat* Game::combat() noexcept
+    {
+        return m_combat.get();
+    }
+
+    const Combat* Game::combat() const noexcept
+    {
+        return m_combat.get();
+    }
+
+    void Game::startCombat(CombatTarget& target)
+    {
+        if (m_combat)
+        {
+            return;
+        }
+
+        m_combat = std::make_unique<Combat>(
+            m_player,
+            target,
+            m_combatDice);
+    }
+
+    CombatTarget* Game::combatTargetAt(int x, int y) noexcept
+    {
+        for (const auto& enemy : m_enemies)
+        {
+            if (enemy->x() == x && enemy->y() == y &&
+                !enemy->isDefeated())
+            {
+                return enemy.get();
+            }
+        }
+
+        for (const auto& chest : m_chests)
+        {
+            if (chest->x() == x && chest->y() == y &&
+                !chest->isDefeated())
+            {
+                return chest.get();
+            }
+        }
+
+        return nullptr;
+    }
+
+    void Game::performCombatAttack()
+    {
+        if (!m_combat)
+        {
+            return;
+        }
+
+        m_combat->playerAttack();
+
+        if (!m_combat->isActive())
+        {
+            finishCombatIfNeeded();
+            return;
+        }
+
+        m_combat->enemyTurn();
+
+        if (!m_combat->isActive())
+        {
+            finishCombatIfNeeded();
+        }
+    }
+
+    void Game::finishCombatIfNeeded()
+    {
+        if (!m_combat)
+        {
+            return;
+        }
+
+        if (!m_combat->isActive())
+        {
+            CombatTarget* target = &m_combat->target();
+
+            const bool targetDefeated =
+                target->isDefeated();
+
+            m_combat.reset();
+
+            if (!targetDefeated)
+            {
+                return;
+            }
+
+            for (auto it = m_enemies.begin();
+                it != m_enemies.end();
+                ++it)
+            {
+                if (it->get() == target)
+                {
+                    m_enemies.erase(it);
+                    return;
+                }
+            }
+
+            for (auto it = m_chests.begin();
+                it != m_chests.end();
+                ++it)
+            {
+                if (it->get() == target)
+                {
+                    m_chests.erase(it);
+                    return;
+                }
+            }
         }
     }
 
