@@ -40,11 +40,95 @@ add_executable(
 
     #"dungeon-crawler.cpp"
     #"dungeon-crawler.h"
+     
+    #Core
+     src/main.cpp
+     "src/app/Game.cpp"
+     
+     "src/rendering/Renderer.cpp"
+     
+     "include/world/Map.h"
+     "src/world/Map.cpp" 
 
-    src/main.cpp
-    "src/app/Game.cpp"
-    "src/rendering/Renderer.cpp"
- "include/world/Map.h" "include/entities/Player.h" "src/world/Map.cpp" "src/entities/Player.cpp" "include/entities/Enemy.h" "src/entities/Enemy.cpp" "include/entities/Skeleton.h" "src/entities/Skeleton.cpp" "include/entities/Goblin.h" "src/entities/Goblin.cpp" "include/entities/Dragon.h" "src/entities/Dragon.cpp" "include/entities/EnemyFactory.h" "src/entities/EnemyFactory.cpp" "include/combat/CombatStats.h" "include/combat/CombatTarget.h" "include/entities/Orc.h" "include/entities/Troll.h" "src/entities/Orc.cpp" "src/entities/Troll.cpp" "include/combat/IDice.h" "include/combat/RandomDice.h" "src/combat/RandomDice.cpp" "include/combat/CombatRules.h" "src/combat/CombatRules.cpp" "include/gear/Equipment.h" "include/gear/Weapon.h" "src/gear/Weapon.cpp" "include/gear/Armor.h" "src/gear/Armor.cpp" "include/gear/Accessory.h" "src/gear/Accessory.cpp" "src/gear/Equipment.cpp" "include/gear/GearFactory.h" "src/gear/GearFactory.cpp" "include/inventory/Consumable.h" "include/inventory/RagePotion.h" "include/inventory/Inventory.h" "src/inventory/Inventory.cpp" "include/entities/Chest.h" "src/entities/Chest.cpp" "include/loot/LootReward.h" "include/loot/LootTable.h" "include/loot/LootGenerator.h" "src/loot/LootGenerator.cpp" "src/loot/LootTable.cpp")
+     #Player
+     "include/entities/Player.h" 
+     "src/entities/Player.cpp"
+     
+     #Enemies:
+     "include/entities/Enemy.h" 
+     "src/entities/Enemy.cpp" 
+     
+     "include/entities/EnemyFactory.h" 
+     "src/entities/EnemyFactory.cpp" 
+     
+     "include/combat/CombatStats.h" 
+     "include/combat/CombatTarget.h" 
+     
+     "include/entities/Chest.h" 
+     "src/entities/Chest.cpp" 
+     
+     "include/entities/Goblin.h" 
+     "src/entities/Goblin.cpp" 
+
+     "include/entities/Skeleton.h" 
+     "src/entities/Skeleton.cpp" 
+     
+     "include/entities/Dragon.h" 
+     "src/entities/Dragon.cpp" 
+     
+     "include/entities/Orc.h" 
+     "src/entities/Orc.cpp" 
+     
+     "include/entities/Troll.h" 
+     "src/entities/Troll.cpp" 
+     
+
+     #Combat/Logic
+     "include/combat/IDice.h" 
+     
+     "include/combat/RandomDice.h" 
+     "src/combat/RandomDice.cpp" 
+     
+     "include/combat/CombatRules.h" 
+     "src/combat/CombatRules.cpp" 
+
+     #Loot
+     "include/gear/Equipment.h" 
+     "include/inventory/Consumable.h" 
+     
+     "include/gear/Weapon.h" 
+     "src/gear/Weapon.cpp" 
+     
+     "include/gear/Armor.h" 
+     "src/gear/Armor.cpp" 
+     
+     "include/gear/Accessory.h" 
+     "src/gear/Accessory.cpp" 
+     
+     "src/gear/Equipment.cpp" 
+     
+     "include/gear/GearFactory.h" 
+     "src/gear/GearFactory.cpp" 
+     
+     "src/inventory/RagePotion.cpp"
+     "include/inventory/RagePotion.h" 
+     
+     "include/inventory/Inventory.h" 
+     
+     "include/inventory/HealthPotion.h" 
+     "src/inventory/HealthPotion.cpp"
+     
+     "src/inventory/Inventory.cpp" 
+     "src/inventory/Inventory.cpp"
+
+     "include/loot/LootReward.h" 
+     
+     "include/loot/LootTable.h" 
+     "include/loot/LootGenerator.h" 
+     
+     "src/loot/LootGenerator.cpp" 
+     "src/loot/LootTable.cpp"
+)
 
  #set_target_properties(
  #  dungeon-crawler
