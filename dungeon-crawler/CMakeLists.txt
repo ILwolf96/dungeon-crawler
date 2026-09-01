@@ -41,6 +41,8 @@ add_executable(
     #"dungeon-crawler.cpp"
     #"dungeon-crawler.h"
      
+    # I'm aware that I do not need any of the headers there, as those don't compile, but I want to leave those there for now just to make sure everything is as it should be.
+
     #Core
      src/main.cpp
      "src/app/Game.cpp"
