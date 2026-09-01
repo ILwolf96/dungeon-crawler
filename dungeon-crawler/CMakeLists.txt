@@ -127,7 +127,12 @@ add_executable(
      
      "include/loot/LootGenerator.h" 
      "src/loot/LootGenerator.cpp" 
-)
+
+     # NEED To Sort!
+ "include/combat/CombatResult.h" "include/combat/Combat.h" "src/combat/Combat.cpp")
+
+
+
 
  #set_target_properties(
  #  dungeon-crawler
