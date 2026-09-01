@@ -395,6 +395,11 @@ namespace dungeon
         return m_map;
     }
 
+    Player& Game::player() noexcept
+    {
+        return m_player;
+    }
+
     const Player& Game::player() const noexcept
     {
         return m_player;

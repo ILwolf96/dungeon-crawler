@@ -43,6 +43,9 @@ namespace dungeon
         const Map& map() const noexcept;
 
         [[nodiscard]]
+        Player& player() noexcept;
+
+        [[nodiscard]]
         const Player& player() const noexcept;
 
         [[nodiscard]]
