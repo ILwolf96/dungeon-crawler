@@ -73,15 +73,14 @@ add_executable(
      "include/entities/Skeleton.h" 
      "src/entities/Skeleton.cpp" 
      
-     "include/entities/Dragon.h" 
-     "src/entities/Dragon.cpp" 
-     
      "include/entities/Orc.h" 
      "src/entities/Orc.cpp" 
      
      "include/entities/Troll.h" 
      "src/entities/Troll.cpp" 
      
+     "include/entities/Dragon.h" 
+     "src/entities/Dragon.cpp" 
 
      #Combat/Logic
      "include/combat/IDice.h" 
@@ -110,24 +109,22 @@ add_executable(
      "include/gear/GearFactory.h" 
      "src/gear/GearFactory.cpp" 
      
-     "src/inventory/RagePotion.cpp"
-     "include/inventory/RagePotion.h" 
-     
      "include/inventory/Inventory.h" 
+     "src/inventory/Inventory.cpp" 
      
      "include/inventory/HealthPotion.h" 
      "src/inventory/HealthPotion.cpp"
      
-     "src/inventory/Inventory.cpp" 
-     "src/inventory/Inventory.cpp"
+     "src/inventory/RagePotion.cpp"
+     "include/inventory/RagePotion.h" 
 
      "include/loot/LootReward.h" 
      
      "include/loot/LootTable.h" 
-     "include/loot/LootGenerator.h" 
-     
-     "src/loot/LootGenerator.cpp" 
      "src/loot/LootTable.cpp"
+     
+     "include/loot/LootGenerator.h" 
+     "src/loot/LootGenerator.cpp" 
 )
 
  #set_target_properties(
