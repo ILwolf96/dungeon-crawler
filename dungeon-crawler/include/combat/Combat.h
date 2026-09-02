@@ -19,6 +19,11 @@ namespace dungeon
             CombatTarget& target,
             IDice& dice);
 
+        void addPlayerDamageBonus(int amount);
+
+        [[nodiscard]]
+        int playerDamageBonus() const noexcept;
+
         [[nodiscard]]
         CombatResult playerAttack();
 
@@ -72,6 +77,8 @@ namespace dungeon
 
         std::vector<AttackResult> m_lastPlayerAttacks;
         std::vector<AttackResult> m_lastEnemyAttacks;
+
+        int m_playerDamageBonus{ 0 };
 
         bool m_active{ true };
         bool m_playerEscaped{ false };

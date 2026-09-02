@@ -20,6 +20,9 @@ namespace dungeon
         bool removeConsumable(
             std::size_t index);
 
+        bool removeConsumable(
+            const Consumable& consumable);
+
         [[nodiscard]]
         bool canAddConsumable(
             const Consumable& consumable) const noexcept;

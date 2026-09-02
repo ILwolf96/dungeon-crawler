@@ -357,17 +357,50 @@ namespace dungeon
             {
                 switch (action)
                 {
+                case Action::Attack:
+                    if (useHealthPotion())
+                    {
+                        std::clog
+                            << "[INVENTORY] Health Potion used.\n";
+
+                        const CombatResult enemyResult =
+                            m_combat->enemyTurn();
+
+                        std::clog
+                            << "[COMBAT] "
+                            << enemyResult.message
+                            << '\n';
+
+                        if (!m_combat->isActive())
+                        {
+                            finishCombatIfNeeded();
+                        }
+                    }
+                    break;
+
                 case Action::Inventory:
-                    closeCombatInventory();
+                    if (useRagePotion())
+                    {
+                        std::clog
+                            << "[INVENTORY] Rage Potion used.\n";
+
+                        const CombatResult enemyResult =
+                            m_combat->enemyTurn();
+
+                        std::clog
+                            << "[COMBAT] "
+                            << enemyResult.message
+                            << '\n';
+
+                        if (!m_combat->isActive())
+                        {
+                            finishCombatIfNeeded();
+                        }
+                    }
                     break;
 
                 case Action::Escape:
                     closeCombatInventory();
-                    break;
-
-                case Action::Attack:
-                    std::clog
-                        << "[COMBAT] Attack ignored while inventory is open.\n";
                     break;
 
                 default:
@@ -580,17 +613,26 @@ namespace dungeon
         m_inventoryOpen = true;
 
         std::clog
-            << "[INVENTORY] Combat inventory opened.\n";
-
-        std::clog
+            << "[INVENTORY] ====================\n"
+            << "[INVENTORY] Combat Inventory\n"
             << "[INVENTORY] Health Potion: "
             << m_player.inventory().amount(HealthPotion{})
-            << "/3\n";
-
-        std::clog
+            << "/3\n"
             << "[INVENTORY] Rage Potion: "
             << m_player.inventory().amount(RagePotion{})
-            << "/3\n";
+            << "/3\n"
+            << "[INVENTORY] Player HP: "
+            << m_player.currentHp()
+            << "/"
+            << m_player.maxHp()
+            << '\n'
+            << "[INVENTORY] Rage Bonus: +"
+            << m_combat->playerDamageBonus()
+            << " damage\n"
+            << "[INVENTORY] 1 = Health Potion\n"
+            << "[INVENTORY] 2 = Rage Potion\n"
+            << "[INVENTORY] 3 = Close Inventory\n"
+            << "[INVENTORY] ====================\n";
     }
 
     void Game::closeCombatInventory()
@@ -604,6 +646,87 @@ namespace dungeon
 
         std::clog
             << "[INVENTORY] Combat inventory closed.\n";
+    }
+
+    bool Game::useHealthPotion()
+    {
+        if (!m_combat)
+        {
+            return false;
+        }
+
+        constexpr int HealAmount = 3;
+
+        const int currentHp = m_player.currentHp();
+        const int maximumHp = m_player.maxHp();
+
+        if (!m_player.inventory().hasConsumable(HealthPotion{}))
+        {
+            std::clog
+                << "[INVENTORY] Cannot use Health Potion: none available.\n";
+
+            return false;
+        }
+
+        if (currentHp >= maximumHp)
+        {
+            std::clog
+                << "[INVENTORY] Cannot use Health Potion: Player HP is already full ("
+                << currentHp
+                << "/"
+                << maximumHp
+                << ").\n";
+
+            return false;
+        }
+
+        m_player.inventory().removeConsumable(HealthPotion{});
+
+        const int hpBefore = m_player.currentHp();
+
+        m_player.heal(HealAmount);
+
+        const int hpAfter = m_player.currentHp();
+
+        std::clog
+            << "[INVENTORY] Health Potion: Player HP "
+            << hpBefore
+            << " -> "
+            << hpAfter
+            << " / "
+            << maximumHp
+            << '\n';
+
+        return true;
+    }
+
+    bool Game::useRagePotion()
+    {
+        if (!m_combat)
+        {
+            return false;
+        }
+
+        constexpr int DamageBonus = 1;
+
+        if (!m_player.inventory().hasConsumable(RagePotion{}))
+        {
+            std::clog
+                << "[INVENTORY] Cannot use Rage Potion: none available.\n";
+
+            return false;
+        }
+
+        m_player.inventory().removeConsumable(RagePotion{});
+
+        m_combat->addPlayerDamageBonus(DamageBonus);
+
+        std::clog
+            << "[INVENTORY] Rage Potion consumed. Player damage bonus for this encounter is now +"
+            << m_combat->playerDamageBonus()
+            << ".\n";
+
+        return true;
     }
 
     void Game::finishCombatIfNeeded()

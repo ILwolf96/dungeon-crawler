@@ -60,6 +60,20 @@ namespace dungeon
         return true;
     }
 
+    bool Inventory::removeConsumable(
+        const Consumable& consumable)
+    {
+        for (std::size_t i = 0; i < m_consumables.size(); ++i)
+        {
+            if (m_consumables[i]->name() == consumable.name())
+            {
+                return removeConsumable(i);
+            }
+        }
+
+        return false;
+    }
+
     std::size_t Inventory::amount(
         const Consumable& consumable) const noexcept
     {

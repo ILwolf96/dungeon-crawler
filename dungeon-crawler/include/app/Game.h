@@ -85,6 +85,9 @@ namespace dungeon
         RandomDice m_combatDice;
         bool m_inventoryOpen{ false };
 
+        bool useHealthPotion();
+        bool useRagePotion();
+
         config::ConfigData m_configData;
 
         int m_windowWidth{ 640 };

@@ -17,7 +17,8 @@ namespace dungeon
         IDice& dice)
         : m_player(player),
         m_target(target),
-        m_dice(dice)
+        m_dice(dice),
+        m_playerDamageBonus(0)
     {
         if (&player == &target)
         {
@@ -43,7 +44,17 @@ namespace dungeon
             m_player.combatStats();
 
         std::vector<AttackResult>& results = m_lastPlayerAttacks;
-        int damage = m_player.weaponDamage();
+        const int baseDamage = m_player.weaponDamage();
+        const int damage = baseDamage + m_playerDamageBonus;
+
+        std::clog
+            << "[COMBAT] Player weapon damage: "
+            << baseDamage
+            << " + temporary bonus "
+            << m_playerDamageBonus
+            << " = "
+            << damage
+            << '\n';
 
         std::clog << "[COMBAT] Player attacks " << m_target.targetType() << ".\n";
 
@@ -295,6 +306,28 @@ namespace dungeon
         Combat::lastEnemyAttacks() const noexcept
     {
         return m_lastEnemyAttacks;
+    }
+
+    void Combat::addPlayerDamageBonus(int amount)
+    {
+        if (amount <= 0)
+        {
+            return;
+        }
+
+        m_playerDamageBonus += amount;
+
+        std::clog
+            << "[COMBAT] Player temporary damage bonus increased by "
+            << amount
+            << ". Current bonus: +"
+            << m_playerDamageBonus
+            << '\n';
+    }
+
+    int Combat::playerDamageBonus() const noexcept
+    {
+        return m_playerDamageBonus;
     }
 
     AttackResult Combat::resolveAttack(
