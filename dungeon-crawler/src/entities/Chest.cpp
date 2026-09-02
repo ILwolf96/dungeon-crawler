@@ -49,6 +49,11 @@ namespace dungeon
             std::max(0, m_currentHp - amount);
     }
 
+    bool Chest::canDefend() const noexcept
+    {
+        return false;
+    }
+
     bool Chest::isDefeated() const noexcept
     {
         return m_currentHp <= 0;

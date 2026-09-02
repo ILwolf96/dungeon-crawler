@@ -167,6 +167,11 @@ namespace dungeon
             std::min(maxHp(), m_currentHp + amount);
     }
 
+    bool Player::canDefend() const noexcept
+    {
+        return true;
+    }
+
     bool Player::isDefeated() const noexcept
     {
         return m_currentHp <= 0;

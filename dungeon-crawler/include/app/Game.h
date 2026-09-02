@@ -7,6 +7,7 @@
 #include "world/Map.h"
 #include "combat/Combat.h"
 #include "combat/RandomDice.h"
+#include "config/ConfigData.h"
 
 #include <memory>
 #include <string>
@@ -72,10 +73,13 @@ namespace dungeon
         void finishCombatIfNeeded();
         void performCombatAttack();
 
-        std::unique_ptr<Combat> m_combat;
-        RandomDice m_combatDice;
         std::vector<std::unique_ptr<Enemy>> m_enemies;
         std::vector<std::unique_ptr<Chest>> m_chests;
+
+        std::unique_ptr<Combat> m_combat;
+        RandomDice m_combatDice;
+
+        config::ConfigData m_configData;
 
         int m_windowWidth{ 640 };
         int m_windowHeight{ 360 };

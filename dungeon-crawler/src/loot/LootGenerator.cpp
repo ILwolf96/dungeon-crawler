@@ -7,6 +7,7 @@
 #include "inventory/RagePotion.h"
 #include "loot/LootTable.h"
 
+#include <iostream>
 #include <cstddef>
 #include <memory>
 #include <stdexcept>
@@ -183,6 +184,9 @@ namespace
             return false;
         }
 
+        std::clog
+            << "[LOOT] Consumable fallback available.\n";
+
         if (canHealth && canRage)
         {
             const std::size_t selected =
@@ -345,6 +349,10 @@ namespace dungeon
 
         if (availableRewards.empty())
         {
+            std::clog
+                << "[LOOT] No eligible gear rewards remain. "
+                "Falling back to consumable.\n";
+
             return awardFallbackConsumable(
                 player,
                 dice,
@@ -358,6 +366,13 @@ namespace dungeon
 
         const LootReward& reward =
             availableRewards[selectedIndex];
+
+        std::clog
+            << "[LOOT] Selected reward: "
+            << reward.id
+            << " (Tier "
+            << reward.tier
+            << ")\n";
 
         if (awardGear(
             player,

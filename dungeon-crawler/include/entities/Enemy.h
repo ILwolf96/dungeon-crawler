@@ -35,6 +35,9 @@ namespace dungeon
         bool isDefeated() const noexcept override;
 
         [[nodiscard]]
+        bool canDefend() const noexcept override;
+
+        [[nodiscard]]
         const char* targetType() const noexcept override;
 
         [[nodiscard]]

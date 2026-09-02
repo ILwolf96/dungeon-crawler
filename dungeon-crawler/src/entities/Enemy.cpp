@@ -102,6 +102,11 @@ namespace dungeon
         return m_currentHp <= 0;
     }
 
+    bool Enemy::canDefend() const noexcept
+    {
+        return true;
+    }
+
     const char* Enemy::targetType() const noexcept
     {
         return "Enemy";

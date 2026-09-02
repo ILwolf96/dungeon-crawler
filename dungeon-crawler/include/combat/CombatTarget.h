@@ -25,6 +25,8 @@ namespace dungeon
 
         virtual void takeDamage(int amount) = 0;
 
+        virtual bool canDefend() const noexcept = 0;
+
         [[nodiscard]]
         virtual bool isDefeated() const noexcept = 0;
 

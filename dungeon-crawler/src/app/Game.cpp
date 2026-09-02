@@ -5,9 +5,13 @@
 #include "config/ParserFactory.h"
 
 #include "gear/GearFactory.h"
+#include "loot/LootGenerator.h"
+
+#include <iostream>
 #include <stdexcept>
 #include <string>
 #include <string_view>
+#include <tuple>
 #include <unordered_map>
 #include <utility>
 
@@ -109,17 +113,17 @@ namespace dungeon
     void Game::load(std::string_view filePath)
     {
         auto parser = config::makeParser(filePath);
-        const config::ConfigData data = parser->parse(filePath);
+        m_configData = parser->parse(filePath);
 
         // Window configuration.
         const int windowWidth =
-            getRequiredInt(data, "window", "width");
+            getRequiredInt(m_configData, "window", "width");
 
         const int windowHeight =
-            getRequiredInt(data, "window", "height");
+            getRequiredInt(m_configData, "window", "height");
 
         const std::string title =
-            getRequiredString(data, "window", "title");
+            getRequiredString(m_configData, "window", "title");
 
         if (windowWidth <= 0 || windowHeight <= 0)
         {
@@ -130,7 +134,7 @@ namespace dungeon
         // Map configuration.
         const std::size_t height =
             static_cast<std::size_t>(
-                getRequiredInt(data, "map", "height"));
+                getRequiredInt(m_configData, "map", "height"));
 
         if (height == 0)
         {
@@ -149,7 +153,7 @@ namespace dungeon
                 std::to_string(row);
 
             grid.push_back(
-                getRequiredString(data, "map", key));
+                getRequiredString(m_configData, "map", key));
         }
 
         m_map.setGrid(std::move(grid));
@@ -158,7 +162,7 @@ namespace dungeon
         std::unordered_map<char, std::string> enemyDefinitions;
 
         for (const auto& [sectionName, sectionData] :
-            data.sections())
+            m_configData.sections())
         {
             if (!isEnemyDefinition(sectionName))
             {
@@ -166,7 +170,7 @@ namespace dungeon
             }
 
             const char symbol =
-                getRequiredSymbol(data, sectionName);
+                getRequiredSymbol(m_configData, sectionName);
 
             if (symbol == '#' ||
                 symbol == '.' ||
@@ -247,39 +251,39 @@ namespace dungeon
 
                 const int maxHp =
                     getRequiredInt(
-                        data,
+                        m_configData,
                         sectionName,
                         "max_hp");
 
                 const int tier =
                     getRequiredInt(
-                        data,
+                        m_configData,
                         sectionName,
                         "tier");
 
                 const CombatStats stats{
                     getRequiredInt(
-                        data,
+                        m_configData,
                         sectionName,
                         "attacks"),
 
                     getRequiredInt(
-                        data,
+                        m_configData,
                         sectionName,
                         "precision"),
 
                     getRequiredInt(
-                        data,
+                        m_configData,
                         sectionName,
                         "strength"),
 
                     getRequiredInt(
-                        data,
+                        m_configData,
                         sectionName,
                         "toughness"),
 
                     getRequiredInt(
-                        data,
+                        m_configData,
                         sectionName,
                         "defense")
                 };
@@ -305,30 +309,30 @@ namespace dungeon
 
         // Player configuration.
         const int playerMaxHp =
-            getRequiredInt(data, "player", "max_hp");
+            getRequiredInt(m_configData, "player", "max_hp");
 
         const CombatStats playerBaseStats{
-            getRequiredInt(data, "player", "attacks"),
-            getRequiredInt(data, "player", "precision"),
-            getRequiredInt(data, "player", "strength"),
-            getRequiredInt(data, "player", "toughness"),
-            getRequiredInt(data, "player", "defense")
+            getRequiredInt(m_configData, "player", "attacks"),
+            getRequiredInt(m_configData, "player", "precision"),
+            getRequiredInt(m_configData, "player", "strength"),
+            getRequiredInt(m_configData, "player", "toughness"),
+            getRequiredInt(m_configData, "player", "defense")
         };
 
         const std::string weaponId =
-            getRequiredString(data, "player", "weapon");
+            getRequiredString(m_configData, "player", "weapon");
 
         const std::string armorId =
-            getRequiredString(data, "player", "armor");
+            getRequiredString(m_configData, "player", "armor");
 
         auto playerWeapon =
             GearFactory::createWeapon(
-                data,
+                m_configData,
                 weaponId);
 
         auto playerArmor =
             GearFactory::createArmor(
-                data,
+                m_configData,
                 armorId);
 
         m_player.initialize(
@@ -416,6 +420,20 @@ namespace dungeon
             return;
         }
 
+        std::clog
+            << "[COMBAT] Encounter started: "
+            << target.targetType()
+            << " at ("
+            << target.x()
+            << ", "
+            << target.y()
+            << ")"
+            << " HP="
+            << target.currentHp()
+            << "/"
+            << target.maxHp()
+            << '\n';
+
         m_combat = std::make_unique<Combat>(
             m_player,
             target,
@@ -452,6 +470,8 @@ namespace dungeon
             return;
         }
 
+        std::clog << "[COMBAT] Player attacks.\n";
+
         m_combat->playerAttack();
 
         if (!m_combat->isActive())
@@ -459,6 +479,8 @@ namespace dungeon
             finishCombatIfNeeded();
             return;
         }
+
+        std::clog << "[COMBAT] Enemy turn.\n";
 
         m_combat->enemyTurn();
 
@@ -475,41 +497,98 @@ namespace dungeon
             return;
         }
 
-        if (!m_combat->isActive())
+        if (m_combat->isActive())
         {
-            CombatTarget* target = &m_combat->target();
+            return;
+        }
 
-            const bool targetDefeated =
-                target->isDefeated();
+        CombatTarget* target = &m_combat->target();
 
-            m_combat.reset();
+        const bool targetDefeated =
+            target->isDefeated();
 
-            if (!targetDefeated)
+        m_combat.reset();
+
+        if (!targetDefeated)
+        {
+            std::clog
+                << "[COMBAT] Encounter ended without target defeat.\n";
+
+            return;
+        }
+
+        std::string lootMessage;
+
+        for (auto it = m_enemies.begin();
+            it != m_enemies.end();
+            ++it)
+        {
+            if (it->get() != target)
             {
-                return;
+                continue;
             }
 
-            for (auto it = m_enemies.begin();
-                it != m_enemies.end();
-                ++it)
+            const int tier = (*it)->tier();
+
+            std::clog
+                << "[LOOT] Defeated "
+                << (*it)->targetType()
+                << " Tier "
+                << tier
+                << ". Generating reward...\n";
+
+            static_cast<void>(LootGenerator::award(
+                m_player,
+                tier,
+                m_combatDice,
+                m_configData,
+                lootMessage));
+
+            std::clog
+                << "[LOOT] "
+                << lootMessage
+                << '\n';
+
+            static_cast<void>(m_enemies.erase(it));
+
+            std::clog
+                << "[COMBAT] Enemy removed from map.\n";
+
+            return;
+        }
+
+        for (auto it = m_chests.begin();
+            it != m_chests.end();
+            ++it)
+        {
+            if (it->get() != target)
             {
-                if (it->get() == target)
-                {
-                    m_enemies.erase(it);
-                    return;
-                }
+                continue;
             }
 
-            for (auto it = m_chests.begin();
-                it != m_chests.end();
-                ++it)
-            {
-                if (it->get() == target)
-                {
-                    m_chests.erase(it);
-                    return;
-                }
-            }
+            const int tier = 1;
+
+            std::clog
+                << "[LOOT] Chest opened. Generating reward...\n";
+
+            static_cast<void>(LootGenerator::award(
+                m_player,
+                tier,
+                m_combatDice,
+                m_configData,
+                lootMessage));
+
+            std::clog
+                << "[LOOT] "
+                << lootMessage
+                << '\n';
+
+            static_cast<void>(m_chests.erase(it));
+
+            std::clog
+                << "[COMBAT] Chest removed from map.\n";
+
+            return;
         }
     }
 

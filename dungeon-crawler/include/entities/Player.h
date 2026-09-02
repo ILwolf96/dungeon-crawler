@@ -35,6 +35,8 @@ namespace dungeon
         [[nodiscard]]
         int maxHp() const noexcept override;
 
+        bool canDefend() const noexcept override;
+
         void takeDamage(int amount) override;
 
         void heal(int amount);

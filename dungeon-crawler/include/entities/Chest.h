@@ -26,6 +26,8 @@ namespace dungeon
 
         void takeDamage(int amount) override;
 
+        bool canDefend() const noexcept override;
+
         [[nodiscard]]
         bool isDefeated() const noexcept override;
 
