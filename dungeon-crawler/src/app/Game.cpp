@@ -7,6 +7,9 @@
 #include "gear/GearFactory.h"
 #include "loot/LootGenerator.h"
 
+#include "inventory/HealthPotion.h"
+#include "inventory/RagePotion.h"
+
 #include <iostream>
 #include <stdexcept>
 #include <string>
@@ -350,9 +353,48 @@ namespace dungeon
     {
         if (m_combat)
         {
-            if (action == Action::Attack)
+            if (m_inventoryOpen)
             {
+                switch (action)
+                {
+                case Action::Inventory:
+                    closeCombatInventory();
+                    break;
+
+                case Action::Escape:
+                    closeCombatInventory();
+                    break;
+
+                case Action::Attack:
+                    std::clog
+                        << "[COMBAT] Attack ignored while inventory is open.\n";
+                    break;
+
+                default:
+                    break;
+                }
+
+                return;
+            }
+
+            switch (action)
+            {
+            case Action::Attack:
                 performCombatAttack();
+                break;
+
+            case Action::Inventory:
+                openCombatInventory();
+                break;
+
+            case Action::Escape:
+                performCombatEscape();
+                break;
+
+            default:
+                std::clog
+                    << "[COMBAT] Movement/input ignored during combat.\n";
+                break;
             }
 
             return;
@@ -380,6 +422,9 @@ namespace dungeon
             break;
 
         case Action::None:
+        case Action::Attack:
+        case Action::Inventory:
+        case Action::Escape:
             return;
         }
 
@@ -390,7 +435,8 @@ namespace dungeon
 
         m_player.setPosition(targetX, targetY);
 
-        CombatTarget* target = combatTargetAt(targetX, targetY);
+        CombatTarget* target =
+            combatTargetAt(targetX, targetY);
 
         if (target != nullptr)
         {
@@ -470,9 +516,15 @@ namespace dungeon
             return;
         }
 
-        std::clog << "[COMBAT] Player attacks.\n";
+        std::clog << "[COMBAT] Player selected Attack.\n";
 
-        m_combat->playerAttack();
+        const CombatResult playerResult =
+            m_combat->playerAttack();
+
+        std::clog
+            << "[COMBAT] "
+            << playerResult.message
+            << '\n';
 
         if (!m_combat->isActive())
         {
@@ -480,9 +532,16 @@ namespace dungeon
             return;
         }
 
-        std::clog << "[COMBAT] Enemy turn.\n";
+        std::clog
+            << "[COMBAT] Enemy turn begins.\n";
 
-        m_combat->enemyTurn();
+        const CombatResult enemyResult =
+            m_combat->enemyTurn();
+
+        std::clog
+            << "[COMBAT] "
+            << enemyResult.message
+            << '\n';
 
         if (!m_combat->isActive())
         {
@@ -490,17 +549,72 @@ namespace dungeon
         }
     }
 
-    void Game::finishCombatIfNeeded()
+    void Game::performCombatEscape()
     {
         if (!m_combat)
         {
             return;
         }
 
-        if (m_combat->isActive())
+        std::clog
+            << "[COMBAT] Player selected Escape.\n";
+
+        const CombatResult result =
+            m_combat->escape();
+
+        std::clog
+            << "[COMBAT] "
+            << result.message
+            << '\n';
+
+        finishCombatIfNeeded();
+    }
+
+    void Game::openCombatInventory()
+    {
+        if (!m_combat)
         {
             return;
         }
+
+        m_inventoryOpen = true;
+
+        std::clog
+            << "[INVENTORY] Combat inventory opened.\n";
+
+        std::clog
+            << "[INVENTORY] Health Potion: "
+            << m_player.inventory().amount(HealthPotion{})
+            << "/3\n";
+
+        std::clog
+            << "[INVENTORY] Rage Potion: "
+            << m_player.inventory().amount(RagePotion{})
+            << "/3\n";
+    }
+
+    void Game::closeCombatInventory()
+    {
+        if (!m_inventoryOpen)
+        {
+            return;
+        }
+
+        m_inventoryOpen = false;
+
+        std::clog
+            << "[INVENTORY] Combat inventory closed.\n";
+    }
+
+    void Game::finishCombatIfNeeded()
+    {
+        if (!m_combat ||
+            m_combat->isActive())
+        {
+            return;
+        }
+
+        m_inventoryOpen = false;
 
         CombatTarget* target = &m_combat->target();
 

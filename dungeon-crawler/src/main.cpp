@@ -2,12 +2,10 @@
 #include "rendering/Renderer.h"
 
 //Testing! don't forget to remove when done!
-
 #include "combat/Combat.h"
 #include "combat/SequenceDice.h"
-//#include "entities/Goblin.h"
-
 //
+
 #include "raylib.h"
 
 #include <iostream>
@@ -40,11 +38,9 @@ namespace
         return dungeon::Action::None;
     }
 
-    /**/
-    // TESTING! DON"T FORGET TO UPDATE WHEN DONE!
+    // TESTING! DON'T FORGET TO UPDATE WHEN DONE!
     void runCombatDiagnostic(dungeon::Game& game)
     {
-
         const auto& enemies = game.enemies();
 
         if (enemies.empty())
@@ -98,7 +94,6 @@ namespace
 
         const auto& attack = attacks.front();
 
-
         TraceLog(
             LOG_INFO,
             "Precision: roll %d / target %d",
@@ -129,7 +124,6 @@ namespace
             enemies.front()->maxHp());
     }
 }
-    /*End of Test Zone*/
 
 int main(int argc, char** argv)
 {
@@ -159,8 +153,6 @@ int main(int argc, char** argv)
         return 1;
     }
 
-    //runCombatDiagnostic(game);
-
     InitWindow(
         game.windowWidth(),
         game.windowHeight(),
@@ -170,24 +162,33 @@ int main(int argc, char** argv)
 
     while (!WindowShouldClose())
     {
-
-        //Test Zone
-        /*
-        if (IsKeyPressed(KEY_F1))
+        // Attack (F1 or 1)
+        if (IsKeyPressed(KEY_F1) || IsKeyPressed(KEY_ONE))
         {
-            runCombatDiagnostic(game);
-        }
-        //End of Test Zone
-        */
-        if (IsKeyPressed(KEY_F1))
-        {
+            // TODO: Reminder - When inventory is open, pressing 1 (KEY_ONE) should use Health Potion once implemented.
             game.handleAction(dungeon::Action::Attack);
         }
 
+        // Inventory (I or 2)
+        if (IsKeyPressed(KEY_I) || IsKeyPressed(KEY_TWO))
+        {
+            // TODO: Reminder - When inventory is open, pressing 2 (KEY_TWO) should use Rage Potion once implemented.
+            game.handleAction(dungeon::Action::Inventory);
+        }
+
+        // Escape / Close Inventory (E or 3)
+        if (IsKeyPressed(KEY_E) || IsKeyPressed(KEY_THREE))
+        {
+            // Pressing 3 (KEY_THREE) triggers Action::Escape, which also closes the inventory when it is open.
+            game.handleAction(dungeon::Action::Escape);
+        }
 
         const dungeon::Action action = pollAction();
 
-        game.handleAction(action);
+        if (action != dungeon::Action::None)
+        {
+            game.handleAction(action);
+        }
 
         BeginDrawing();
 

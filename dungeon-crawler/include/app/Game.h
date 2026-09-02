@@ -23,7 +23,9 @@ namespace dungeon
         MoveDown,
         MoveLeft,
         MoveRight,
-        Attack
+        Attack,
+        Inventory,
+        Escape
     };
 
     class Game
@@ -72,12 +74,16 @@ namespace dungeon
         CombatTarget* combatTargetAt(int x, int y) noexcept;
         void finishCombatIfNeeded();
         void performCombatAttack();
+        void performCombatEscape();
+        void openCombatInventory();
+        void closeCombatInventory();
 
         std::vector<std::unique_ptr<Enemy>> m_enemies;
         std::vector<std::unique_ptr<Chest>> m_chests;
 
         std::unique_ptr<Combat> m_combat;
         RandomDice m_combatDice;
+        bool m_inventoryOpen{ false };
 
         config::ConfigData m_configData;
 
