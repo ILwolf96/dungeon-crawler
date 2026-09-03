@@ -17,7 +17,6 @@ namespace dungeon
         // ---------------------------------------------------------------------
         // Main Screen design resolution
         // ---------------------------------------------------------------------
-
         static constexpr int ScreenWidth = 1280;
         static constexpr int ScreenHeight = 720;
 
@@ -85,6 +84,7 @@ namespace dungeon
         // Map
         // ---------------------------------------------------------------------
 
+        // The Map Render contains a 27 px frame on every side.
         static constexpr int MapFrameThickness = 27;
 
         static constexpr int VisibleMapWidth =
@@ -93,7 +93,57 @@ namespace dungeon
         static constexpr int VisibleMapHeight =
             MapRenderHeight - (MapFrameThickness * 2);
 
+        // Temporary placeholder map tile size.
+        // The final map tiles will be PNGs and use the 416x416 visual area.
         static constexpr int TemporaryMapTileSize = 16;
+
+        // ---------------------------------------------------------------------
+        // Statistics PNG slots
+        // ---------------------------------------------------------------------
+
+        static constexpr int StatIconSize = 32;
+        static constexpr int StatNumberSize = 32;
+
+        static constexpr int StatIconX = 1120;
+        static constexpr int StatNumberX = 1178;
+
+        static constexpr int StatAtkY = 615;
+
+        static constexpr int StatStrY = 568;
+
+        static constexpr int StatPrecY = 521;
+        
+        static constexpr int StatDmgY = 474;
+        
+        static constexpr int StatDefY = 427;
+
+        static constexpr int StatToughY = 380;
+
+        static constexpr int StatHpY = 333;
+
+        // ---------------------------------------------------------------------
+        // Gear PNG slots
+        // ---------------------------------------------------------------------
+
+        static constexpr int GearIconSize = 48;
+
+        // Potion rows
+        static constexpr int PotionIconX = 1100;
+        static constexpr int PotionNumberX = 1182;
+
+        static constexpr int HealthPotionY = 197;
+        static constexpr int RagePotionY = 139;
+
+        // Weapon / Armor
+        static constexpr int WeaponIconX = 1095;
+        static constexpr int ArmorIconX = 1187;
+        static constexpr int WeaponArmorY = 73;
+
+        // Accessories
+        static constexpr int Tier1AccessoryX = 1071;
+        static constexpr int Tier2AccessoryX = 1141;
+        static constexpr int Tier3AccessoryX = 1211;
+        static constexpr int AccessoriesY = 15;
 
         // ---------------------------------------------------------------------
         // Coordinate conversion
@@ -115,5 +165,7 @@ namespace dungeon
 
         void drawMainScreenLayout() const;
         void drawMap(const Game& game) const;
+        void drawStatSlots() const;
+        void drawGearSlots() const;
     };
 }

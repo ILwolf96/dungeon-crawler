@@ -35,12 +35,17 @@ namespace dungeon
 
         drawMainScreenLayout();
         drawMap(game);
+        drawStatSlots();
+        drawGearSlots();
     }
 
     void Renderer::drawMainScreenLayout() const
     {
         // ---------------------------------------------------------------------
         // Title Art
+        //
+        // Temporary placeholder.
+        // This will later be replaced by the Title Art PNG.
         // ---------------------------------------------------------------------
 
         const Rectangle titleArt = toRaylibRectangle(
@@ -60,6 +65,9 @@ namespace dungeon
 
         // ---------------------------------------------------------------------
         // Stats Title
+        //
+        // Temporary placeholder.
+        // This will later be replaced by the Stats Title PNG.
         // ---------------------------------------------------------------------
 
         const Rectangle statsTitle = toRaylibRectangle(
@@ -79,6 +87,9 @@ namespace dungeon
 
         // ---------------------------------------------------------------------
         // POV
+        //
+        // Temporary placeholder.
+        // This will later be replaced by the POV PNG.
         // ---------------------------------------------------------------------
 
         const Rectangle povRender = toRaylibRectangle(
@@ -98,6 +109,8 @@ namespace dungeon
 
         // ---------------------------------------------------------------------
         // Stats Window
+        //
+        // Temporary placeholder background.
         // ---------------------------------------------------------------------
 
         const Rectangle statsWindow = toRaylibRectangle(
@@ -117,6 +130,9 @@ namespace dungeon
 
         // ---------------------------------------------------------------------
         // Gear Title
+        //
+        // Temporary placeholder.
+        // This will later be replaced by the Gear Title PNG.
         // ---------------------------------------------------------------------
 
         const Rectangle gearTitle = toRaylibRectangle(
@@ -136,6 +152,8 @@ namespace dungeon
 
         // ---------------------------------------------------------------------
         // Gear Window
+        //
+        // Temporary placeholder background.
         // ---------------------------------------------------------------------
 
         const Rectangle gearWindow = toRaylibRectangle(
@@ -155,6 +173,9 @@ namespace dungeon
 
         // ---------------------------------------------------------------------
         // Action Bar
+        //
+        // Temporary placeholder.
+        // This will later be replaced by the Action Bar PNG.
         // ---------------------------------------------------------------------
 
         const Rectangle actionBar = toRaylibRectangle(
@@ -173,12 +194,162 @@ namespace dungeon
             DARKGRAY);
     }
 
+    void Renderer::drawStatSlots() const
+    {
+        // ---------------------------------------------------------------------
+        // Temporary Stat PNG placeholders
+        //
+        // Every slot is exactly 32x32.
+        //
+        // The final Stat Icon / Number PNGs will be drawn in these exact
+        // positions. These temporary rectangles can then be commented out.
+        // ---------------------------------------------------------------------
+
+        const int iconX = StatIconX;
+        const int numberX = StatNumberX;
+
+        const int statYPositions[] =
+        {
+            StatAtkY,
+            StatStrY,
+            StatPrecY,
+            StatDmgY,
+            StatDefY,
+            StatToughY,
+            StatHpY
+        };
+
+        for (const int y : statYPositions)
+        {
+            const Rectangle icon = toRaylibRectangle(
+                iconX,
+                y,
+                StatIconSize,
+                StatIconSize);
+
+            const Rectangle number = toRaylibRectangle(
+                numberX,
+                y,
+                StatNumberSize,
+                StatNumberSize);
+
+            DrawRectangleLinesEx(
+                icon,
+                1.0f,
+                GRAY);
+
+            DrawRectangleLinesEx(
+                number,
+                1.0f,
+                GRAY);
+        }
+    }
+
+    void Renderer::drawGearSlots() const
+    {
+        // ---------------------------------------------------------------------
+        // Temporary Gear PNG placeholders
+        //
+        // Every Gear Icon / Number is exactly 48x48.
+        //
+        // The final PNGs will be drawn in these exact positions.
+        // ---------------------------------------------------------------------
+
+        // Health Potion
+        DrawRectangleLinesEx(
+            toRaylibRectangle(
+                PotionIconX,
+                HealthPotionY,
+                GearIconSize,
+                GearIconSize),
+            1.0f,
+            GRAY);
+
+        DrawRectangleLinesEx(
+            toRaylibRectangle(
+                PotionNumberX,
+                HealthPotionY,
+                GearIconSize,
+                GearIconSize),
+            1.0f,
+            GRAY);
+
+        // Rage Potion
+        DrawRectangleLinesEx(
+            toRaylibRectangle(
+                PotionIconX,
+                RagePotionY,
+                GearIconSize,
+                GearIconSize),
+            1.0f,
+            GRAY);
+
+        DrawRectangleLinesEx(
+            toRaylibRectangle(
+                PotionNumberX,
+                RagePotionY,
+                GearIconSize,
+                GearIconSize),
+            1.0f,
+            GRAY);
+
+        // Weapon
+        DrawRectangleLinesEx(
+            toRaylibRectangle(
+                WeaponIconX,
+                WeaponArmorY,
+                GearIconSize,
+                GearIconSize),
+            1.0f,
+            GRAY);
+
+        // Armor
+        DrawRectangleLinesEx(
+            toRaylibRectangle(
+                ArmorIconX,
+                WeaponArmorY,
+                GearIconSize,
+                GearIconSize),
+            1.0f,
+            GRAY);
+
+        // Tier 1 Accessory
+        DrawRectangleLinesEx(
+            toRaylibRectangle(
+                Tier1AccessoryX,
+                AccessoriesY,
+                GearIconSize,
+                GearIconSize),
+            1.0f,
+            GRAY);
+
+        // Tier 2 Accessory
+        DrawRectangleLinesEx(
+            toRaylibRectangle(
+                Tier2AccessoryX,
+                AccessoriesY,
+                GearIconSize,
+                GearIconSize),
+            1.0f,
+            GRAY);
+
+        // Tier 3 Accessory
+        DrawRectangleLinesEx(
+            toRaylibRectangle(
+                Tier3AccessoryX,
+                AccessoriesY,
+                GearIconSize,
+                GearIconSize),
+            1.0f,
+            GRAY);
+    }
+
     void Renderer::drawMap(const Game& game) const
     {
         const Map& map = game.map();
 
         // ---------------------------------------------------------------------
-        // Map Render zone
+        // Map Render area
         // ---------------------------------------------------------------------
 
         const Rectangle mapRender = toRaylibRectangle(
@@ -187,14 +358,20 @@ namespace dungeon
             MapRenderWidth,
             MapRenderHeight);
 
+        /*
+            Temporary Map Frame.
+            Later this entire frame will be replaced with the Map Frame PNG.
+        */
         DrawRectangleRec(
             mapRender,
             DARKGRAY);
 
         // ---------------------------------------------------------------------
-        // 27 px Map Frame
+        // Visible map area
         //
-        // The actual visible map is the 416x416 area inside the frame.
+        // 470x470 outer render area
+        // 27px frame on every side
+        // 416x416 inner visual map
         // ---------------------------------------------------------------------
 
         const int visibleMapX =
@@ -216,8 +393,8 @@ namespace dungeon
         // ---------------------------------------------------------------------
         // Temporary map rendering
         //
-        // 16x16 is being used only to establish the new map scale.
-        // The map's actual PNG tiles will replace this later.
+        // This remains so that the game is still visibly functional.
+        // The future map PNG tiles will replace this section.
         // ---------------------------------------------------------------------
 
         const int renderedMapWidth =
@@ -247,13 +424,6 @@ namespace dungeon
                     mapOffsetX +
                     static_cast<int>(x) * TemporaryMapTileSize;
 
-                /*
-                    The configuration map is currently indexed from its
-                    top row downward.
-
-                    Our UI layout uses a bottom-left coordinate system, so
-                    the map row is converted accordingly.
-                */
                 const int tileY =
                     mapOffsetY +
                     renderedMapHeight -
@@ -402,7 +572,9 @@ namespace dungeon
         }
 
         // ---------------------------------------------------------------------
-        // Visible map boundary
+        // Temporary visible-map boundary.
+        //
+        // This will remain useful for verifying the 416x416 viewport.
         // ---------------------------------------------------------------------
 
         DrawRectangleLinesEx(
