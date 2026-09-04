@@ -121,6 +121,47 @@ namespace dungeon
         drawActionBar();
     }
 
+    void Renderer::drawFallbackText(
+        std::string_view text,
+        int x,
+        int y,
+        int width,
+        int height,
+        int fontSize) const
+    {
+        if (text.empty())
+        {
+            return;
+        }
+
+        const std::string value(text);
+
+        const int textWidth =
+            MeasureText(
+                value.c_str(),
+                fontSize);
+
+        const int raylibY =
+            toRaylibY(
+                y,
+                height);
+
+        const int textX =
+            x + (width - textWidth) / 2;
+
+        const int textY =
+            raylibY + (height - fontSize) / 2;
+
+        DrawText(
+            value.c_str(),
+            textX,
+            textY,
+            fontSize,
+            BLACK);
+    }
+
+
+
     void Renderer::drawMainScreenLayout() const
     {
         // ---------------------------------------------------------------------
@@ -480,107 +521,347 @@ namespace dungeon
         // Static Stat Icons
         // -------------------------------------------------------------------------
 
-        drawTexture(
-            m_mainScreenAssets.atkIcon(),
-            StatIconX,
-            StatAtkY,
-            StatIconSize,
-            StatIconSize);
 
-        drawTexture(
-            m_mainScreenAssets.strIcon(),
-            StatIconX,
-            StatStrY,
-            StatIconSize,
-            StatIconSize);
+        //ATK Icon
+        if (m_mainScreenAssets.atkIcon().id != 0)
+        {
+            drawTexture(
+                m_mainScreenAssets.atkIcon(),
+                StatIconX,
+                StatAtkY,
+                StatIconSize,
+                StatIconSize);
+        }
+        else
+        {
+            drawFallbackText(
+                "ATK",
+                StatIconX,
+                StatAtkY,
+                StatIconSize,
+                StatIconSize,
+                10);
+        }
 
-        drawTexture(
-            m_mainScreenAssets.precIcon(),
-            StatIconX,
-            StatPrecY,
-            StatIconSize,
-            StatIconSize);
 
-        drawTexture(
-            m_mainScreenAssets.dmgIcon(),
-            StatIconX,
-            StatDmgY,
-            StatIconSize,
-            StatIconSize);
+        //STR Icon
+        if (m_mainScreenAssets.strIcon().id != 0)
+        {
+            drawTexture(
+                m_mainScreenAssets.strIcon(),
+                StatIconX,
+                StatStrY,
+                StatIconSize,
+                StatIconSize);
+        }
+        else
+        {
+            drawFallbackText(
+                "STR",
+                StatIconX,
+                StatStrY,
+                StatIconSize,
+                StatIconSize,
+                10);
+        }
 
-        drawTexture(
-            m_mainScreenAssets.defIcon(),
-            StatIconX,
-            StatDefY,
-            StatIconSize,
-            StatIconSize);
 
-        drawTexture(
-            m_mainScreenAssets.toughIcon(),
-            StatIconX,
-            StatToughY,
-            StatIconSize,
-            StatIconSize);
+        //PREC Icon
+        if (m_mainScreenAssets.precIcon().id != 0)
+        {
+            drawTexture(
+                m_mainScreenAssets.precIcon(),
+                StatIconX,
+                StatPrecY,
+                StatIconSize,
+                StatIconSize);
+        }
+        else
+        {
+            drawFallbackText(
+                "PREC",
+                StatIconX,
+                StatPrecY,
+                StatIconSize,
+                StatIconSize,
+                10);
+        }
 
-        drawTexture(
-            m_mainScreenAssets.hpIcon(),
-            StatIconX,
-            StatHpY,
-            StatIconSize,
-            StatIconSize);
+
+        //DMG Icon
+        if (m_mainScreenAssets.dmgIcon().id != 0)
+        {
+            drawTexture(
+                m_mainScreenAssets.dmgIcon(),
+                StatIconX,
+                StatDmgY,
+                StatIconSize,
+                StatIconSize);
+        }
+        else
+        {
+            drawFallbackText(
+                "DMG",
+                StatIconX,
+                StatDmgY,
+                StatIconSize,
+                StatIconSize,
+                10);
+        }
+
+
+        //DEF Icon
+        if (m_mainScreenAssets.defIcon().id != 0)
+        {
+            drawTexture(
+                m_mainScreenAssets.defIcon(),
+                StatIconX,
+                StatDefY,
+                StatIconSize,
+                StatIconSize);
+        }
+        else
+        {
+            drawFallbackText(
+                "DEF",
+                StatIconX,
+                StatDefY,
+                StatIconSize,
+                StatIconSize,
+                10);
+        }
+
+
+        //TOUGH Icon
+        if (m_mainScreenAssets.toughIcon().id != 0)
+        {
+            drawTexture(
+                m_mainScreenAssets.toughIcon(),
+                StatIconX,
+                StatToughY,
+                StatIconSize,
+                StatIconSize);
+        }
+        else
+        {
+            drawFallbackText(
+                "TGH",
+                StatIconX,
+                StatToughY,
+                StatIconSize,
+                StatIconSize,
+                10);
+        }
+
+
+        //HP Icon
+        if (m_mainScreenAssets.hpIcon().id != 0)
+        {
+            drawTexture(
+                m_mainScreenAssets.hpIcon(),
+                StatIconX,
+                StatHpY,
+                StatIconSize,
+                StatIconSize);
+        }
+        else
+        {
+            drawFallbackText(
+                "HP",
+                StatIconX,
+                StatHpY,
+                StatIconSize,
+                StatIconSize,
+                10);
+        }
+
+
 
         // -------------------------------------------------------------------------
         // Dynamic Number PNGs
         // -------------------------------------------------------------------------
 
-        drawTexture(
-            m_mainScreenAssets.number(attack),
-            StatNumberX,
-            StatAtkY,
-            StatNumberSize,
-            StatNumberSize);
 
-        drawTexture(
-            m_mainScreenAssets.number(strength),
-            StatNumberX,
-            StatStrY,
-            StatNumberSize,
-            StatNumberSize);
+        
+        //ATK Num
+        const Texture2D& attackNumber =
+            m_mainScreenAssets.number(attack);
 
-        drawTexture(
-            m_mainScreenAssets.number(precision),
-            StatNumberX,
-            StatPrecY,
-            StatNumberSize,
-            StatNumberSize);
+        if (attackNumber.id != 0)
+        {
+            drawTexture(
+                attackNumber,
+                StatNumberX,
+                StatAtkY,
+                StatNumberSize,
+                StatNumberSize);
+        }
+        else
+        {
+            drawFallbackText(
+                std::to_string(attack),
+                StatNumberX,
+                StatAtkY,
+                StatNumberSize,
+                StatNumberSize,
+                18);
+        }
 
-        drawTexture(
-            m_mainScreenAssets.number(damage),
-            StatNumberX,
-            StatDmgY,
-            StatNumberSize,
-            StatNumberSize);
 
-        drawTexture(
-            m_mainScreenAssets.number(defense),
-            StatNumberX,
-            StatDefY,
-            StatNumberSize,
-            StatNumberSize);
 
-        drawTexture(
-            m_mainScreenAssets.number(toughness),
-            StatNumberX,
-            StatToughY,
-            StatNumberSize,
-            StatNumberSize);
+        //STR Num
+        const Texture2D& strengthNumber =
+            m_mainScreenAssets.number(strength);
 
-        drawTexture(
-            m_mainScreenAssets.number(hp),
-            StatNumberX,
-            StatHpY,
-            StatNumberSize,
-            StatNumberSize);
+        if (strengthNumber.id != 0)
+        {
+            drawTexture(
+                strengthNumber,
+                StatNumberX,
+                StatStrY,
+                StatNumberSize,
+                StatNumberSize);
+        }
+        else
+        {
+            drawFallbackText(
+                std::to_string(strength),
+                StatNumberX,
+                StatStrY,
+                StatNumberSize,
+                StatNumberSize,
+                18);
+        }
+
+
+
+        //PREC Num
+        const Texture2D& precisionNumber =
+            m_mainScreenAssets.number(precision);
+
+        if (precisionNumber.id != 0)
+        {
+            drawTexture(
+                precisionNumber,
+                StatNumberX,
+                StatPrecY,
+                StatNumberSize,
+                StatNumberSize);
+        }
+        else
+        {
+            drawFallbackText(
+                std::to_string(precision),
+                StatNumberX,
+                StatPrecY,
+                StatNumberSize,
+                StatNumberSize,
+                18);
+        }
+
+
+
+        //DMG Num
+        const Texture2D& damageNumber =
+            m_mainScreenAssets.number(damage);
+
+        if (damageNumber.id != 0)
+        {
+            drawTexture(
+                damageNumber,
+                StatNumberX,
+                StatDmgY,
+                StatNumberSize,
+                StatNumberSize);
+        }
+        else
+        {
+            drawFallbackText(
+                std::to_string(damage),
+                StatNumberX,
+                StatDmgY,
+                StatNumberSize,
+                StatNumberSize,
+                18);
+        }
+
+
+
+        //DEF Num
+        const Texture2D& defenseNumber =
+            m_mainScreenAssets.number(defense);
+
+        if (defenseNumber.id != 0)
+        {
+            drawTexture(
+                defenseNumber,
+                StatNumberX,
+                StatDefY,
+                StatNumberSize,
+                StatNumberSize);
+        }
+        else
+        {
+            drawFallbackText(
+                std::to_string(defense),
+                StatNumberX,
+                StatDefY,
+                StatNumberSize,
+                StatNumberSize,
+                18);
+        }
+
+
+
+        //TOUGH Num
+        const Texture2D& toughnessNumber =
+            m_mainScreenAssets.number(toughness);
+
+        if (toughnessNumber.id != 0)
+        {
+            drawTexture(
+                toughnessNumber,
+                StatNumberX,
+                StatToughY,
+                StatNumberSize,
+                StatNumberSize);
+        }
+        else
+        {
+            drawFallbackText(
+                std::to_string(toughness),
+                StatNumberX,
+                StatToughY,
+                StatNumberSize,
+                StatNumberSize,
+                18);
+        }
+
+
+
+        //HP Num
+        const Texture2D& hpNumber =
+            m_mainScreenAssets.number(hp);
+
+        if (hpNumber.id != 0)
+        {
+            drawTexture(
+                hpNumber,
+                StatNumberX,
+                StatHpY,
+                StatNumberSize,
+                StatNumberSize);
+        }
+        else
+        {
+            drawFallbackText(
+                std::to_string(hp),
+                StatNumberX,
+                StatHpY,
+                StatNumberSize,
+                StatNumberSize,
+                18);
+        }
     }
 
     void Renderer::drawGearAssets(const Game& game) const
@@ -595,47 +876,112 @@ namespace dungeon
         // Potion Icons
         // -------------------------------------------------------------------------
 
-        drawTexture(
-            m_mainScreenAssets.healthPotionIcon(),
-            PotionIconX,
-            HealthPotionY,
-            GearIconSize,
-            GearIconSize);
+        // Health Potion Icon
+        if (m_mainScreenAssets.healthPotionIcon().id != 0)
+        {
+            drawTexture(
+                m_mainScreenAssets.healthPotionIcon(),
+                PotionIconX,
+                HealthPotionY,
+                GearIconSize,
+                GearIconSize);
+        }
+        else
+        {
+            drawFallbackText(
+                "HPC",
+                PotionIconX,
+                HealthPotionY,
+                GearIconSize,
+                GearIconSize,
+                14);
+        }
 
-        drawTexture(
-            m_mainScreenAssets.ragePotionIcon(),
-            PotionIconX,
-            RagePotionY,
-            GearIconSize,
-            GearIconSize);
+
+        // Rage Potion Icon
+        if (m_mainScreenAssets.ragePotionIcon().id != 0)
+        {
+            drawTexture(
+                m_mainScreenAssets.ragePotionIcon(),
+                PotionIconX,
+                RagePotionY,
+                GearIconSize,
+                GearIconSize);
+        }
+        else
+        {
+            drawFallbackText(
+                "RPC",
+                PotionIconX,
+                RagePotionY,
+                GearIconSize,
+                GearIconSize,
+                14);
+        }
 
         // -------------------------------------------------------------------------
         // Potion Amounts
         // -------------------------------------------------------------------------
 
+
+        // Health Potion Amount
         const int healthAmount =
             static_cast<int>(
                 inventory.amount(HealthPotion{}));
 
+        const Texture2D& healthAmountTexture =
+            m_mainScreenAssets.healthPotionAmount(
+                healthAmount);
+
+        if (healthAmountTexture.id != 0)
+        {
+            drawTexture(
+                healthAmountTexture,
+                PotionNumberX,
+                HealthPotionY,
+                GearIconSize,
+                GearIconSize);
+        }
+        else
+        {
+            drawFallbackText(
+                std::to_string(healthAmount) + "/3",
+                PotionNumberX,
+                HealthPotionY,
+                GearIconSize,
+                GearIconSize,
+                18);
+        }
+
+
+        // Rage Potion Amount
         const int rageAmount =
             static_cast<int>(
                 inventory.amount(RagePotion{}));
 
-        drawTexture(
-            m_mainScreenAssets.healthPotionAmount(
-                healthAmount),
-            PotionNumberX,
-            HealthPotionY,
-            GearIconSize,
-            GearIconSize);
-
-        drawTexture(
+        const Texture2D& rageAmountTexture =
             m_mainScreenAssets.ragePotionAmount(
-                rageAmount),
-            PotionNumberX,
-            RagePotionY,
-            GearIconSize,
-            GearIconSize);
+                rageAmount);
+
+        if (rageAmountTexture.id != 0)
+        {
+            drawTexture(
+                rageAmountTexture,
+                PotionNumberX,
+                RagePotionY,
+                GearIconSize,
+                GearIconSize);
+        }
+        else
+        {
+            drawFallbackText(
+                std::to_string(rageAmount) + "/3",
+                PotionNumberX,
+                RagePotionY,
+                GearIconSize,
+                GearIconSize,
+                18);
+        }
 
         // -------------------------------------------------------------------------
         // Weapon
@@ -646,13 +992,39 @@ namespace dungeon
 
         if (weapon != nullptr)
         {
-            drawTexture(
+            const Texture2D& weaponTexture =
                 m_mainScreenAssets.weaponTier(
-                    weapon->tier()),
+                    weapon->tier());
+
+            if (weaponTexture.id != 0)
+            {
+                drawTexture(
+                    weaponTexture,
+                    WeaponIconX,
+                    WeaponArmorY,
+                    GearIconSize,
+                    GearIconSize);
+            }
+            else
+            {
+                drawFallbackText(
+                    std::string("W") + std::to_string(weapon->tier()),
+                    WeaponIconX,
+                    WeaponArmorY,
+                    GearIconSize,
+                    GearIconSize,
+                    14);
+            }
+        }
+        else
+        {
+            drawFallbackText(
+                "--",
                 WeaponIconX,
                 WeaponArmorY,
                 GearIconSize,
-                GearIconSize);
+                GearIconSize,
+                14);
         }
 
         // -------------------------------------------------------------------------
@@ -664,13 +1036,39 @@ namespace dungeon
 
         if (armor != nullptr)
         {
-            drawTexture(
+            const Texture2D& armorTexture =
                 m_mainScreenAssets.armorTier(
-                    armor->tier()),
+                    armor->tier());
+
+            if (armorTexture.id != 0)
+            {
+                drawTexture(
+                    armorTexture,
+                    ArmorIconX,
+                    WeaponArmorY,
+                    GearIconSize,
+                    GearIconSize);
+            }
+            else
+            {
+                drawFallbackText(
+                    std::string("A") + std::to_string(armor->tier()),
+                    ArmorIconX,
+                    WeaponArmorY,
+                    GearIconSize,
+                    GearIconSize,
+                    14);
+            }
+        }
+        else
+        {
+            drawFallbackText(
+                "--",
                 ArmorIconX,
                 WeaponArmorY,
                 GearIconSize,
-                GearIconSize);
+                GearIconSize,
+                14);
         }
 
         // -------------------------------------------------------------------------
@@ -703,33 +1101,168 @@ namespace dungeon
             }
         }
 
-        drawTexture(
-            hasMagicSkull
-            ? m_mainScreenAssets.magicSkull()
-            : m_mainScreenAssets.noAccessory(),
-            Tier1AccessoryX,
-            AccessoriesY,
-            GearIconSize,
-            GearIconSize);
+        // Magic Skull
+        if (hasMagicSkull)
+        {
+            const Texture2D& texture =
+                m_mainScreenAssets.magicSkull();
 
-        drawTexture(
-            hasOrcFang
-            ? m_mainScreenAssets.orcFang()
-            : m_mainScreenAssets.noAccessory(),
-            Tier2AccessoryX,
-            AccessoriesY,
-            GearIconSize,
-            GearIconSize);
+            if (texture.id != 0)
+            {
+                drawTexture(
+                    texture,
+                    Tier1AccessoryX,
+                    AccessoriesY,
+                    GearIconSize,
+                    GearIconSize);
+            }
+            else
+            {
+                drawFallbackText(
+                    "MS",
+                    Tier1AccessoryX,
+                    AccessoriesY,
+                    GearIconSize,
+                    GearIconSize,
+                    14);
+            }
+        }
+        else
+        {
+            const Texture2D& texture =
+                m_mainScreenAssets.noAccessory();
 
-        drawTexture(
-            hasTrollHeart
-            ? m_mainScreenAssets.trollHeart()
-            : m_mainScreenAssets.noAccessory(),
-            Tier3AccessoryX,
-            AccessoriesY,
-            GearIconSize,
-            GearIconSize);
+            if (texture.id != 0)
+            {
+                drawTexture(
+                    texture,
+                    Tier1AccessoryX,
+                    AccessoriesY,
+                    GearIconSize,
+                    GearIconSize);
+            }
+            else
+            {
+                drawFallbackText(
+                    "--",
+                    Tier1AccessoryX,
+                    AccessoriesY,
+                    GearIconSize,
+                    GearIconSize,
+                    14);
+            }
+        }
+
+        // Orc Fang
+        if (hasOrcFang)
+        {
+            const Texture2D& texture =
+                m_mainScreenAssets.orcFang();
+
+            if (texture.id != 0)
+            {
+                drawTexture(
+                    texture,
+                    Tier2AccessoryX,
+                    AccessoriesY,
+                    GearIconSize,
+                    GearIconSize);
+            }
+            else
+            {
+                drawFallbackText(
+                    "OF",
+                    Tier2AccessoryX,
+                    AccessoriesY,
+                    GearIconSize,
+                    GearIconSize,
+                    14);
+            }
+        }
+        else
+        {
+            const Texture2D& texture =
+                m_mainScreenAssets.noAccessory();
+
+            if (texture.id != 0)
+            {
+                drawTexture(
+                    texture,
+                    Tier2AccessoryX,
+                    AccessoriesY,
+                    GearIconSize,
+                    GearIconSize);
+            }
+            else
+            {
+                drawFallbackText(
+                    "--",
+                    Tier2AccessoryX,
+                    AccessoriesY,
+                    GearIconSize,
+                    GearIconSize,
+                    14);
+            }
+        }
+
+        // Troll's Heart
+        if (hasTrollHeart)
+        {
+            const Texture2D& texture =
+                m_mainScreenAssets.trollHeart();
+
+            if (texture.id != 0)
+            {
+                drawTexture(
+                    texture,
+                    Tier3AccessoryX,
+                    AccessoriesY,
+                    GearIconSize,
+                    GearIconSize);
+            }
+            else
+            {
+                drawFallbackText(
+                    "TH",
+                    Tier3AccessoryX,
+                    AccessoriesY,
+                    GearIconSize,
+                    GearIconSize,
+                    14);
+            }
+        }
+        else
+        {
+            const Texture2D& texture =
+                m_mainScreenAssets.noAccessory();
+
+            if (texture.id != 0)
+            {
+                drawTexture(
+                    texture,
+                    Tier3AccessoryX,
+                    AccessoriesY,
+                    GearIconSize,
+                    GearIconSize);
+            }
+            else
+            {
+                drawFallbackText(
+                    "--",
+                    Tier3AccessoryX,
+                    AccessoriesY,
+                    GearIconSize,
+                    GearIconSize,
+                    14);
+            }
+        }
     }
+
+
+
+        // ---------------------------------------------------------------------
+        // Action Render area
+        // ---------------------------------------------------------------------
 
     void Renderer::drawActionBar() const
     {
@@ -963,6 +1496,25 @@ namespace dungeon
             }
             else
             {
+                const char* identifier = "G";
+
+                if (type == "Skeleton")
+                {
+                    identifier = "S";
+                }
+                else if (type == "Orc")
+                {
+                    identifier = "O";
+                }
+                else if (type == "Troll")
+                {
+                    identifier = "T";
+                }
+                else if (type == "Dragon")
+                {
+                    identifier = "D";
+                }
+
                 DrawRectangle(
                     enemyX,
                     toRaylibY(
@@ -971,6 +1523,14 @@ namespace dungeon
                     TemporaryMapTileSize,
                     TemporaryMapTileSize,
                     RED);
+
+                drawFallbackText(
+                    identifier,
+                    enemyX,
+                    enemyY,
+                    TemporaryMapTileSize,
+                    TemporaryMapTileSize,
+                    11);
             }
         }
 

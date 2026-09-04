@@ -2,6 +2,7 @@
 
 #include "rendering/MainScreenAssets.h"
 #include "raylib.h"
+#include <string_view>
 
 namespace dungeon
 {
@@ -182,6 +183,14 @@ namespace dungeon
             int y,
             int width,
             int height) const;
+
+        void drawFallbackText(
+            std::string_view text,
+            int x,
+            int y,
+            int width,
+            int height,
+            int fontSize) const;
 
         MainScreenAssets m_mainScreenAssets;
     };
