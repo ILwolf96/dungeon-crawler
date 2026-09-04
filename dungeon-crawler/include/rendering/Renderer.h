@@ -149,12 +149,6 @@ namespace dungeon
         static constexpr int AccessoriesY = 15;
 
         // ---------------------------------------------------------------------
-        // Assets
-        // ---------------------------------------------------------------------
-
-        MainScreenAssets m_mainScreenAssets;
-
-        // ---------------------------------------------------------------------
         // Coordinate conversion
         // ---------------------------------------------------------------------
 
@@ -176,5 +170,19 @@ namespace dungeon
         void drawMap(const Game& game) const;
         void drawStatSlots() const;
         void drawGearSlots() const;
+
+        void drawTitleAssets() const;
+        void drawStatAssets(const Game& game) const;
+        void drawGearAssets(const Game& game) const;
+        void drawActionBar() const;
+
+        void drawTexture(
+            const Texture2D& texture,
+            int x,
+            int y,
+            int width,
+            int height) const;
+
+        MainScreenAssets m_mainScreenAssets;
     };
 }

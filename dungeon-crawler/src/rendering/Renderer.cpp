@@ -3,11 +3,36 @@
 
 #include "raylib.h"
 
+#include "entities/Chest.h"
+#include "entities/Dragon.h"
+#include "entities/Goblin.h"
+#include "entities/Orc.h"
+#include "entities/Skeleton.h"
+#include "entities/Troll.h"
+#include "inventory/HealthPotion.h"
+#include "inventory/RagePotion.h"
+
 #include <cstddef>
 #include <string>
+#include <string_view>
 
 namespace dungeon
 {
+    namespace
+    {
+        const Texture2D* mapTextureForTile(
+            const MainScreenAssets& assets,
+            char tile)
+        {
+            if (tile == '#')
+            {
+                return &assets.wallTile();
+            }
+
+            return &assets.floorTile();
+        }
+    }
+
     int Renderer::toRaylibY(
         int bottomLeftY,
         int height) noexcept
@@ -34,14 +59,66 @@ namespace dungeon
         return m_mainScreenAssets.load();
     }
 
+    void Renderer::drawTexture(
+        const Texture2D& texture,
+        int x,
+        int y,
+        int width,
+        int height) const
+    {
+        if (texture.id == 0)
+        {
+            return;
+        }
+
+        const Rectangle destination =
+            toRaylibRectangle(
+                x,
+                y,
+                width,
+                height);
+
+        const Rectangle source{
+            0.0f,
+            0.0f,
+            static_cast<float>(texture.width),
+            static_cast<float>(texture.height)
+        };
+
+        DrawTexturePro(
+            texture,
+            source,
+            destination,
+            Vector2{ 0.0f, 0.0f },
+            0.0f,
+            WHITE);
+    }
+
     void Renderer::draw(const Game& game) const
     {
         ClearBackground(RAYWHITE);
 
         drawMainScreenLayout();
         drawMap(game);
+
+        // ---------------------------------------------------------------------
+        // Temporary fallback slots
+        //
+        // These remain underneath the PNG assets so that the established
+        // positions are still visible whenever an asset is missing.
+        // ---------------------------------------------------------------------
+
         drawStatSlots();
         drawGearSlots();
+
+        // ---------------------------------------------------------------------
+        // PNG assets
+        // ---------------------------------------------------------------------
+
+        drawTitleAssets();
+        drawStatAssets(game);
+        drawGearAssets(game);
+        drawActionBar();
     }
 
     void Renderer::drawMainScreenLayout() const
@@ -349,6 +426,321 @@ namespace dungeon
             GRAY);
     }
 
+    void Renderer::drawTitleAssets() const
+    {
+        drawTexture(
+            m_mainScreenAssets.titleArt(),
+            TitleArtX,
+            TitleArtY,
+            TitleArtWidth,
+            TitleArtHeight);
+
+        drawTexture(
+            m_mainScreenAssets.statsTitle(),
+            StatsTitleX,
+            StatsTitleY,
+            StatsTitleWidth,
+            StatsTitleHeight);
+
+        drawTexture(
+            m_mainScreenAssets.gearTitle(),
+            GearTitleX,
+            GearTitleY,
+            GearTitleWidth,
+            GearTitleHeight);
+    }
+
+    void Renderer::drawStatAssets(const Game& game) const
+    {
+        const CombatStats stats =
+            game.player().combatStats();
+
+        const int attack =
+            stats.attacks;
+
+        const int strength =
+            stats.strength;
+
+        const int precision =
+            stats.precision;
+
+        const int damage =
+            game.player().weaponDamage();
+
+        const int defense =
+            stats.defense;
+
+        const int toughness =
+            stats.toughness;
+
+        const int hp =
+            game.player().currentHp();
+
+        // -------------------------------------------------------------------------
+        // Static Stat Icons
+        // -------------------------------------------------------------------------
+
+        drawTexture(
+            m_mainScreenAssets.atkIcon(),
+            StatIconX,
+            StatAtkY,
+            StatIconSize,
+            StatIconSize);
+
+        drawTexture(
+            m_mainScreenAssets.strIcon(),
+            StatIconX,
+            StatStrY,
+            StatIconSize,
+            StatIconSize);
+
+        drawTexture(
+            m_mainScreenAssets.precIcon(),
+            StatIconX,
+            StatPrecY,
+            StatIconSize,
+            StatIconSize);
+
+        drawTexture(
+            m_mainScreenAssets.dmgIcon(),
+            StatIconX,
+            StatDmgY,
+            StatIconSize,
+            StatIconSize);
+
+        drawTexture(
+            m_mainScreenAssets.defIcon(),
+            StatIconX,
+            StatDefY,
+            StatIconSize,
+            StatIconSize);
+
+        drawTexture(
+            m_mainScreenAssets.toughIcon(),
+            StatIconX,
+            StatToughY,
+            StatIconSize,
+            StatIconSize);
+
+        drawTexture(
+            m_mainScreenAssets.hpIcon(),
+            StatIconX,
+            StatHpY,
+            StatIconSize,
+            StatIconSize);
+
+        // -------------------------------------------------------------------------
+        // Dynamic Number PNGs
+        // -------------------------------------------------------------------------
+
+        drawTexture(
+            m_mainScreenAssets.number(attack),
+            StatNumberX,
+            StatAtkY,
+            StatNumberSize,
+            StatNumberSize);
+
+        drawTexture(
+            m_mainScreenAssets.number(strength),
+            StatNumberX,
+            StatStrY,
+            StatNumberSize,
+            StatNumberSize);
+
+        drawTexture(
+            m_mainScreenAssets.number(precision),
+            StatNumberX,
+            StatPrecY,
+            StatNumberSize,
+            StatNumberSize);
+
+        drawTexture(
+            m_mainScreenAssets.number(damage),
+            StatNumberX,
+            StatDmgY,
+            StatNumberSize,
+            StatNumberSize);
+
+        drawTexture(
+            m_mainScreenAssets.number(defense),
+            StatNumberX,
+            StatDefY,
+            StatNumberSize,
+            StatNumberSize);
+
+        drawTexture(
+            m_mainScreenAssets.number(toughness),
+            StatNumberX,
+            StatToughY,
+            StatNumberSize,
+            StatNumberSize);
+
+        drawTexture(
+            m_mainScreenAssets.number(hp),
+            StatNumberX,
+            StatHpY,
+            StatNumberSize,
+            StatNumberSize);
+    }
+
+    void Renderer::drawGearAssets(const Game& game) const
+    {
+        const Player& player =
+            game.player();
+
+        const Inventory& inventory =
+            player.inventory();
+
+        // -------------------------------------------------------------------------
+        // Potion Icons
+        // -------------------------------------------------------------------------
+
+        drawTexture(
+            m_mainScreenAssets.healthPotionIcon(),
+            PotionIconX,
+            HealthPotionY,
+            GearIconSize,
+            GearIconSize);
+
+        drawTexture(
+            m_mainScreenAssets.ragePotionIcon(),
+            PotionIconX,
+            RagePotionY,
+            GearIconSize,
+            GearIconSize);
+
+        // -------------------------------------------------------------------------
+        // Potion Amounts
+        // -------------------------------------------------------------------------
+
+        const int healthAmount =
+            static_cast<int>(
+                inventory.amount(HealthPotion{}));
+
+        const int rageAmount =
+            static_cast<int>(
+                inventory.amount(RagePotion{}));
+
+        drawTexture(
+            m_mainScreenAssets.healthPotionAmount(
+                healthAmount),
+            PotionNumberX,
+            HealthPotionY,
+            GearIconSize,
+            GearIconSize);
+
+        drawTexture(
+            m_mainScreenAssets.ragePotionAmount(
+                rageAmount),
+            PotionNumberX,
+            RagePotionY,
+            GearIconSize,
+            GearIconSize);
+
+        // -------------------------------------------------------------------------
+        // Weapon
+        // -------------------------------------------------------------------------
+
+        const Weapon* weapon =
+            player.equipment().weapon();
+
+        if (weapon != nullptr)
+        {
+            drawTexture(
+                m_mainScreenAssets.weaponTier(
+                    weapon->tier()),
+                WeaponIconX,
+                WeaponArmorY,
+                GearIconSize,
+                GearIconSize);
+        }
+
+        // -------------------------------------------------------------------------
+        // Armor
+        // -------------------------------------------------------------------------
+
+        const Armor* armor =
+            player.equipment().armor();
+
+        if (armor != nullptr)
+        {
+            drawTexture(
+                m_mainScreenAssets.armorTier(
+                    armor->tier()),
+                ArmorIconX,
+                WeaponArmorY,
+                GearIconSize,
+                GearIconSize);
+        }
+
+        // -------------------------------------------------------------------------
+        // Accessories
+        // -------------------------------------------------------------------------
+
+        const auto& accessories =
+            player.equipment().accessories();
+
+        bool hasMagicSkull = false;
+        bool hasOrcFang = false;
+        bool hasTrollHeart = false;
+
+        for (const auto& accessory : accessories)
+        {
+            const std::string_view name =
+                accessory->name();
+
+            if (name == "Magic Skull")
+            {
+                hasMagicSkull = true;
+            }
+            else if (name == "Orc Fang")
+            {
+                hasOrcFang = true;
+            }
+            else if (name == "Troll's Heart")
+            {
+                hasTrollHeart = true;
+            }
+        }
+
+        drawTexture(
+            hasMagicSkull
+            ? m_mainScreenAssets.magicSkull()
+            : m_mainScreenAssets.noAccessory(),
+            Tier1AccessoryX,
+            AccessoriesY,
+            GearIconSize,
+            GearIconSize);
+
+        drawTexture(
+            hasOrcFang
+            ? m_mainScreenAssets.orcFang()
+            : m_mainScreenAssets.noAccessory(),
+            Tier2AccessoryX,
+            AccessoriesY,
+            GearIconSize,
+            GearIconSize);
+
+        drawTexture(
+            hasTrollHeart
+            ? m_mainScreenAssets.trollHeart()
+            : m_mainScreenAssets.noAccessory(),
+            Tier3AccessoryX,
+            AccessoriesY,
+            GearIconSize,
+            GearIconSize);
+    }
+
+    void Renderer::drawActionBar() const
+    {
+        drawTexture(
+            m_mainScreenAssets.traversalActionBar(),
+            ActionBarX,
+            ActionBarY,
+            ActionBarWidth,
+            ActionBarHeight);
+    }
+
     void Renderer::drawMap(const Game& game) const
     {
         const Map& map = game.map();
@@ -363,20 +755,13 @@ namespace dungeon
             MapRenderWidth,
             MapRenderHeight);
 
-        /*
-            Temporary Map Frame.
-            Later this entire frame will be replaced with the Map Frame PNG.
-        */
+        // Temporary frame fallback.
         DrawRectangleRec(
             mapRender,
             DARKGRAY);
 
         // ---------------------------------------------------------------------
         // Visible map area
-        //
-        // 470x470 outer render area
-        // 27px frame on every side
-        // 416x416 inner visual map
         // ---------------------------------------------------------------------
 
         const int visibleMapX =
@@ -391,15 +776,13 @@ namespace dungeon
             VisibleMapWidth,
             VisibleMapHeight);
 
+        // Temporary floor/background fallback.
         DrawRectangleRec(
             visibleMap,
             BLACK);
 
         // ---------------------------------------------------------------------
-        // Temporary map rendering
-        //
-        // This remains so that the game is still visibly functional.
-        // The future map PNG tiles will replace this section.
+        // Map dimensions
         // ---------------------------------------------------------------------
 
         const int renderedMapWidth =
@@ -408,7 +791,6 @@ namespace dungeon
         const int renderedMapHeight =
             static_cast<int>(map.height()) * TemporaryMapTileSize;
 
-        // Center the currently loaded map inside the 416x416 visible area.
         const int mapOffsetX =
             visibleMapX +
             (VisibleMapWidth - renderedMapWidth) / 2;
@@ -416,6 +798,10 @@ namespace dungeon
         const int mapOffsetY =
             visibleMapY +
             (VisibleMapHeight - renderedMapHeight) / 2;
+
+        // ---------------------------------------------------------------------
+        // Map tiles
+        // ---------------------------------------------------------------------
 
         for (std::size_t y = 0; y < map.height(); ++y)
         {
@@ -435,11 +821,37 @@ namespace dungeon
                     TemporaryMapTileSize -
                     static_cast<int>(y) * TemporaryMapTileSize;
 
-                const Rectangle tileRectangle = toRaylibRectangle(
-                    tileX,
-                    tileY,
-                    TemporaryMapTileSize,
-                    TemporaryMapTileSize);
+                const Rectangle tileRectangle =
+                    toRaylibRectangle(
+                        tileX,
+                        tileY,
+                        TemporaryMapTileSize,
+                        TemporaryMapTileSize);
+
+                const Texture2D* texture =
+                    mapTextureForTile(
+                        m_mainScreenAssets,
+                        tile);
+
+                // -------------------------------------------------------------
+                // PNG version
+                // -------------------------------------------------------------
+
+                if (texture != nullptr && texture->id != 0)
+                {
+                    drawTexture(
+                        *texture,
+                        tileX,
+                        tileY,
+                        TemporaryMapTileSize,
+                        TemporaryMapTileSize);
+
+                    continue;
+                }
+
+                // -------------------------------------------------------------
+                // Temporary fallback version
+                // -------------------------------------------------------------
 
                 if (tile == '#')
                 {
@@ -451,7 +863,7 @@ namespace dungeon
                 {
                     DrawRectangleRec(
                         tileRectangle,
-                        LIGHTGRAY);
+                        GRAY);
                 }
             }
         }
@@ -472,19 +884,29 @@ namespace dungeon
             TemporaryMapTileSize -
             player.y() * TemporaryMapTileSize;
 
-        const int playerCenterX =
-            playerX +
-            TemporaryMapTileSize / 2;
+        const Texture2D& playerTexture =
+            m_mainScreenAssets.playerTile();
 
-        const int playerCenterY =
-            playerY +
-            TemporaryMapTileSize / 2;
-
-        DrawCircle(
-            playerCenterX,
-            ScreenHeight - playerCenterY,
-            static_cast<float>(TemporaryMapTileSize / 3),
-            MAROON);
+        if (playerTexture.id != 0)
+        {
+            drawTexture(
+                playerTexture,
+                playerX,
+                playerY,
+                TemporaryMapTileSize,
+                TemporaryMapTileSize);
+        }
+        else
+        {
+            DrawRectangle(
+                playerX,
+                toRaylibY(
+                    playerY,
+                    TemporaryMapTileSize),
+                TemporaryMapTileSize,
+                TemporaryMapTileSize,
+                BLUE);
+        }
 
         // ---------------------------------------------------------------------
         // Enemies
@@ -504,30 +926,52 @@ namespace dungeon
                 TemporaryMapTileSize -
                 enemy->y() * TemporaryMapTileSize;
 
-            const int enemyCenterX =
-                enemyX +
-                TemporaryMapTileSize / 2;
+            const std::string_view type = enemy->type();
 
-            const int enemyCenterY =
-                enemyY +
-                TemporaryMapTileSize / 2;
+            const Texture2D* enemyTexture =
+                &m_mainScreenAssets.goblinTile();
 
-            DrawCircle(
-                enemyCenterX,
-                ScreenHeight - enemyCenterY,
-                static_cast<float>(TemporaryMapTileSize / 3),
-                RED);
+            if (type == "Skeleton")
+            {
+                enemyTexture =
+                    &m_mainScreenAssets.skeletonTile();
+            }
+            else if (type == "Orc")
+            {
+                enemyTexture =
+                    &m_mainScreenAssets.orcTile();
+            }
+            else if (type == "Troll")
+            {
+                enemyTexture =
+                    &m_mainScreenAssets.trollTile();
+            }
+            else if (type == "Dragon")
+            {
+                enemyTexture =
+                    &m_mainScreenAssets.dragonTile();
+            }
 
-            const std::string enemyType(enemy->type());
-
-            DrawText(
-                enemyType.c_str(),
-                enemyCenterX - MeasureText(
-                    enemyType.c_str(),
-                    6) / 2,
-                ScreenHeight - enemyCenterY - 3,
-                6,
-                BLACK);
+            if (enemyTexture->id != 0)
+            {
+                drawTexture(
+                    *enemyTexture,
+                    enemyX,
+                    enemyY,
+                    TemporaryMapTileSize,
+                    TemporaryMapTileSize);
+            }
+            else
+            {
+                DrawRectangle(
+                    enemyX,
+                    toRaylibY(
+                        enemyY,
+                        TemporaryMapTileSize),
+                    TemporaryMapTileSize,
+                    TemporaryMapTileSize,
+                    RED);
+            }
         }
 
         // ---------------------------------------------------------------------
@@ -548,43 +992,54 @@ namespace dungeon
                 TemporaryMapTileSize -
                 chest->y() * TemporaryMapTileSize;
 
-            const int chestCenterX =
-                chestX +
-                TemporaryMapTileSize / 2;
+            const Texture2D& chestTexture =
+                m_mainScreenAssets.chestTile();
 
-            const int chestCenterY =
-                chestY +
-                TemporaryMapTileSize / 2;
-
-            const int chestSize =
-                (TemporaryMapTileSize * 2) / 3;
-
-            DrawRectangle(
-                chestCenterX - chestSize / 2,
-                ScreenHeight - chestCenterY - chestSize / 2,
-                chestSize,
-                chestSize,
-                GOLD);
-
-            DrawText(
-                "Chest",
-                chestCenterX - MeasureText(
-                    "Chest",
-                    6) / 2,
-                ScreenHeight - chestCenterY - 3,
-                6,
-                BLACK);
+            if (chestTexture.id != 0)
+            {
+                drawTexture(
+                    chestTexture,
+                    chestX,
+                    chestY,
+                    TemporaryMapTileSize,
+                    TemporaryMapTileSize);
+            }
+            else
+            {
+                DrawRectangle(
+                    chestX,
+                    toRaylibY(
+                        chestY,
+                        TemporaryMapTileSize),
+                    TemporaryMapTileSize,
+                    TemporaryMapTileSize,
+                    GOLD);
+            }
         }
 
         // ---------------------------------------------------------------------
-        // Temporary visible-map boundary.
-        //
-        // This will remain useful for verifying the 416x416 viewport.
+        // Map Frame PNG
         // ---------------------------------------------------------------------
 
-        DrawRectangleLinesEx(
-            visibleMap,
-            1.0f,
-            WHITE);
+        const Texture2D& frameTexture =
+            m_mainScreenAssets.mapFrame();
+
+        if (frameTexture.id != 0)
+        {
+            drawTexture(
+                frameTexture,
+                MapRenderX,
+                MapRenderY,
+                MapRenderWidth,
+                MapRenderHeight);
+        }
+        else
+        {
+            // Keep the temporary frame visible if the PNG isn't available.
+            DrawRectangleLinesEx(
+                mapRender,
+                static_cast<float>(MapFrameThickness),
+                DARKGRAY);
+        }
     }
 }
