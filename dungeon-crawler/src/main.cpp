@@ -158,6 +158,14 @@ int main(int argc, char** argv)
         game.windowHeight(),
         game.title().c_str());
 
+    if (!renderer.loadMainScreenAssets())
+    {
+        TraceLog(
+            LOG_WARNING,
+            "Some Main Screen assets are not available yet. "
+            "Temporary rendering will remain active.");
+    }
+
     SetTargetFPS(60);
 
     while (!WindowShouldClose())

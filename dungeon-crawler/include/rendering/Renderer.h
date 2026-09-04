@@ -1,5 +1,6 @@
 #pragma once
 
+#include "rendering/MainScreenAssets.h"
 #include "raylib.h"
 
 namespace dungeon
@@ -12,6 +13,8 @@ namespace dungeon
         Renderer() = default;
 
         void draw(const Game& game) const;
+
+        bool loadMainScreenAssets();
 
     private:
         // ---------------------------------------------------------------------
@@ -112,9 +115,9 @@ namespace dungeon
         static constexpr int StatStrY = 568;
 
         static constexpr int StatPrecY = 521;
-        
+
         static constexpr int StatDmgY = 474;
-        
+
         static constexpr int StatDefY = 427;
 
         static constexpr int StatToughY = 380;
@@ -144,6 +147,12 @@ namespace dungeon
         static constexpr int Tier2AccessoryX = 1141;
         static constexpr int Tier3AccessoryX = 1211;
         static constexpr int AccessoriesY = 15;
+
+        // ---------------------------------------------------------------------
+        // Assets
+        // ---------------------------------------------------------------------
+
+        MainScreenAssets m_mainScreenAssets;
 
         // ---------------------------------------------------------------------
         // Coordinate conversion

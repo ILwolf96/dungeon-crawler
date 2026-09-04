@@ -29,6 +29,11 @@ namespace dungeon
         };
     }
 
+    bool Renderer::loadMainScreenAssets()
+    {
+        return m_mainScreenAssets.load();
+    }
+
     void Renderer::draw(const Game& game) const
     {
         ClearBackground(RAYWHITE);
