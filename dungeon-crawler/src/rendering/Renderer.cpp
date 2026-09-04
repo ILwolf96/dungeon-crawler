@@ -59,6 +59,11 @@ namespace dungeon
         return m_mainScreenAssets.load();
     }
 
+    void Renderer::toggleGameInstructions() noexcept
+    {
+        m_gameInstructionsOpen = !m_gameInstructionsOpen;
+    }
+
     void Renderer::drawTexture(
         const Texture2D& texture,
         int x,
@@ -93,6 +98,7 @@ namespace dungeon
             0.0f,
             WHITE);
     }
+
 
     void Renderer::draw(const Game& game) const
     {
@@ -171,20 +177,25 @@ namespace dungeon
         // This will later be replaced by the Title Art PNG.
         // ---------------------------------------------------------------------
 
-        const Rectangle titleArt = toRaylibRectangle(
-            TitleArtX,
-            TitleArtY,
-            TitleArtWidth,
-            TitleArtHeight);
-
-        DrawRectangleRec(
-            titleArt,
-            LIGHTGRAY);
-
-        DrawRectangleLinesEx(
-            titleArt,
-            1.0f,
-            DARKGRAY);
+        if (m_mainScreenAssets.titleArt().id != 0)
+        {
+            drawTexture(
+                m_mainScreenAssets.titleArt(),
+                TitleArtX,
+                TitleArtY,
+                TitleArtWidth,
+                TitleArtHeight);
+        }
+        else
+        {
+            drawFallbackText(
+                R"(Final C++ Project - Made by Ilan "Ilwolf" Boguslavsky/Mintzker)",
+                TitleArtX,
+                TitleArtY,
+                TitleArtWidth,
+                TitleArtHeight,
+                22);
+        }
 
         // ---------------------------------------------------------------------
         // Stats Title
@@ -193,23 +204,28 @@ namespace dungeon
         // This will later be replaced by the Stats Title PNG.
         // ---------------------------------------------------------------------
 
-        const Rectangle statsTitle = toRaylibRectangle(
-            StatsTitleX,
-            StatsTitleY,
-            StatsTitleWidth,
-            StatsTitleHeight);
-
-        DrawRectangleRec(
-            statsTitle,
-            LIGHTGRAY);
-
-        DrawRectangleLinesEx(
-            statsTitle,
-            1.0f,
-            DARKGRAY);
+        if (m_mainScreenAssets.statsTitle().id != 0)
+        {
+            drawTexture(
+                m_mainScreenAssets.statsTitle(),
+                StatsTitleX,
+                StatsTitleY,
+                StatsTitleWidth,
+                StatsTitleHeight);
+        }
+        else
+        {
+            drawFallbackText(
+                "Player Stats",
+                StatsTitleX,
+                StatsTitleY,
+                StatsTitleWidth,
+                StatsTitleHeight,
+                22);
+        }
 
         // ---------------------------------------------------------------------
-        // POV
+        // POV / GAME INSTRUCTIONS
         //
         // Temporary placeholder.
         // This will later be replaced by the POV PNG.
@@ -221,14 +237,36 @@ namespace dungeon
             PovRenderWidth,
             PovRenderHeight);
 
-        DrawRectangleRec(
-            povRender,
-            RAYWHITE);
+        if (m_gameInstructionsOpen)
+        {
+            DrawRectangleRec(
+                povRender,
+                LIGHTGRAY);
 
-        DrawRectangleLinesEx(
-            povRender,
-            1.0f,
-            DARKGRAY);
+            DrawRectangleLinesEx(
+                povRender,
+                1.0f,
+                DARKGRAY);
+
+            drawFallbackText(
+                "GAME INSTRUCTIONS",
+                PovRenderX,
+                PovRenderY + PovRenderHeight - 50,
+                PovRenderWidth,
+                40,
+                26);
+        }
+        else
+        {
+            DrawRectangleRec(
+                povRender,
+                RAYWHITE);
+
+            DrawRectangleLinesEx(
+                povRender,
+                1.0f,
+                DARKGRAY);
+        }
 
         // ---------------------------------------------------------------------
         // Stats Window
@@ -258,20 +296,25 @@ namespace dungeon
         // This will later be replaced by the Gear Title PNG.
         // ---------------------------------------------------------------------
 
-        const Rectangle gearTitle = toRaylibRectangle(
-            GearTitleX,
-            GearTitleY,
-            GearTitleWidth,
-            GearTitleHeight);
-
-        DrawRectangleRec(
-            gearTitle,
-            LIGHTGRAY);
-
-        DrawRectangleLinesEx(
-            gearTitle,
-            1.0f,
-            DARKGRAY);
+        if (m_mainScreenAssets.gearTitle().id != 0)
+        {
+            drawTexture(
+                m_mainScreenAssets.gearTitle(),
+                GearTitleX,
+                GearTitleY,
+                GearTitleWidth,
+                GearTitleHeight);
+        }
+        else
+        {
+            drawFallbackText(
+                "Player Gear",
+                GearTitleX,
+                GearTitleY,
+                GearTitleWidth,
+                GearTitleHeight,
+                22);
+        }
 
         // ---------------------------------------------------------------------
         // Gear Window
@@ -1266,12 +1309,85 @@ namespace dungeon
 
     void Renderer::drawActionBar() const
     {
-        drawTexture(
-            m_mainScreenAssets.traversalActionBar(),
+        const Rectangle actionBar =
+            toRaylibRectangle(
+                ActionBarX,
+                ActionBarY,
+                ActionBarWidth,
+                ActionBarHeight);
+
+        if (m_mainScreenAssets.traversalActionBar().id != 0)
+        {
+            drawTexture(
+                m_mainScreenAssets.traversalActionBar(),
+                ActionBarX,
+                ActionBarY,
+                ActionBarWidth,
+                ActionBarHeight);
+
+            return;
+        }
+
+        // ---------------------------------------------------------------------
+        // Temporary traversal action-bar fallback.
+        // ---------------------------------------------------------------------
+
+        DrawRectangleRec(
+            actionBar,
+            LIGHTGRAY);
+
+        DrawRectangleLinesEx(
+            actionBar,
+            1.0f,
+            DARKGRAY);
+
+        drawFallbackText(
+            "TRAVERSAL CONTROLS",
             ActionBarX,
-            ActionBarY,
+            ActionBarY + 140,
             ActionBarWidth,
-            ActionBarHeight);
+            40,
+            22);
+
+        drawFallbackText(
+            "MOVE",
+            ActionBarX + 40,
+            ActionBarY + 85,
+            220,
+            35,
+            18);
+
+        drawFallbackText(
+            "ATTACK",
+            ActionBarX + 270,
+            ActionBarY + 85,
+            220,
+            35,
+            18);
+
+        drawFallbackText(
+            "INVENTORY",
+            ActionBarX + 500,
+            ActionBarY + 85,
+            220,
+            35,
+            18);
+
+        drawFallbackText(
+            "ESCAPE",
+            ActionBarX + 730,
+            ActionBarY + 85,
+            220,
+            35,
+            18);
+
+        drawFallbackText(
+            "TAB  -  Game Instructions",
+            ActionBarX,
+            ActionBarY + 20,
+            ActionBarWidth,
+            35,
+            16);
     }
 
     void Renderer::drawMap(const Game& game) const

@@ -17,6 +17,8 @@ namespace dungeon
 
         bool loadMainScreenAssets();
 
+        void toggleGameInstructions() noexcept;
+
     private:
         // ---------------------------------------------------------------------
         // Main Screen design resolution
@@ -176,6 +178,8 @@ namespace dungeon
         void drawStatAssets(const Game& game) const;
         void drawGearAssets(const Game& game) const;
         void drawActionBar() const;
+
+        bool m_gameInstructionsOpen{ false };
 
         void drawTexture(
             const Texture2D& texture,

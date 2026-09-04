@@ -170,24 +170,28 @@ int main(int argc, char** argv)
 
     while (!WindowShouldClose())
     {
+
+        // Game Instructions
+        if (IsKeyPressed(KEY_TAB))
+        {
+            renderer.toggleGameInstructions();
+        }
+
         // Attack (F1 or 1)
         if (IsKeyPressed(KEY_F1) || IsKeyPressed(KEY_ONE))
         {
-            // TODO: Reminder - When inventory is open, pressing 1 (KEY_ONE) should use Health Potion once implemented.
             game.handleAction(dungeon::Action::Attack);
         }
 
         // Inventory (I or 2)
         if (IsKeyPressed(KEY_I) || IsKeyPressed(KEY_TWO))
         {
-            // TODO: Reminder - When inventory is open, pressing 2 (KEY_TWO) should use Rage Potion once implemented.
             game.handleAction(dungeon::Action::Inventory);
         }
 
         // Escape / Close Inventory (E or 3)
         if (IsKeyPressed(KEY_E) || IsKeyPressed(KEY_THREE))
         {
-            // Pressing 3 (KEY_THREE) triggers Action::Escape, which also closes the inventory when it is open.
             game.handleAction(dungeon::Action::Escape);
         }
 
