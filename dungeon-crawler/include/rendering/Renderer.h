@@ -202,6 +202,11 @@ namespace dungeon
         void drawActionBar() const;
         void drawCombatActionBar() const;
 
+
+        void drawDiceRoll(const Game& game) const;
+        void drawCombatInfo(const Game& game) const;
+        void drawFallbackDie(int value, int x, int y, int size) const;
+
         bool m_gameInstructionsOpen{ false };
 
         void drawTexture(
@@ -218,6 +223,15 @@ namespace dungeon
             int width,
             int height,
             int fontSize) const;
+
+        void drawWrappedFallbackText(
+            std::string_view text,
+            int x,
+            int y,
+            int width,
+            int height,
+            int fontSize,
+            int lineSpacing) const;
 
         MainScreenAssets m_mainScreenAssets;
     };

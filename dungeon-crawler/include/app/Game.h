@@ -1,6 +1,7 @@
 #pragma once
 
 #include "combat/CombatStats.h"
+#include "combat/CombatPresentation.h"
 #include "entities/Chest.h"
 #include "entities/Enemy.h"
 #include "entities/Player.h"
@@ -35,6 +36,7 @@ namespace dungeon
 
         void load(std::string_view filePath);
         void handleAction(Action action);
+        void update(float deltaSeconds);
 
         bool inCombat() const noexcept;
 
@@ -67,6 +69,12 @@ namespace dungeon
         [[nodiscard]]
         const std::vector<std::unique_ptr<Chest>>& chests() const noexcept;
 
+        [[nodiscard]]
+        bool combatPresentationActive() const noexcept;
+
+        [[nodiscard]]
+        const CombatPresentation& combatPresentation() const noexcept;
+
     private:
         Map m_map;
         Player m_player;
@@ -77,13 +85,17 @@ namespace dungeon
         void performCombatEscape();
         void openCombatInventory();
         void closeCombatInventory();
+        void advanceCombatPresentation();
 
         std::vector<std::unique_ptr<Enemy>> m_enemies;
         std::vector<std::unique_ptr<Chest>> m_chests;
 
         std::unique_ptr<Combat> m_combat;
+        CombatPresentation m_combatPresentation;
         RandomDice m_combatDice;
         bool m_inventoryOpen{ false };
+        bool m_pendingEnemyTurn{ false };
+        bool m_pendingCombatFinish{ false };
 
         bool useHealthPotion();
         bool useRagePotion();

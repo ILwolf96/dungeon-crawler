@@ -202,6 +202,9 @@ int main(int argc, char** argv)
             game.handleAction(action);
         }
 
+        //Updates Game here!!!
+        game.update(GetFrameTime());
+
         BeginDrawing();
 
         renderer.draw(game);

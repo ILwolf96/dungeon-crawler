@@ -15,6 +15,7 @@
 #include <cstddef>
 #include <string>
 #include <string_view>
+#include <vector>
 
 namespace dungeon
 {
@@ -133,11 +134,15 @@ namespace dungeon
         if (game.inCombat())
         {
             drawEnemyStatSlots();
+            drawDiceRoll(game);
+            drawCombatInfo(game);
             drawCombatActionBar();
         }
         else
         {
             drawMap(game);
+            drawStatSlots();
+            drawGearSlots();
             drawActionBar();
         }
     }
@@ -566,13 +571,13 @@ namespace dungeon
 
         DrawRectangleRec(
             diceRollWindow,
-            RAYWHITE);
+            GRAY);
 
         DrawRectangleLinesEx(
             diceRollWindow,
             1.0f,
             DARKGRAY);
-
+        /*
         drawFallbackText(
             "Dice Roll Window",
             230,
@@ -580,6 +585,7 @@ namespace dungeon
             240,
             70,
             18);
+        */
 
         // ---------------------------------------------------------------------
         // Combat Info Title
@@ -629,6 +635,7 @@ namespace dungeon
             1.0f,
             DARKGRAY);
 
+        /*
         drawFallbackText(
             "Combat Info Window",
             230,
@@ -636,6 +643,7 @@ namespace dungeon
             240,
             100,
             16);
+        */
 
         // ---------------------------------------------------------------------
         // Loot Title
@@ -857,6 +865,262 @@ namespace dungeon
         }
 
     }
+
+    void Renderer::drawDiceRoll(const Game& game) const
+    {
+        const CombatPresentation& presentation =
+            game.combatPresentation();
+
+        constexpr int DiceWindowX = 230;
+        constexpr int DiceWindowY = 260;
+        constexpr int DiceWindowWidth = 240;
+        constexpr int DiceWindowHeight = 360;
+
+        constexpr int dieSize = 110;
+
+        const int dieX =
+            DiceWindowX +
+            (DiceWindowWidth - dieSize) / 2;
+
+        const int dieY =
+            DiceWindowY +
+            175;
+
+        // ---------------------------------------------------------------------
+        // No active presentation
+        // ---------------------------------------------------------------------
+
+        if (!presentation.active())
+        {
+
+                drawWrappedFallbackText(
+                    "Waiting for\nDice Action",
+                    DiceWindowX,
+                    DiceWindowY +85, // Adjust this to move it up or down vertically
+                    DiceWindowWidth,
+                    DiceWindowHeight,
+                    22,
+                    28); // Positive line spacing
+
+
+            return;
+        }
+
+        // ---------------------------------------------------------------------
+        // Rolling
+        //
+        // The displayed face is purely decorative.
+        // It has NO connection to the actual combat roll.
+        // ---------------------------------------------------------------------
+
+        if (presentation.phase() ==
+            CombatPresentation::Phase::Rolling)
+        {
+            const int dieValue =
+                static_cast<int>(
+                    presentation.phaseElapsed() * 10.0f)
+                % 6 + 1;
+
+            drawFallbackDie(
+                dieValue,
+                dieX,
+                dieY,
+                dieSize);
+
+            return;
+        }
+
+        // ---------------------------------------------------------------------
+        // Result
+        //
+        // The actual result is shown on the die itself.
+        // The numerical roll/target information belongs in Combat Info.
+        // ---------------------------------------------------------------------
+
+        if (presentation.phase() ==
+            CombatPresentation::Phase::Result)
+        {
+            const AttackResult* result =
+                presentation.currentAttack();
+
+            if (result == nullptr)
+            {
+                return;
+            }
+
+            int dieValue = 1;
+
+            switch (presentation.rollType())
+            {
+            case CombatPresentation::RollType::Precision:
+                dieValue = result->precisionRoll;
+                break;
+
+            case CombatPresentation::RollType::Wound:
+                dieValue = result->woundRoll;
+                break;
+
+            case CombatPresentation::RollType::Defense:
+                dieValue = result->defenseRoll;
+                break;
+
+            case CombatPresentation::RollType::None:
+            default:
+                return;
+            }
+
+            drawFallbackDie(
+                dieValue,
+                dieX,
+                dieY,
+                dieSize);
+        }
+    }
+
+    void Renderer::drawFallbackDie(
+        int value,
+        int x,
+        int y,
+        int size) const
+    {
+        if (value < 1 || value > 6)
+        {
+            value = 1;
+        }
+
+        const Rectangle die =
+            toRaylibRectangle(
+                x,
+                y,
+                size,
+                size);
+
+        DrawRectangleRec(
+            die,
+            WHITE);
+
+        DrawRectangleLinesEx(
+            die,
+            3.0f,
+            BLACK);
+
+        const float left =
+            die.x + size * 0.25f;
+
+        const float centerX =
+            die.x + size * 0.5f;
+
+        const float right =
+            die.x + size * 0.75f;
+
+        const float top =
+            die.y + size * 0.25f;
+
+        const float centerY =
+            die.y + size * 0.5f;
+
+        const float bottom =
+            die.y + size * 0.75f;
+
+        const float radius =
+            size * 0.07f;
+
+        auto drawPip =
+            [radius](float px, float py)
+            {
+                DrawCircle(
+                    static_cast<int>(px),
+                    static_cast<int>(py),
+                    radius,
+                    BLACK);
+            };
+
+        switch (value)
+        {
+        case 1:
+            drawPip(centerX, centerY);
+            break;
+
+        case 2:
+            drawPip(left, top);
+            drawPip(right, bottom);
+            break;
+
+        case 3:
+            drawPip(left, top);
+            drawPip(centerX, centerY);
+            drawPip(right, bottom);
+            break;
+
+        case 4:
+            drawPip(left, top);
+            drawPip(right, top);
+            drawPip(left, bottom);
+            drawPip(right, bottom);
+            break;
+
+        case 5:
+            drawPip(left, top);
+            drawPip(right, top);
+            drawPip(centerX, centerY);
+            drawPip(left, bottom);
+            drawPip(right, bottom);
+            break;
+
+        case 6:
+            drawPip(left, top);
+            drawPip(right, top);
+            drawPip(left, centerY);
+            drawPip(right, centerY);
+            drawPip(left, bottom);
+            drawPip(right, bottom);
+            break;
+        }
+    }
+
+
+        void Renderer::drawCombatInfo(
+            const Game& game) const
+        {
+            const CombatPresentation& presentation =
+                game.combatPresentation();
+
+            constexpr int CombatInfoX = 230;
+            constexpr int CombatInfoY = 260;
+            constexpr int CombatInfoWidth = 240;
+            constexpr int CombatInfoHeight = 100;
+
+            // ---------------------------------------------------------------------
+            // No active combat presentation
+            // ---------------------------------------------------------------------
+
+            if (!presentation.active())
+            {
+                drawWrappedFallbackText(
+                    "Select a Combat Action",
+                    CombatInfoX,
+                    CombatInfoY,
+                    CombatInfoWidth,
+                    CombatInfoHeight,
+                    16,
+                    22);
+
+                return;
+            }
+
+            // ---------------------------------------------------------------------
+            // Active presentation
+            // ---------------------------------------------------------------------
+
+            drawWrappedFallbackText(
+                presentation.infoMessage(),
+                CombatInfoX,
+                CombatInfoY,
+                CombatInfoWidth,
+                CombatInfoHeight,
+                16,
+                22);
+        }
 
     void Renderer::drawEnemyStatSlots() const
     {
@@ -2343,6 +2607,108 @@ namespace dungeon
                 mapRender,
                 static_cast<float>(MapFrameThickness),
                 DARKGRAY);
+        }
+
+
+
+    }
+
+    void Renderer::drawWrappedFallbackText(
+        std::string_view text,
+        int x,
+        int y,
+        int width,
+        int height,
+        int fontSize,
+        int lineSpacing) const
+    {
+        const std::string value(text);
+
+        if (value.empty())
+        {
+            return;
+        }
+
+        const int maxTextWidth =
+            width - 12;
+
+        std::vector<std::string> lines;
+        std::string currentLine;
+
+        std::size_t start = 0;
+
+        while (start < value.size())
+        {
+            std::size_t end =
+                value.find(' ', start);
+
+            if (end == std::string::npos)
+            {
+                end = value.size();
+            }
+
+            const std::string word =
+                value.substr(
+                    start,
+                    end - start);
+
+            const std::string candidate =
+                currentLine.empty()
+                ? word
+                : currentLine + " " + word;
+
+            if (MeasureText(
+                candidate.c_str(),
+                fontSize) <= maxTextWidth)
+            {
+                currentLine = candidate;
+            }
+            else
+            {
+                if (!currentLine.empty())
+                {
+                    lines.push_back(currentLine);
+                }
+
+                currentLine = word;
+            }
+
+            start =
+                end == value.size()
+                ? value.size()
+                : end + 1;
+        }
+
+        if (!currentLine.empty())
+        {
+            lines.push_back(currentLine);
+        }
+
+        const int totalHeight =
+            static_cast<int>(lines.size()) * lineSpacing;
+
+        int currentY =
+            y + (height - totalHeight) / 2;
+
+        for (const std::string& line : lines)
+        {
+            const int lineWidth =
+                MeasureText(
+                    line.c_str(),
+                    fontSize);
+
+            const int lineX =
+                x + (width - lineWidth) / 2;
+
+            drawFallbackText(
+                line,
+                lineX,
+                currentY,
+                lineWidth,
+                lineSpacing,
+                fontSize);
+
+            currentY += lineSpacing;
         }
     }
 }

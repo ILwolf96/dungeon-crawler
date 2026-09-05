@@ -349,10 +349,83 @@ namespace dungeon
         m_title = title;
     }
 
+    void Game::update(float deltaSeconds)
+    {
+        if (!m_combat ||
+            !m_combatPresentation.active())
+        {
+            return;
+        }
+
+        const bool presentationCompleted =
+            m_combatPresentation.update(deltaSeconds);
+
+        if (!presentationCompleted)
+        {
+            return;
+        }
+
+        advanceCombatPresentation();
+    }
+
+    void Game::advanceCombatPresentation()
+    {
+        if (!m_combat)
+        {
+            return;
+        }
+
+        // ---------------------------------------------------------------------
+        // Player presentation finished.
+        // Continues with the enemy turn.
+        // ---------------------------------------------------------------------
+
+        if (m_pendingEnemyTurn)
+        {
+            m_pendingEnemyTurn = false;
+
+            std::clog
+                << "[COMBAT] Enemy turn begins.\n";
+
+            const CombatResult enemyResult =
+                m_combat->enemyTurn();
+
+            std::clog
+                << "[COMBAT] "
+                << enemyResult.message
+                << '\n';
+
+            m_pendingCombatFinish =
+                !m_combat->isActive();
+
+            const std::string enemyName =
+                std::string(m_combat->target().targetType());
+
+            const auto& attackResults =
+                m_combat->lastEnemyAttacks();
+
+            m_combatPresentation.start(
+                enemyName,
+                "Player",
+                enemyName + "\nSelected Attack",
+                std::vector<AttackResult>(
+                    attackResults.begin(),
+                    attackResults.end()));
+
+            return;
+        }
+    }
+
     void Game::handleAction(Action action)
     {
         if (m_combat)
         {
+            if (m_combat &&
+                m_combatPresentation.active())
+            {
+                return;
+            }
+
             if (m_inventoryOpen)
             {
                 switch (action)
@@ -544,12 +617,14 @@ namespace dungeon
 
     void Game::performCombatAttack()
     {
-        if (!m_combat)
+        if (!m_combat ||
+            m_combatPresentation.active())
         {
             return;
         }
 
-        std::clog << "[COMBAT] Player selected Attack.\n";
+        std::clog
+            << "[COMBAT] Player selected Attack.\n";
 
         const CombatResult playerResult =
             m_combat->playerAttack();
@@ -559,27 +634,22 @@ namespace dungeon
             << playerResult.message
             << '\n';
 
-        if (!m_combat->isActive())
-        {
-            finishCombatIfNeeded();
-            return;
-        }
+        const auto& attackResults =
+            m_combat->lastPlayerAttacks();
 
-        std::clog
-            << "[COMBAT] Enemy turn begins.\n";
+        m_pendingEnemyTurn =
+            m_combat->isActive();
 
-        const CombatResult enemyResult =
-            m_combat->enemyTurn();
+        m_pendingCombatFinish =
+            !m_combat->isActive();
 
-        std::clog
-            << "[COMBAT] "
-            << enemyResult.message
-            << '\n';
-
-        if (!m_combat->isActive())
-        {
-            finishCombatIfNeeded();
-        }
+        m_combatPresentation.start(
+            "Player",
+            std::string(m_combat->target().targetType()),
+            "Player\nSelected Attack",
+            std::vector<AttackResult>(
+                attackResults.begin(),
+                attackResults.end()));
     }
 
     void Game::performCombatEscape()
@@ -827,6 +897,16 @@ namespace dungeon
 
             return;
         }
+    }
+
+    bool Game::combatPresentationActive() const noexcept
+    {
+        return m_combatPresentation.active();
+    }
+
+    const CombatPresentation& Game::combatPresentation() const noexcept
+    {
+        return m_combatPresentation;
     }
 
     int Game::windowWidth() const noexcept
