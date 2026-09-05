@@ -104,27 +104,38 @@ namespace dungeon
     {
         ClearBackground(RAYWHITE);
 
-        drawMainScreenLayout();
-        drawMap(game);
+        if (game.inCombat())
+        {
+            drawCombatScreenLayout();
+        }
+        else
+        {
+            drawMainScreenLayout();
+        }
 
         // ---------------------------------------------------------------------
-        // Temporary fallback slots
-        //
-        // These remain underneath the PNG assets so that the established
-        // positions are still visible whenever an asset is missing.
-        // ---------------------------------------------------------------------
-
-        drawStatSlots();
-        drawGearSlots();
-
-        // ---------------------------------------------------------------------
-        // PNG assets
+        // Shared top/right-side elements
         // ---------------------------------------------------------------------
 
         drawTitleAssets();
         drawStatAssets(game);
         drawGearAssets(game);
-        drawActionBar();
+
+        // ---------------------------------------------------------------------
+        // Screen-specific elements
+        // ---------------------------------------------------------------------
+
+        if (game.inCombat())
+        {
+            drawCombatActionBar();
+        }
+        else
+        {
+            drawMap(game);
+            drawStatSlots();
+            drawGearSlots();
+            drawActionBar();
+        }
     }
 
     void Renderer::drawFallbackText(
@@ -359,6 +370,299 @@ namespace dungeon
             1.0f,
             DARKGRAY);
     }
+
+    void Renderer::drawCombatScreenLayout() const
+    {
+        // ---------------------------------------------------------------------
+        // Combat Screen
+        //
+        // The Title Art, Player Stats Title, Player Stats Window, Gear Title,
+        // Gear Window and POV area retain their established positions.
+        //
+        // The Main Screen Map area is replaced by the combat-specific windows.
+        // ---------------------------------------------------------------------
+
+        // ---------------------------------------------------------------------
+        // Enemy Stats Title
+        // ---------------------------------------------------------------------
+
+        const Rectangle enemyStatsTitle =
+            toRaylibRectangle(
+                0,
+                620,
+                230,
+                50);
+
+        DrawRectangleRec(
+            enemyStatsTitle,
+            LIGHTGRAY);
+
+        DrawRectangleLinesEx(
+            enemyStatsTitle,
+            1.0f,
+            DARKGRAY);
+
+        drawFallbackText(
+            "Enemy Stats",
+            0,
+            620,
+            230,
+            50,
+            20);
+
+        // ---------------------------------------------------------------------
+        // Enemy Stats Window
+        // ---------------------------------------------------------------------
+
+        const Rectangle enemyStatsWindow =
+            toRaylibRectangle(
+                0,
+                260,
+                230,
+                360);
+
+        DrawRectangleRec(
+            enemyStatsWindow,
+            RAYWHITE);
+
+        DrawRectangleLinesEx(
+            enemyStatsWindow,
+            1.0f,
+            DARKGRAY);
+
+        drawFallbackText(
+            "Enemy Stats Window",
+            0,
+            260 + 145,
+            230,
+            70,
+            18);
+
+        // ---------------------------------------------------------------------
+        // Dice Roll Title
+        // ---------------------------------------------------------------------
+
+        const Rectangle diceRollTitle =
+            toRaylibRectangle(
+                230,
+                620,
+                240,
+                50);
+
+        DrawRectangleRec(
+            diceRollTitle,
+            LIGHTGRAY);
+
+        DrawRectangleLinesEx(
+            diceRollTitle,
+            1.0f,
+            DARKGRAY);
+
+        drawFallbackText(
+            "Dice Roll",
+            230,
+            620,
+            240,
+            50,
+            20);
+
+        // ---------------------------------------------------------------------
+        // Dice Roll Window
+        // ---------------------------------------------------------------------
+
+        const Rectangle diceRollWindow =
+            toRaylibRectangle(
+                230,
+                260,
+                240,
+                360);
+
+        DrawRectangleRec(
+            diceRollWindow,
+            RAYWHITE);
+
+        DrawRectangleLinesEx(
+            diceRollWindow,
+            1.0f,
+            DARKGRAY);
+
+        drawFallbackText(
+            "Dice Roll Window",
+            230,
+            260 + 145,
+            240,
+            70,
+            18);
+
+        // ---------------------------------------------------------------------
+        // Combat Info Title
+        // ---------------------------------------------------------------------
+
+        const Rectangle combatInfoTitle =
+            toRaylibRectangle(
+                230,
+                360,
+                240,
+                50);
+
+        DrawRectangleRec(
+            combatInfoTitle,
+            LIGHTGRAY);
+
+        DrawRectangleLinesEx(
+            combatInfoTitle,
+            1.0f,
+            DARKGRAY);
+
+        drawFallbackText(
+            "Combat Info",
+            230,
+            360,
+            240,
+            50,
+            18);
+
+        // ---------------------------------------------------------------------
+        // Combat Info Window
+        // ---------------------------------------------------------------------
+
+        const Rectangle combatInfoWindow =
+            toRaylibRectangle(
+                230,
+                260,
+                240,
+                100);
+
+        DrawRectangleRec(
+            combatInfoWindow,
+            RAYWHITE);
+
+        DrawRectangleLinesEx(
+            combatInfoWindow,
+            1.0f,
+            DARKGRAY);
+
+        drawFallbackText(
+            "Combat Info Window",
+            230,
+            260,
+            240,
+            100,
+            16);
+
+        // ---------------------------------------------------------------------
+        // Loot Title
+        // ---------------------------------------------------------------------
+
+        const Rectangle lootTitle =
+            toRaylibRectangle(
+                0,
+                200,
+                104,
+                60);
+
+        DrawRectangleRec(
+            lootTitle,
+            LIGHTGRAY);
+
+        DrawRectangleLinesEx(
+            lootTitle,
+            1.0f,
+            DARKGRAY);
+
+        drawFallbackText(
+            "Loot",
+            0,
+            200,
+            104,
+            60,
+            18);
+
+        // ---------------------------------------------------------------------
+        // Loot Table Window
+        // ---------------------------------------------------------------------
+
+        const Rectangle lootTableWindow =
+            toRaylibRectangle(
+                104,
+                200,
+                336,
+                60);
+
+        DrawRectangleRec(
+            lootTableWindow,
+            RAYWHITE);
+
+        DrawRectangleLinesEx(
+            lootTableWindow,
+            1.0f,
+            DARKGRAY);
+
+        // ---------------------------------------------------------------------
+        // Loot Icons
+        //
+        // Exact 48x48 slots.
+        // Exact 21 px spacing.
+        // 6 px top/bottom.
+        //
+        // Actual loot content will be implemented later.
+        // ---------------------------------------------------------------------
+
+        constexpr int LootIconSize = 48;
+        constexpr int LootIconY = 206;
+
+        constexpr int LootIcon1X = 125;
+        constexpr int LootIcon2X = 194;
+        constexpr int LootIcon3X = 263;
+        constexpr int LootIcon4X = 332;
+        constexpr int LootIcon5X = 401;
+
+        const int lootIconXs[] =
+        {
+            LootIcon1X,
+            LootIcon2X,
+            LootIcon3X,
+            LootIcon4X,
+            LootIcon5X
+        };
+
+        for (const int x : lootIconXs)
+        {
+            DrawRectangleLinesEx(
+                toRaylibRectangle(
+                    x,
+                    LootIconY,
+                    LootIconSize,
+                    LootIconSize),
+                1.0f,
+                GRAY);
+        }
+
+        // ---------------------------------------------------------------------
+        // POV / Combat Instructions area
+        //
+        // This remains exactly 580x470.
+        // Tab switching to Combat Instructions will be added to the existing
+        // Renderer instruction-state handling.
+        // ---------------------------------------------------------------------
+
+        const Rectangle povRender =
+            toRaylibRectangle(
+                PovRenderX,
+                PovRenderY,
+                PovRenderWidth,
+                PovRenderHeight);
+
+        DrawRectangleRec(
+            povRender,
+            RAYWHITE);
+
+        DrawRectangleLinesEx(
+            povRender,
+            1.0f,
+            DARKGRAY);
+    }
+
 
     void Renderer::drawStatSlots() const
     {
@@ -1388,6 +1692,65 @@ namespace dungeon
             ActionBarWidth,
             35,
             16);
+    }
+
+
+    void Renderer::drawCombatActionBar() const
+    {
+        const Rectangle actionBar =
+            toRaylibRectangle(
+                ActionBarX,
+                ActionBarY,
+                ActionBarWidth,
+                ActionBarHeight);
+
+        // ---------------------------------------------------------------------
+        // Temporary fallback.
+        //
+        // The actual combat_action_bar.png and inventory_action_bar.png will
+        // replace this later.
+        // ---------------------------------------------------------------------
+
+        DrawRectangleRec(
+            actionBar,
+            LIGHTGRAY);
+
+        DrawRectangleLinesEx(
+            actionBar,
+            1.0f,
+            DARKGRAY);
+
+        drawFallbackText(
+            "COMBAT ACTION BAR",
+            ActionBarX,
+            ActionBarY + 125,
+            ActionBarWidth,
+            40,
+            24);
+
+        drawFallbackText(
+            "Attack",
+            ActionBarX + 50,
+            ActionBarY + 65,
+            200,
+            40,
+            18);
+
+        drawFallbackText(
+            "Inventory",
+            ActionBarX + 275,
+            ActionBarY + 65,
+            200,
+            40,
+            18);
+
+        drawFallbackText(
+            "Escape",
+            ActionBarX + 500,
+            ActionBarY + 65,
+            200,
+            40,
+            18);
     }
 
     void Renderer::drawMap(const Game& game) const

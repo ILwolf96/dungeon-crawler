@@ -19,7 +19,7 @@ namespace dungeon
 
         void toggleGameInstructions() noexcept;
 
-    private:
+    private: //--------------------------------------------------------------------------------Private Starts HERE!
         // ---------------------------------------------------------------------
         // Main Screen design resolution
         // ---------------------------------------------------------------------
@@ -166,10 +166,12 @@ namespace dungeon
             int height) noexcept;
 
         // ---------------------------------------------------------------------
-        // Main Screen rendering
+        // Travarsal/ Combat Screen rendering
         // ---------------------------------------------------------------------
 
         void drawMainScreenLayout() const;
+        void drawCombatScreenLayout() const;
+
         void drawMap(const Game& game) const;
         void drawStatSlots() const;
         void drawGearSlots() const;
@@ -177,7 +179,9 @@ namespace dungeon
         void drawTitleAssets() const;
         void drawStatAssets(const Game& game) const;
         void drawGearAssets(const Game& game) const;
+
         void drawActionBar() const;
+        void drawCombatActionBar() const;
 
         bool m_gameInstructionsOpen{ false };
 
