@@ -128,6 +128,24 @@ namespace dungeon
         static constexpr int StatHpY = 333;
 
         // ---------------------------------------------------------------------
+        // Enemy Statistics PNG slots
+        //
+        // Same geometry as Player Stats, but relative to the Enemy Stats
+        // Window at X = 0, Y = 260.
+        // ---------------------------------------------------------------------
+
+        static constexpr int EnemyStatIconX = 70;
+        static constexpr int EnemyStatNumberX = 128;
+
+        static constexpr int EnemyStatAtkY = 565;
+        static constexpr int EnemyStatStrY = 518;
+        static constexpr int EnemyStatPrecY = 471;
+        static constexpr int EnemyStatDmgY = 424;
+        static constexpr int EnemyStatDefY = 377;
+        static constexpr int EnemyStatToughY = 330;
+        static constexpr int EnemyStatHpY = 283;
+
+        // ---------------------------------------------------------------------
         // Gear PNG slots
         // ---------------------------------------------------------------------
 
@@ -175,6 +193,7 @@ namespace dungeon
         void drawMap(const Game& game) const;
         void drawStatSlots() const;
         void drawGearSlots() const;
+        void drawEnemyStatSlots() const;
 
         void drawTitleAssets() const;
         void drawStatAssets(const Game& game) const;
