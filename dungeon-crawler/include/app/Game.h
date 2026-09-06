@@ -9,6 +9,8 @@
 #include "combat/Combat.h"
 #include "combat/RandomDice.h"
 #include "config/ConfigData.h"
+#include "loot/LootReward.h"
+
 
 #include <memory>
 #include <string>
@@ -79,6 +81,9 @@ namespace dungeon
         [[nodiscard]]
         const CombatPresentation& combatPresentation() const noexcept;
 
+        [[nodiscard]]
+        const std::vector<LootReward>& combatLootPreview() const noexcept;
+
     private:
         Map m_map;
         Player m_player;
@@ -93,19 +98,37 @@ namespace dungeon
 
         std::vector<std::unique_ptr<Enemy>> m_enemies;
         std::vector<std::unique_ptr<Chest>> m_chests;
+        std::vector<LootReward> m_combatLootPreview;
 
         std::unique_ptr<Combat> m_combat;
         CombatPresentation m_combatPresentation;
 
+        enum class CombatPresentationActor
+        {
+            None,
+            Player,
+            Enemy
+        };
+
         int m_displayedPlayerHp{ 0 };
         int m_displayedCombatTargetHp{ 0 };
-        bool m_pendingPlayerHpSync{ false };
+        CombatPresentationActor m_combatPresentationActor{
+            CombatPresentationActor::None
+        };
 
+        std::size_t m_lastPresentedDamageAttackIndex{
+         static_cast<std::size_t>(-1)
+        };
+
+        CombatPresentation::RollType m_lastPresentedDamageRollType{
+            CombatPresentation::RollType::None
+        };
 
         RandomDice m_combatDice;
         bool m_inventoryOpen{ false };
         bool m_pendingEnemyTurn{ false };
         bool m_pendingCombatFinish{ false };
+
 
         bool useHealthPotion();
         bool useRagePotion();

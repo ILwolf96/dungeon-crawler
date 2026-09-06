@@ -17,6 +17,8 @@
 #include <tuple>
 #include <unordered_map>
 #include <utility>
+#include <algorithm>
+
 
 namespace
 {
@@ -350,7 +352,9 @@ namespace dungeon
             m_player.currentHp();
 
         m_displayedCombatTargetHp = 0;
-        m_pendingPlayerHpSync = false;
+
+        m_combatPresentationActor =
+            CombatPresentationActor::None;
 
         m_windowWidth = windowWidth;
         m_windowHeight = windowHeight;
@@ -368,12 +372,75 @@ namespace dungeon
         const bool presentationCompleted =
             m_combatPresentation.update(deltaSeconds);
 
-        if (!presentationCompleted)
+        // -------------------------------------------------------------------------
+        // A Result phase means the actual combat result has reached the point
+        // where its damage should now become visible in the HUD.
+        //
+        // The actual HP was already modified by Combat::resolveAttack().
+        // Here we reveal that damage in the presentation state.
+        // -------------------------------------------------------------------------
+        if (m_combatPresentation.phase() ==
+            CombatPresentation::Phase::Result)
         {
-            return;
+            const AttackResult* result =
+                m_combatPresentation.currentAttack();
+
+            if (result != nullptr &&
+                result->damage > 0)
+            {
+                const auto rollType =
+                    m_combatPresentation.rollType();
+
+                const bool damageStep =
+                    rollType ==
+                    CombatPresentation::RollType::Defense
+                    ||
+                    (rollType ==
+                        CombatPresentation::RollType::Wound &&
+                        result->defenseRoll == 0);
+
+                if (damageStep)
+                {
+                    const std::size_t attackIndex =
+                        m_combatPresentation.currentAttackIndex();
+
+                    if (attackIndex != m_lastPresentedDamageAttackIndex ||
+                        rollType != m_lastPresentedDamageRollType)
+                    {
+                        if (m_combatPresentationActor ==
+                            CombatPresentationActor::Player)
+                        {
+                            m_displayedCombatTargetHp =
+                                std::max(
+                                    0,
+                                    m_displayedCombatTargetHp -
+                                    result->damage);
+                        }
+                        else if (
+                            m_combatPresentationActor ==
+                            CombatPresentationActor::Enemy)
+                        {
+                            m_displayedPlayerHp =
+                                std::max(
+                                    0,
+                                    m_displayedPlayerHp -
+                                    result->damage);
+                        }
+
+                        m_lastPresentedDamageAttackIndex =
+                            attackIndex;
+
+                        m_lastPresentedDamageRollType =
+                            rollType;
+                    }
+                }
+            }
         }
 
-        advanceCombatPresentation();
+        if (presentationCompleted)
+        {
+            advanceCombatPresentation();
+        }
     }
 
     void Game::advanceCombatPresentation()
@@ -384,17 +451,10 @@ namespace dungeon
         }
 
         // -------------------------------------------------------------------------
-        // Player presentation has finished.
-        //
-        // The actual target HP was already changed by Combat::playerAttack().
-        // Commit that new target HP to the HUD now, after every player dice roll
-        // and result has been presented.
+        // Player attack presentation has finished.
         // -------------------------------------------------------------------------
         if (m_pendingEnemyTurn)
         {
-            m_displayedCombatTargetHp =
-                m_combat->target().currentHp();
-
             m_pendingEnemyTurn = false;
 
             std::clog
@@ -411,14 +471,35 @@ namespace dungeon
             m_pendingCombatFinish =
                 !m_combat->isActive();
 
-            m_pendingPlayerHpSync = true;
-
             const std::string enemyName =
                 std::string(
                     m_combat->target().targetType());
 
             const auto& attackResults =
                 m_combat->lastEnemyAttacks();
+
+            if (attackResults.empty())
+            {
+                m_combatPresentationActor =
+                    CombatPresentationActor::None;
+
+                if (m_pendingCombatFinish)
+                {
+                    m_pendingCombatFinish = false;
+                    finishCombatIfNeeded();
+                }
+
+                return;
+            }
+
+            m_combatPresentationActor =
+                CombatPresentationActor::Enemy;
+
+            m_lastPresentedDamageAttackIndex =
+                static_cast<std::size_t>(-1);
+
+            m_lastPresentedDamageRollType =
+                CombatPresentation::RollType::None;
 
             m_combatPresentation.start(
                 enemyName,
@@ -432,49 +513,25 @@ namespace dungeon
         }
 
         // -------------------------------------------------------------------------
-        // Enemy presentation has finished.
-        //
-        // Commit the player's actual HP only now, after the enemy's complete dice
-        // presentation has finished.
-        // -------------------------------------------------------------------------
-        if (m_pendingPlayerHpSync)
-        {
-            m_pendingPlayerHpSync = false;
-
-            m_displayedPlayerHp =
-                m_player.currentHp();
-
-            if (m_pendingCombatFinish)
-            {
-                m_displayedCombatTargetHp =
-                    m_combat->target().currentHp();
-
-                m_pendingCombatFinish = false;
-
-                finishCombatIfNeeded();
-            }
-
-            return;
-        }
-
-        // -------------------------------------------------------------------------
-        // Player attack ended combat immediately.
-        //
-        // There was no enemy turn, so commit the final HP values before the combat
-        // object is destroyed.
+        // Combat has finished.
         // -------------------------------------------------------------------------
         if (m_pendingCombatFinish)
         {
             m_pendingCombatFinish = false;
 
-            m_displayedPlayerHp =
-                m_player.currentHp();
-
-            m_displayedCombatTargetHp =
-                m_combat->target().currentHp();
+            m_combatPresentationActor =
+                CombatPresentationActor::None;
 
             finishCombatIfNeeded();
+
+            return;
         }
+
+        // -------------------------------------------------------------------------
+        // Enemy presentation finished and combat continues.
+        // -------------------------------------------------------------------------
+        m_combatPresentationActor =
+            CombatPresentationActor::None;
     }
 
     void Game::handleAction(Action action)
@@ -658,7 +715,7 @@ namespace dungeon
         m_displayedCombatTargetHp =
             target.currentHp();
 
-        m_pendingPlayerHpSync = false;
+        //m_pendingPlayerHpSync = false;
     }
 
     CombatTarget* Game::combatTargetAt(int x, int y) noexcept
@@ -712,9 +769,19 @@ namespace dungeon
         m_pendingCombatFinish =
             !m_combat->isActive();
 
+        m_combatPresentationActor =
+            CombatPresentationActor::Player;
+
+        m_lastPresentedDamageAttackIndex =
+            static_cast<std::size_t>(-1);
+
+        m_lastPresentedDamageRollType =
+            CombatPresentation::RollType::None;
+
         m_combatPresentation.start(
             "Player",
-            std::string(m_combat->target().targetType()),
+            std::string(
+                m_combat->target().targetType()),
             "Player\nSelected Attack",
             std::vector<AttackResult>(
                 attackResults.begin(),
@@ -824,6 +891,8 @@ namespace dungeon
         const int hpBefore = m_player.currentHp();
 
         m_player.heal(HealAmount);
+        m_displayedPlayerHp =
+            m_player.currentHp();
 
         const int hpAfter = m_player.currentHp();
 
