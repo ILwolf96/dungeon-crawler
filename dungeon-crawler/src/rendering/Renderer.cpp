@@ -332,19 +332,24 @@ namespace dungeon
         // DO NOT FORGET IT!
         // -------------------------------------------------------------------------
 
+
         const int blockBottomY =
-            y + (height - totalHeight) / 2;
+            y +
+            (height - totalHeight) / 2;
 
         const int firstLineY =
             blockBottomY +
             static_cast<int>(lines.size() - 1) *
-            actualLineSpacing;
+            lineSpacing;
+
+        int currentY =
+            firstLineY;
 
         // -------------------------------------------------------------------------
         // Draw each line centered horizontally.
         // -------------------------------------------------------------------------
 
-        int currentY = firstLineY;
+        //int currentY = firstLineY;
 
         for (const std::string& line : lines)
         {
@@ -2029,27 +2034,49 @@ namespace dungeon
             DiceWindowY +
             175;
 
-        // ---------------------------------------------------------------------
+        // -------------------------------------------------------------------------
         // Idle
-        // ---------------------------------------------------------------------
+        // -------------------------------------------------------------------------
 
         if (!presentation.active())
         {
             drawWrappedFallbackText(
-                "Waiting for Dice Action",
+                "Waiting for\nDice Action",
                 DiceWindowX,
-                DiceWindowY,
+                dieY,
                 DiceWindowWidth,
-                DiceWindowHeight,
+                DieSize,
                 22,
                 28);
 
             return;
         }
 
-        // ---------------------------------------------------------------------
+        // -------------------------------------------------------------------------
+        // Information
+        //
+        // The player has selected an action, but the dice have not started rolling
+        // yet. Keep the Combat Info message separate from this Dice Roll message.
+        // -------------------------------------------------------------------------
+
+        if (presentation.phase() ==
+            CombatPresentation::Phase::Information)
+        {
+            drawWrappedFallbackText(
+                "Preparing to\nRoll Dice",
+                DiceWindowX,
+                dieY,
+                DiceWindowWidth,
+                DieSize,
+                22,
+                28);
+
+            return;
+        }
+
+        // -------------------------------------------------------------------------
         // Rolling
-        // ---------------------------------------------------------------------
+        // -------------------------------------------------------------------------
 
         if (presentation.phase() ==
             CombatPresentation::Phase::Rolling)
@@ -2071,9 +2098,9 @@ namespace dungeon
             return;
         }
 
-        // ---------------------------------------------------------------------
+        // -------------------------------------------------------------------------
         // Result
-        // ---------------------------------------------------------------------
+        // -------------------------------------------------------------------------
 
         if (presentation.phase() ==
             CombatPresentation::Phase::Result)
