@@ -193,7 +193,7 @@ namespace dungeon
         void drawMap(const Game& game) const;
         void drawStatSlots() const;
         void drawGearSlots() const;
-        void drawEnemyStatSlots() const;
+        void drawEnemyStatSlots(const Game& game) const;
 
         void drawTitleAssets() const;
         void drawStatAssets(const Game& game) const;

@@ -3,6 +3,8 @@
 
 #include "raylib.h"
 
+
+#include "combat/Combat.h"
 #include "entities/Chest.h"
 #include "entities/Dragon.h"
 #include "entities/Goblin.h"
@@ -409,7 +411,7 @@ namespace dungeon
 
         if (game.inCombat())
         {
-            drawEnemyStatSlots();
+            drawEnemyStatSlots(game);
             drawDiceRoll(game);
             drawCombatInfo(game);
             drawCombatActionBar();
@@ -1119,7 +1121,8 @@ namespace dungeon
     // Enemy Stats Slot Fallback
     // =========================================================================
 
-    void Renderer::drawEnemyStatSlots() const
+    void Renderer::drawEnemyStatSlots(
+        const Game& game) const
     {
         const int iconX =
             EnemyStatIconX;
@@ -1131,17 +1134,103 @@ namespace dungeon
         {
             const char* label;
             int y;
+            int value;
         };
 
-        constexpr EnemyStatSlot slots[] =
+        // -------------------------------------------------------------------------
+        // No active combat target.
+        // -------------------------------------------------------------------------
+
+        const Combat* combat =
+            game.combat();
+
+        if (combat == nullptr)
         {
-            { "ATK", EnemyStatAtkY },
-            { "STR", EnemyStatStrY },
-            { "PRE", EnemyStatPrecY },
-            { "DMG", EnemyStatDmgY },
-            { "DEF", EnemyStatDefY },
-            { "TGH", EnemyStatToughY },
-            { "HP",  EnemyStatHpY }
+            constexpr EnemyStatSlot emptySlots[] =
+            {
+                { "ATK", EnemyStatAtkY, 0 },
+                { "STR", EnemyStatStrY, 0 },
+                { "PRE", EnemyStatPrecY, 0 },
+                { "DMG", EnemyStatDmgY, 0 },
+                { "DEF", EnemyStatDefY, 0 },
+                { "TGH", EnemyStatToughY, 0 },
+                { "HP",  EnemyStatHpY, 0 }
+            };
+
+            for (const EnemyStatSlot& slot : emptySlots)
+            {
+                DrawRectangleLinesEx(
+                    toRaylibRectangle(
+                        iconX,
+                        slot.y,
+                        StatIconSize,
+                        StatIconSize),
+                    1.0f,
+                    GRAY);
+
+                DrawRectangleLinesEx(
+                    toRaylibRectangle(
+                        numberX,
+                        slot.y,
+                        StatNumberSize,
+                        StatNumberSize),
+                    1.0f,
+                    GRAY);
+
+                drawFallbackText(
+                    slot.label,
+                    iconX,
+                    slot.y,
+                    StatIconSize,
+                    StatIconSize,
+                    10);
+
+                drawFallbackText(
+                    "--",
+                    numberX,
+                    slot.y,
+                    StatNumberSize,
+                    StatNumberSize,
+                    12);
+            }
+
+            return;
+        }
+
+        // -------------------------------------------------------------------------
+        // Active combat target.
+        // -------------------------------------------------------------------------
+
+        const CombatTarget& target =
+            combat->target();
+
+        const CombatStats stats =
+            target.combatStats();
+
+        // The current combat system uses 1 damage per enemy attack.
+        // A target with zero attacks cannot damage the player.
+        const int damage =
+            stats.attacks > 0
+            ? 1
+            : 0;
+
+        /*
+        const int hp =
+            target.currentHp();
+        */
+        const int hp =
+            game.displayedCombatTargetHp();
+
+
+        const EnemyStatSlot slots[] =
+        {
+            { "ATK", EnemyStatAtkY,   stats.attacks },
+            { "STR", EnemyStatStrY,   stats.strength },
+            { "PRE", EnemyStatPrecY,  stats.precision },
+            { "DMG", EnemyStatDmgY,   damage },
+            { "DEF", EnemyStatDefY,   stats.defense },
+            { "TGH", EnemyStatToughY, stats.toughness },
+            { "HP",  EnemyStatHpY,    hp }
         };
 
         for (const EnemyStatSlot& slot : slots)
@@ -1172,13 +1261,29 @@ namespace dungeon
                 StatIconSize,
                 10);
 
-            drawFallbackText(
-                "--",
-                numberX,
-                slot.y,
-                StatNumberSize,
-                StatNumberSize,
-                12);
+            const Texture2D& numberTexture =
+                m_mainScreenAssets.number(
+                    slot.value);
+
+            if (numberTexture.id != 0)
+            {
+                drawTexture(
+                    numberTexture,
+                    numberX,
+                    slot.y,
+                    StatNumberSize,
+                    StatNumberSize);
+            }
+            else
+            {
+                drawFallbackText(
+                    std::to_string(slot.value),
+                    numberX,
+                    slot.y,
+                    StatNumberSize,
+                    StatNumberSize,
+                    18);
+            }
         }
     }
 
@@ -1304,9 +1409,13 @@ namespace dungeon
 
         const int toughness =
             stats.toughness;
-
+        /*
         const int hp =
             game.player().currentHp();
+        */
+
+        const int hp =
+            game.displayedPlayerHp();
 
         // ---------------------------------------------------------------------
         // ATK

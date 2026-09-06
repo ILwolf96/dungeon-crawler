@@ -45,6 +45,10 @@ namespace dungeon
 
         void startCombat(CombatTarget& target);
 
+        int displayedPlayerHp() const noexcept;
+        int displayedCombatTargetHp() const noexcept;
+
+
         [[nodiscard]]
         int windowWidth() const noexcept;
 
@@ -92,6 +96,12 @@ namespace dungeon
 
         std::unique_ptr<Combat> m_combat;
         CombatPresentation m_combatPresentation;
+
+        int m_displayedPlayerHp{ 0 };
+        int m_displayedCombatTargetHp{ 0 };
+        bool m_pendingPlayerHpSync{ false };
+
+
         RandomDice m_combatDice;
         bool m_inventoryOpen{ false };
         bool m_pendingEnemyTurn{ false };

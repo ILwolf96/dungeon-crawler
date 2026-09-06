@@ -103,6 +103,8 @@ namespace
 
         return symbol.front();
     }
+
+
 }
 
 namespace dungeon
@@ -344,6 +346,12 @@ namespace dungeon
             std::move(playerWeapon),
             std::move(playerArmor));
 
+        m_displayedPlayerHp =
+            m_player.currentHp();
+
+        m_displayedCombatTargetHp = 0;
+        m_pendingPlayerHpSync = false;
+
         m_windowWidth = windowWidth;
         m_windowHeight = windowHeight;
         m_title = title;
@@ -375,13 +383,18 @@ namespace dungeon
             return;
         }
 
-        // ---------------------------------------------------------------------
-        // Player presentation finished.
-        // Continues with the enemy turn.
-        // ---------------------------------------------------------------------
-
+        // -------------------------------------------------------------------------
+        // Player presentation has finished.
+        //
+        // The actual target HP was already changed by Combat::playerAttack().
+        // Commit that new target HP to the HUD now, after every player dice roll
+        // and result has been presented.
+        // -------------------------------------------------------------------------
         if (m_pendingEnemyTurn)
         {
+            m_displayedCombatTargetHp =
+                m_combat->target().currentHp();
+
             m_pendingEnemyTurn = false;
 
             std::clog
@@ -398,8 +411,11 @@ namespace dungeon
             m_pendingCombatFinish =
                 !m_combat->isActive();
 
+            m_pendingPlayerHpSync = true;
+
             const std::string enemyName =
-                std::string(m_combat->target().targetType());
+                std::string(
+                    m_combat->target().targetType());
 
             const auto& attackResults =
                 m_combat->lastEnemyAttacks();
@@ -415,14 +431,47 @@ namespace dungeon
             return;
         }
 
-        // ---------------------------------------------------------------------
-        // No enemy turn remains.
-        // The combat itself has ended, so finish it now.
-        // ---------------------------------------------------------------------
+        // -------------------------------------------------------------------------
+        // Enemy presentation has finished.
+        //
+        // Commit the player's actual HP only now, after the enemy's complete dice
+        // presentation has finished.
+        // -------------------------------------------------------------------------
+        if (m_pendingPlayerHpSync)
+        {
+            m_pendingPlayerHpSync = false;
 
+            m_displayedPlayerHp =
+                m_player.currentHp();
+
+            if (m_pendingCombatFinish)
+            {
+                m_displayedCombatTargetHp =
+                    m_combat->target().currentHp();
+
+                m_pendingCombatFinish = false;
+
+                finishCombatIfNeeded();
+            }
+
+            return;
+        }
+
+        // -------------------------------------------------------------------------
+        // Player attack ended combat immediately.
+        //
+        // There was no enemy turn, so commit the final HP values before the combat
+        // object is destroyed.
+        // -------------------------------------------------------------------------
         if (m_pendingCombatFinish)
         {
             m_pendingCombatFinish = false;
+
+            m_displayedPlayerHp =
+                m_player.currentHp();
+
+            m_displayedCombatTargetHp =
+                m_combat->target().currentHp();
 
             finishCombatIfNeeded();
         }
@@ -602,6 +651,14 @@ namespace dungeon
             m_player,
             target,
             m_combatDice);
+
+        m_displayedPlayerHp =
+            m_player.currentHp();
+
+        m_displayedCombatTargetHp =
+            target.currentHp();
+
+        m_pendingPlayerHpSync = false;
     }
 
     CombatTarget* Game::combatTargetAt(int x, int y) noexcept
@@ -960,4 +1017,25 @@ namespace dungeon
     {
         return m_chests;
     }
+
+    int Game::displayedPlayerHp() const noexcept
+    {
+        if (!m_combat)
+        {
+            return m_player.currentHp();
+        }
+
+        return m_displayedPlayerHp;
+    }
+
+    int Game::displayedCombatTargetHp() const noexcept
+    {
+        if (!m_combat)
+        {
+            return 0;
+        }
+
+        return m_displayedCombatTargetHp;
+    }
+
 }
