@@ -9,6 +9,7 @@
 #include "entities/Orc.h"
 #include "entities/Skeleton.h"
 #include "entities/Troll.h"
+
 #include "inventory/HealthPotion.h"
 #include "inventory/RagePotion.h"
 
@@ -34,6 +35,10 @@ namespace dungeon
         }
     }
 
+    // =========================================================================
+    // Coordinate Conversion
+    // =========================================================================
+
     int Renderer::toRaylibY(
         int bottomLeftY,
         int height) noexcept
@@ -49,21 +54,37 @@ namespace dungeon
     {
         return Rectangle{
             static_cast<float>(x),
-            static_cast<float>(toRaylibY(y, height)),
+            static_cast<float>(
+                toRaylibY(
+                    y,
+                    height)),
             static_cast<float>(width),
             static_cast<float>(height)
         };
     }
+
+    // =========================================================================
+    // Asset Loading
+    // =========================================================================
 
     bool Renderer::loadMainScreenAssets()
     {
         return m_mainScreenAssets.load();
     }
 
+    // =========================================================================
+    // Instructions Toggle
+    // =========================================================================
+
     void Renderer::toggleGameInstructions() noexcept
     {
-        m_gameInstructionsOpen = !m_gameInstructionsOpen;
+        m_gameInstructionsOpen =
+            !m_gameInstructionsOpen;
     }
+
+    // =========================================================================
+    // Basic Texture Rendering
+    // =========================================================================
 
     void Renderer::drawTexture(
         const Texture2D& texture,
@@ -100,52 +121,9 @@ namespace dungeon
             WHITE);
     }
 
-
-    void Renderer::draw(const Game& game) const
-    {
-        ClearBackground(RAYWHITE);
-
-        if (game.inCombat())
-        {
-            drawCombatScreenLayout();
-        }
-        else
-        {
-            drawMainScreenLayout();
-        }
-
-        // ---------------------------------------------------------------------
-        // Shared Player HUD
-        //
-        // The Player Stats and Player Gear remain visible on both screens.
-        // ---------------------------------------------------------------------
-
-        drawStatSlots();
-        drawGearSlots();
-
-        drawTitleAssets();
-        drawStatAssets(game);
-        drawGearAssets(game);
-
-        // ---------------------------------------------------------------------
-        // Screen-specific rendering
-        // ---------------------------------------------------------------------
-
-        if (game.inCombat())
-        {
-            drawEnemyStatSlots();
-            drawDiceRoll(game);
-            drawCombatInfo(game);
-            drawCombatActionBar();
-        }
-        else
-        {
-            drawMap(game);
-            drawStatSlots();
-            drawGearSlots();
-            drawActionBar();
-        }
-    }
+    // =========================================================================
+    // Fallback Text
+    // =========================================================================
 
     void Renderer::drawFallbackText(
         std::string_view text,
@@ -173,10 +151,12 @@ namespace dungeon
                 height);
 
         const int textX =
-            x + (width - textWidth) / 2;
+            x +
+            (width - textWidth) / 2;
 
         const int textY =
-            raylibY + (height - fontSize) / 2;
+            raylibY +
+            (height - fontSize) / 2;
 
         DrawText(
             value.c_str(),
@@ -186,28 +166,284 @@ namespace dungeon
             BLACK);
     }
 
+    // =========================================================================
+    // Wrapped Fallback Text
+    //
+    // Supports:
+    //   - explicit '\n' line breaks
+    //   - automatic word wrapping
+    //   - horizontal centering
+    //   - vertical centering of the COMPLETE text block
+    //
+    // Designed for small UI panels such as Combat Info.
+    // =========================================================================
 
+    void Renderer::drawWrappedFallbackText(
+        std::string_view text,
+        int x,
+        int y,
+        int width,
+        int height,
+        int fontSize,
+        int lineSpacing) const
+    {
+        if (text.empty())
+        {
+            return;
+        }
+
+        const std::string value(text);
+
+        constexpr int HorizontalPadding = 12;
+
+        const int maxTextWidth =
+            width - (HorizontalPadding * 2);
+
+        if (maxTextWidth <= 0 || height <= 0)
+        {
+            return;
+        }
+
+        // -------------------------------------------------------------------------
+        // Build wrapped lines while preserving explicit '\n' line breaks.
+        // -------------------------------------------------------------------------
+
+        std::vector<std::string> lines;
+        std::string currentLine;
+
+        auto pushCurrentLine =
+            [&]()
+            {
+                if (!currentLine.empty())
+                {
+                    lines.push_back(currentLine);
+                    currentLine.clear();
+                }
+            };
+
+        std::size_t start = 0;
+
+        while (start <= value.size())
+        {
+            const std::size_t newline =
+                value.find('\n', start);
+
+            const std::size_t sectionEnd =
+                newline == std::string::npos
+                ? value.size()
+                : newline;
+
+            std::size_t wordStart = start;
+
+            while (wordStart < sectionEnd)
+            {
+                std::size_t wordEnd =
+                    value.find(' ', wordStart);
+
+                if (wordEnd == std::string::npos ||
+                    wordEnd > sectionEnd)
+                {
+                    wordEnd = sectionEnd;
+                }
+
+                const std::string word =
+                    value.substr(
+                        wordStart,
+                        wordEnd - wordStart);
+
+                if (!word.empty())
+                {
+                    const std::string candidate =
+                        currentLine.empty()
+                        ? word
+                        : currentLine + " " + word;
+
+                    if (MeasureText(
+                        candidate.c_str(),
+                        fontSize) <= maxTextWidth)
+                    {
+                        currentLine = candidate;
+                    }
+                    else
+                    {
+                        pushCurrentLine();
+
+                        currentLine = word;
+                    }
+                }
+
+                if (wordEnd >= sectionEnd)
+                {
+                    break;
+                }
+
+                wordStart = wordEnd + 1;
+            }
+
+            // Explicit newline.
+            pushCurrentLine();
+
+            if (newline == std::string::npos)
+            {
+                break;
+            }
+
+            start = newline + 1;
+        }
+
+        if (lines.empty())
+        {
+            return;
+        }
+
+        // -------------------------------------------------------------------------
+        // Make sure line spacing is always large enough for the font.
+        //
+        // We want the lines to be visually separated, not overlapping.
+        // -------------------------------------------------------------------------
+
+        const int actualLineSpacing =
+            (lineSpacing < fontSize + 2)
+            ? fontSize + 2
+            : lineSpacing;
+
+        // -------------------------------------------------------------------------
+        // Calculate the COMPLETE text block height.
+        // -------------------------------------------------------------------------
+
+        const int totalHeight =
+            fontSize +
+            static_cast<int>(lines.size() - 1) *
+            actualLineSpacing;
+
+        // -------------------------------------------------------------------------
+        // Center the COMPLETE block inside the supplied window.
+        //
+        // IMPORTANT:
+        // My design coordinates use a bottom-left origin.
+        //
+        // Therefore:
+        //   - the FIRST line is the TOP line
+        //   - subsequent lines move DOWN by decreasing Y
+        //
+        // sooo I first calculate the bottom of the entire block, then move upward
+        // to find the Y position of the first/top line.
+        // 
+        // DO NOT FORGET IT!
+        // -------------------------------------------------------------------------
+
+        const int blockBottomY =
+            y + (height - totalHeight) / 2;
+
+        const int firstLineY =
+            blockBottomY +
+            static_cast<int>(lines.size() - 1) *
+            actualLineSpacing;
+
+        // -------------------------------------------------------------------------
+        // Draw each line centered horizontally.
+        // -------------------------------------------------------------------------
+
+        int currentY = firstLineY;
+
+        for (const std::string& line : lines)
+        {
+            const int lineWidth =
+                MeasureText(
+                    line.c_str(),
+                    fontSize);
+
+            const int lineX =
+                x +
+                (width - lineWidth) / 2;
+
+            drawFallbackText(
+                line,
+                lineX,
+                currentY,
+                lineWidth,
+                fontSize,
+                fontSize);
+
+            currentY -= actualLineSpacing;
+        }
+    }
+
+    // =========================================================================
+    // Main Renderer
+    // =========================================================================
+
+    void Renderer::draw(
+        const Game& game) const
+    {
+        ClearBackground(RAYWHITE);
+
+        if (game.inCombat())
+        {
+            drawCombatScreenLayout();
+        }
+        else
+        {
+            drawMainScreenLayout();
+        }
+
+        // ---------------------------------------------------------------------
+        // Shared Player HUD
+        // ---------------------------------------------------------------------
+
+        drawStatSlots();
+        drawGearSlots();
+
+        drawTitleAssets();
+        drawStatAssets(game);
+        drawGearAssets(game);
+
+        // ---------------------------------------------------------------------
+        // Screen-specific content
+        // ---------------------------------------------------------------------
+
+        if (game.inCombat())
+        {
+            drawEnemyStatSlots();
+            drawDiceRoll(game);
+            drawCombatInfo(game);
+            drawCombatActionBar();
+        }
+        else
+        {
+            drawMap(game);
+            drawActionBar();
+        }
+    }
+
+    // =========================================================================
+    // Main Screen Layout
+    // =========================================================================
 
     void Renderer::drawMainScreenLayout() const
     {
         // ---------------------------------------------------------------------
         // Title Art
-        //
-        // Temporary placeholder.
-        // This will later be replaced by the Title Art PNG.
         // ---------------------------------------------------------------------
 
-        if (m_mainScreenAssets.titleArt().id != 0)
+        if (m_mainScreenAssets.titleArt().id == 0)
         {
-            drawTexture(
-                m_mainScreenAssets.titleArt(),
-                TitleArtX,
-                TitleArtY,
-                TitleArtWidth,
-                TitleArtHeight);
-        }
-        else
-        {
+            const Rectangle titleArt =
+                toRaylibRectangle(
+                    TitleArtX,
+                    TitleArtY,
+                    TitleArtWidth,
+                    TitleArtHeight);
+
+            DrawRectangleRec(
+                titleArt,
+                LIGHTGRAY);
+
+            DrawRectangleLinesEx(
+                titleArt,
+                1.0f,
+                DARKGRAY);
+
             drawFallbackText(
                 R"(Final C++ Project - Made by Ilan "Ilwolf" Boguslavsky/Mintzker)",
                 TitleArtX,
@@ -219,22 +455,26 @@ namespace dungeon
 
         // ---------------------------------------------------------------------
         // Stats Title
-        //
-        // Temporary placeholder.
-        // This will later be replaced by the Stats Title PNG.
         // ---------------------------------------------------------------------
 
-        if (m_mainScreenAssets.statsTitle().id != 0)
+        if (m_mainScreenAssets.statsTitle().id == 0)
         {
-            drawTexture(
-                m_mainScreenAssets.statsTitle(),
-                StatsTitleX,
-                StatsTitleY,
-                StatsTitleWidth,
-                StatsTitleHeight);
-        }
-        else
-        {
+            const Rectangle statsTitle =
+                toRaylibRectangle(
+                    StatsTitleX,
+                    StatsTitleY,
+                    StatsTitleWidth,
+                    StatsTitleHeight);
+
+            DrawRectangleRec(
+                statsTitle,
+                LIGHTGRAY);
+
+            DrawRectangleLinesEx(
+                statsTitle,
+                1.0f,
+                DARKGRAY);
+
             drawFallbackText(
                 "Player Stats",
                 StatsTitleX,
@@ -245,29 +485,29 @@ namespace dungeon
         }
 
         // ---------------------------------------------------------------------
-        // POV / GAME INSTRUCTIONS
-        //
-        // Temporary placeholder.
-        // This will later be replaced by the POV PNG.
+        // POV / Game Instructions
         // ---------------------------------------------------------------------
 
-        const Rectangle povRender = toRaylibRectangle(
-            PovRenderX,
-            PovRenderY,
-            PovRenderWidth,
-            PovRenderHeight);
+        const Rectangle povRender =
+            toRaylibRectangle(
+                PovRenderX,
+                PovRenderY,
+                PovRenderWidth,
+                PovRenderHeight);
+
+        DrawRectangleRec(
+            povRender,
+            m_gameInstructionsOpen
+            ? LIGHTGRAY
+            : RAYWHITE);
+
+        DrawRectangleLinesEx(
+            povRender,
+            1.0f,
+            DARKGRAY);
 
         if (m_gameInstructionsOpen)
         {
-            DrawRectangleRec(
-                povRender,
-                LIGHTGRAY);
-
-            DrawRectangleLinesEx(
-                povRender,
-                1.0f,
-                DARKGRAY);
-
             drawFallbackText(
                 "GAME INSTRUCTIONS",
                 PovRenderX,
@@ -276,151 +516,6 @@ namespace dungeon
                 40,
                 26);
         }
-        else
-        {
-            DrawRectangleRec(
-                povRender,
-                RAYWHITE);
-
-            DrawRectangleLinesEx(
-                povRender,
-                1.0f,
-                DARKGRAY);
-        }
-
-        // ---------------------------------------------------------------------
-        // Stats Window
-        //
-        // Temporary placeholder background.
-        // ---------------------------------------------------------------------
-
-        const Rectangle statsWindow = toRaylibRectangle(
-            StatsWindowX,
-            StatsWindowY,
-            StatsWindowWidth,
-            StatsWindowHeight);
-
-        DrawRectangleRec(
-            statsWindow,
-            RAYWHITE);
-
-        DrawRectangleLinesEx(
-            statsWindow,
-            1.0f,
-            DARKGRAY);
-
-        // ---------------------------------------------------------------------
-        // Gear Title
-        //
-        // Temporary placeholder.
-        // This will later be replaced by the Gear Title PNG.
-        // ---------------------------------------------------------------------
-
-        if (m_mainScreenAssets.gearTitle().id != 0)
-        {
-            drawTexture(
-                m_mainScreenAssets.gearTitle(),
-                GearTitleX,
-                GearTitleY,
-                GearTitleWidth,
-                GearTitleHeight);
-        }
-        else
-        {
-            drawFallbackText(
-                "Player Gear",
-                GearTitleX,
-                GearTitleY,
-                GearTitleWidth,
-                GearTitleHeight,
-                22);
-        }
-
-        // ---------------------------------------------------------------------
-        // Gear Window
-        //
-        // Temporary placeholder background.
-        // ---------------------------------------------------------------------
-
-        const Rectangle gearWindow = toRaylibRectangle(
-            GearWindowX,
-            GearWindowY,
-            GearWindowWidth,
-            GearWindowHeight);
-
-        DrawRectangleRec(
-            gearWindow,
-            RAYWHITE);
-
-        DrawRectangleLinesEx(
-            gearWindow,
-            1.0f,
-            DARKGRAY);
-
-        // ---------------------------------------------------------------------
-        // Action Bar
-        //
-        // Temporary placeholder.
-        // This will later be replaced by the Action Bar PNG.
-        // ---------------------------------------------------------------------
-
-        const Rectangle actionBar = toRaylibRectangle(
-            ActionBarX,
-            ActionBarY,
-            ActionBarWidth,
-            ActionBarHeight);
-
-        DrawRectangleRec(
-            actionBar,
-            LIGHTGRAY);
-
-        DrawRectangleLinesEx(
-            actionBar,
-            1.0f,
-            DARKGRAY);
-    }
-
-    void Renderer::drawCombatScreenLayout() const
-    {
-        // ---------------------------------------------------------------------
-        // Title Art
-        // ---------------------------------------------------------------------
-
-        const Rectangle titleArt =
-            toRaylibRectangle(
-                TitleArtX,
-                TitleArtY,
-                TitleArtWidth,
-                TitleArtHeight);
-
-        DrawRectangleRec(
-            titleArt,
-            LIGHTGRAY);
-
-        DrawRectangleLinesEx(
-            titleArt,
-            1.0f,
-            DARKGRAY);
-
-        // ---------------------------------------------------------------------
-        // Player Stats Title
-        // ---------------------------------------------------------------------
-
-        const Rectangle statsTitle =
-            toRaylibRectangle(
-                StatsTitleX,
-                StatsTitleY,
-                StatsTitleWidth,
-                StatsTitleHeight);
-
-        DrawRectangleRec(
-            statsTitle,
-            LIGHTGRAY);
-
-        DrawRectangleLinesEx(
-            statsTitle,
-            1.0f,
-            DARKGRAY);
 
         // ---------------------------------------------------------------------
         // Player Stats Window
@@ -446,19 +541,100 @@ namespace dungeon
         // Gear Title
         // ---------------------------------------------------------------------
 
-        const Rectangle gearTitle =
-            toRaylibRectangle(
+        if (m_mainScreenAssets.gearTitle().id == 0)
+        {
+            const Rectangle gearTitle =
+                toRaylibRectangle(
+                    GearTitleX,
+                    GearTitleY,
+                    GearTitleWidth,
+                    GearTitleHeight);
+
+            DrawRectangleRec(
+                gearTitle,
+                LIGHTGRAY);
+
+            DrawRectangleLinesEx(
+                gearTitle,
+                1.0f,
+                DARKGRAY);
+
+            drawFallbackText(
+                "Player Gear",
                 GearTitleX,
                 GearTitleY,
                 GearTitleWidth,
-                GearTitleHeight);
+                GearTitleHeight,
+                22);
+        }
+
+        // ---------------------------------------------------------------------
+        // Gear Window
+        // ---------------------------------------------------------------------
+
+        const Rectangle gearWindow =
+            toRaylibRectangle(
+                GearWindowX,
+                GearWindowY,
+                GearWindowWidth,
+                GearWindowHeight);
 
         DrawRectangleRec(
-            gearTitle,
-            LIGHTGRAY);
+            gearWindow,
+            RAYWHITE);
 
         DrawRectangleLinesEx(
-            gearTitle,
+            gearWindow,
+            1.0f,
+            DARKGRAY);
+
+        // ---------------------------------------------------------------------
+        // Traversal Action Bar background
+        // ---------------------------------------------------------------------
+
+        if (m_mainScreenAssets.traversalActionBar().id == 0)
+        {
+            const Rectangle actionBar =
+                toRaylibRectangle(
+                    ActionBarX,
+                    ActionBarY,
+                    ActionBarWidth,
+                    ActionBarHeight);
+
+            DrawRectangleRec(
+                actionBar,
+                LIGHTGRAY);
+
+            DrawRectangleLinesEx(
+                actionBar,
+                1.0f,
+                DARKGRAY);
+        }
+    }
+
+    // =========================================================================
+    // Combat Screen Layout
+    // =========================================================================
+
+    void Renderer::drawCombatScreenLayout() const
+    {
+        // ---------------------------------------------------------------------
+        // Player Stats Window
+        // ---------------------------------------------------------------------
+
+        const Rectangle statsWindow =
+            toRaylibRectangle(
+                StatsWindowX,
+                StatsWindowY,
+                StatsWindowWidth,
+                StatsWindowHeight);
+
+        DrawRectangleRec(
+            statsWindow,
+            RAYWHITE);
+
+        DrawRectangleLinesEx(
+            statsWindow,
             1.0f,
             DARKGRAY);
 
@@ -577,15 +753,6 @@ namespace dungeon
             diceRollWindow,
             1.0f,
             DARKGRAY);
-        /*
-        drawFallbackText(
-            "Dice Roll Window",
-            230,
-            260 + 145,
-            240,
-            70,
-            18);
-        */
 
         // ---------------------------------------------------------------------
         // Combat Info Title
@@ -635,16 +802,6 @@ namespace dungeon
             1.0f,
             DARKGRAY);
 
-        /*
-        drawFallbackText(
-            "Combat Info Window",
-            230,
-            260,
-            240,
-            100,
-            16);
-        */
-
         // ---------------------------------------------------------------------
         // Loot Title
         // ---------------------------------------------------------------------
@@ -675,19 +832,24 @@ namespace dungeon
 
         // ---------------------------------------------------------------------
         // Loot Table Window
+        //
+        // Nominal window remains exactly 336x60, as specified.
+        //
+        // Its right border is intentionally omitted because Loot Icon 5
+        // extends beyond X = 440 and ends at X = 449.
         // ---------------------------------------------------------------------
 
-        const int lootTableX = 104;
-        const int lootTableY = 200;
-        const int lootTableWidth = 336;
-        const int lootTableHeight = 60;
+        constexpr int LootTableX = 104;
+        constexpr int LootTableY = 200;
+        constexpr int LootTableWidth = 336;
+        constexpr int LootTableHeight = 60;
 
         const Rectangle lootTableWindow =
             toRaylibRectangle(
-                lootTableX,
-                lootTableY,
-                lootTableWidth,
-                lootTableHeight);
+                LootTableX,
+                LootTableY,
+                LootTableWidth,
+                LootTableHeight);
 
         DrawRectangleRec(
             lootTableWindow,
@@ -696,68 +858,69 @@ namespace dungeon
         // Left edge.
         DrawLineEx(
             Vector2{
-                static_cast<float>(lootTableX),
+                static_cast<float>(LootTableX),
                 static_cast<float>(
                     toRaylibY(
-                        lootTableY,
-                        lootTableHeight))
+                        LootTableY,
+                        LootTableHeight))
             },
             Vector2{
-                static_cast<float>(lootTableX),
+                static_cast<float>(LootTableX),
                 static_cast<float>(
                     toRaylibY(
-                        lootTableY,
-                        lootTableHeight) +
-                    lootTableHeight)
-            },
-            1.0f,
-            DARKGRAY);
-
-        // Top and bottom edges.
-        DrawLineEx(
-            Vector2{
-                static_cast<float>(lootTableX),
-                static_cast<float>(
-                    toRaylibY(
-                        lootTableY,
-                        lootTableHeight))
-            },
-            Vector2{
-                static_cast<float>(
-                    lootTableX +
-                    lootTableWidth),
-                static_cast<float>(
-                    toRaylibY(
-                        lootTableY,
-                        lootTableHeight))
+                        LootTableY,
+                        LootTableHeight) +
+                    LootTableHeight)
             },
             1.0f,
             DARKGRAY);
 
+        // Top edge.
         DrawLineEx(
             Vector2{
-                static_cast<float>(lootTableX),
+                static_cast<float>(LootTableX),
                 static_cast<float>(
                     toRaylibY(
-                        lootTableY,
-                        lootTableHeight) +
-                    lootTableHeight)
+                        LootTableY,
+                        LootTableHeight))
             },
             Vector2{
                 static_cast<float>(
-                    lootTableX +
-                    lootTableWidth),
+                    LootTableX +
+                    LootTableWidth),
                 static_cast<float>(
                     toRaylibY(
-                        lootTableY,
-                        lootTableHeight) +
-                    lootTableHeight)
+                        LootTableY,
+                        LootTableHeight))
+            },
+            1.0f,
+            DARKGRAY);
+
+        // Bottom edge.
+        DrawLineEx(
+            Vector2{
+                static_cast<float>(LootTableX),
+                static_cast<float>(
+                    toRaylibY(
+                        LootTableY,
+                        LootTableHeight) +
+                    LootTableHeight)
+            },
+            Vector2{
+                static_cast<float>(
+                    LootTableX +
+                    LootTableWidth),
+                static_cast<float>(
+                    toRaylibY(
+                        LootTableY,
+                        LootTableHeight) +
+                    LootTableHeight)
             },
             1.0f,
             DARKGRAY);
 
         // ---------------------------------------------------------------------
-        // Loot Icon Slots
+        // Loot slots
         // ---------------------------------------------------------------------
 
         constexpr int LootIconSize = 48;
@@ -769,7 +932,7 @@ namespace dungeon
         constexpr int LootIcon4X = 332;
         constexpr int LootIcon5X = 401;
 
-        const int lootIconXs[] =
+        constexpr int LootIconXs[] =
         {
             LootIcon1X,
             LootIcon2X,
@@ -778,11 +941,11 @@ namespace dungeon
             LootIcon5X
         };
 
-        for (const int x : lootIconXs)
+        for (const int iconX : LootIconXs)
         {
             DrawRectangleLinesEx(
                 toRaylibRectangle(
-                    x,
+                    iconX,
                     LootIconY,
                     LootIconSize,
                     LootIconSize),
@@ -801,17 +964,19 @@ namespace dungeon
                 PovRenderWidth,
                 PovRenderHeight);
 
+        DrawRectangleRec(
+            povRender,
+            m_gameInstructionsOpen
+            ? LIGHTGRAY
+            : RAYWHITE);
+
+        DrawRectangleLinesEx(
+            povRender,
+            1.0f,
+            DARKGRAY);
+
         if (m_gameInstructionsOpen)
         {
-            DrawRectangleRec(
-                povRender,
-                LIGHTGRAY);
-
-            DrawRectangleLinesEx(
-                povRender,
-                1.0f,
-                DARKGRAY);
-
             drawFallbackText(
                 "GAME COMBAT INSTRUCTIONS",
                 PovRenderX,
@@ -820,13 +985,14 @@ namespace dungeon
                 50,
                 24);
 
-            drawFallbackText(
+            drawWrappedFallbackText(
                 "Combat rules will be displayed here.",
-                PovRenderX,
-                PovRenderY + 265,
-                PovRenderWidth,
-                40,
-                18);
+                PovRenderX + 20,
+                PovRenderY + 195,
+                PovRenderWidth - 40,
+                80,
+                18,
+                24);
 
             drawFallbackText(
                 "Press TAB to return to the Combat POV.",
@@ -838,15 +1004,6 @@ namespace dungeon
         }
         else
         {
-            DrawRectangleRec(
-                povRender,
-                RAYWHITE);
-
-            DrawRectangleLinesEx(
-                povRender,
-                1.0f,
-                DARKGRAY);
-
             drawFallbackText(
                 "POV ART",
                 PovRenderX,
@@ -864,268 +1021,106 @@ namespace dungeon
                 24);
         }
 
-    }
-
-    void Renderer::drawDiceRoll(const Game& game) const
-    {
-        const CombatPresentation& presentation =
-            game.combatPresentation();
-
-        constexpr int DiceWindowX = 230;
-        constexpr int DiceWindowY = 260;
-        constexpr int DiceWindowWidth = 240;
-        constexpr int DiceWindowHeight = 360;
-
-        constexpr int dieSize = 110;
-
-        const int dieX =
-            DiceWindowX +
-            (DiceWindowWidth - dieSize) / 2;
-
-        const int dieY =
-            DiceWindowY +
-            175;
-
         // ---------------------------------------------------------------------
-        // No active presentation
-        // ---------------------------------------------------------------------
-
-        if (!presentation.active())
-        {
-
-                drawWrappedFallbackText(
-                    "Waiting for\nDice Action",
-                    DiceWindowX,
-                    DiceWindowY +85, // Adjust this to move it up or down vertically
-                    DiceWindowWidth,
-                    DiceWindowHeight,
-                    22,
-                    28); // Positive line spacing
-
-
-            return;
-        }
-
-        // ---------------------------------------------------------------------
-        // Rolling
+        // Combat Action Bar background
         //
-        // The displayed face is purely decorative.
-        // It has NO connection to the actual combat roll.
+        // Actual fallback contents are drawn by drawCombatActionBar().
         // ---------------------------------------------------------------------
-
-        if (presentation.phase() ==
-            CombatPresentation::Phase::Rolling)
-        {
-            const int dieValue =
-                static_cast<int>(
-                    presentation.phaseElapsed() * 10.0f)
-                % 6 + 1;
-
-            drawFallbackDie(
-                dieValue,
-                dieX,
-                dieY,
-                dieSize);
-
-            return;
-        }
-
-        // ---------------------------------------------------------------------
-        // Result
-        //
-        // The actual result is shown on the die itself.
-        // The numerical roll/target information belongs in Combat Info.
-        // ---------------------------------------------------------------------
-
-        if (presentation.phase() ==
-            CombatPresentation::Phase::Result)
-        {
-            const AttackResult* result =
-                presentation.currentAttack();
-
-            if (result == nullptr)
-            {
-                return;
-            }
-
-            int dieValue = 1;
-
-            switch (presentation.rollType())
-            {
-            case CombatPresentation::RollType::Precision:
-                dieValue = result->precisionRoll;
-                break;
-
-            case CombatPresentation::RollType::Wound:
-                dieValue = result->woundRoll;
-                break;
-
-            case CombatPresentation::RollType::Defense:
-                dieValue = result->defenseRoll;
-                break;
-
-            case CombatPresentation::RollType::None:
-            default:
-                return;
-            }
-
-            drawFallbackDie(
-                dieValue,
-                dieX,
-                dieY,
-                dieSize);
-        }
     }
 
-    void Renderer::drawFallbackDie(
-        int value,
-        int x,
-        int y,
-        int size) const
+    // =========================================================================
+    // Titles
+    // =========================================================================
+
+    void Renderer::drawTitleAssets() const
     {
-        if (value < 1 || value > 6)
+        if (m_mainScreenAssets.titleArt().id != 0)
         {
-            value = 1;
+            drawTexture(
+                m_mainScreenAssets.titleArt(),
+                TitleArtX,
+                TitleArtY,
+                TitleArtWidth,
+                TitleArtHeight);
         }
 
-        const Rectangle die =
-            toRaylibRectangle(
-                x,
-                y,
-                size,
-                size);
-
-        DrawRectangleRec(
-            die,
-            WHITE);
-
-        DrawRectangleLinesEx(
-            die,
-            3.0f,
-            BLACK);
-
-        const float left =
-            die.x + size * 0.25f;
-
-        const float centerX =
-            die.x + size * 0.5f;
-
-        const float right =
-            die.x + size * 0.75f;
-
-        const float top =
-            die.y + size * 0.25f;
-
-        const float centerY =
-            die.y + size * 0.5f;
-
-        const float bottom =
-            die.y + size * 0.75f;
-
-        const float radius =
-            size * 0.07f;
-
-        auto drawPip =
-            [radius](float px, float py)
-            {
-                DrawCircle(
-                    static_cast<int>(px),
-                    static_cast<int>(py),
-                    radius,
-                    BLACK);
-            };
-
-        switch (value)
+        if (m_mainScreenAssets.statsTitle().id != 0)
         {
-        case 1:
-            drawPip(centerX, centerY);
-            break;
+            drawTexture(
+                m_mainScreenAssets.statsTitle(),
+                StatsTitleX,
+                StatsTitleY,
+                StatsTitleWidth,
+                StatsTitleHeight);
+        }
 
-        case 2:
-            drawPip(left, top);
-            drawPip(right, bottom);
-            break;
-
-        case 3:
-            drawPip(left, top);
-            drawPip(centerX, centerY);
-            drawPip(right, bottom);
-            break;
-
-        case 4:
-            drawPip(left, top);
-            drawPip(right, top);
-            drawPip(left, bottom);
-            drawPip(right, bottom);
-            break;
-
-        case 5:
-            drawPip(left, top);
-            drawPip(right, top);
-            drawPip(centerX, centerY);
-            drawPip(left, bottom);
-            drawPip(right, bottom);
-            break;
-
-        case 6:
-            drawPip(left, top);
-            drawPip(right, top);
-            drawPip(left, centerY);
-            drawPip(right, centerY);
-            drawPip(left, bottom);
-            drawPip(right, bottom);
-            break;
+        if (m_mainScreenAssets.gearTitle().id != 0)
+        {
+            drawTexture(
+                m_mainScreenAssets.gearTitle(),
+                GearTitleX,
+                GearTitleY,
+                GearTitleWidth,
+                GearTitleHeight);
         }
     }
 
+    // =========================================================================
+    // Player Stats Slot Fallback
+    // =========================================================================
 
-        void Renderer::drawCombatInfo(
-            const Game& game) const
+    void Renderer::drawStatSlots() const
+    {
+        const int iconX =
+            StatIconX;
+
+        const int numberX =
+            StatNumberX;
+
+        const int statYPositions[] =
         {
-            const CombatPresentation& presentation =
-                game.combatPresentation();
+            StatAtkY,
+            StatStrY,
+            StatPrecY,
+            StatDmgY,
+            StatDefY,
+            StatToughY,
+            StatHpY
+        };
 
-            constexpr int CombatInfoX = 230;
-            constexpr int CombatInfoY = 260;
-            constexpr int CombatInfoWidth = 240;
-            constexpr int CombatInfoHeight = 100;
+        for (const int y : statYPositions)
+        {
+            DrawRectangleLinesEx(
+                toRaylibRectangle(
+                    iconX,
+                    y,
+                    StatIconSize,
+                    StatIconSize),
+                1.0f,
+                GRAY);
 
-            // ---------------------------------------------------------------------
-            // No active combat presentation
-            // ---------------------------------------------------------------------
-
-            if (!presentation.active())
-            {
-                drawWrappedFallbackText(
-                    "Select a Combat Action",
-                    CombatInfoX,
-                    CombatInfoY,
-                    CombatInfoWidth,
-                    CombatInfoHeight,
-                    16,
-                    22);
-
-                return;
-            }
-
-            // ---------------------------------------------------------------------
-            // Active presentation
-            // ---------------------------------------------------------------------
-
-            drawWrappedFallbackText(
-                presentation.infoMessage(),
-                CombatInfoX,
-                CombatInfoY,
-                CombatInfoWidth,
-                CombatInfoHeight,
-                16,
-                22);
+            DrawRectangleLinesEx(
+                toRaylibRectangle(
+                    numberX,
+                    y,
+                    StatNumberSize,
+                    StatNumberSize),
+                1.0f,
+                GRAY);
         }
+    }
+
+    // =========================================================================
+    // Enemy Stats Slot Fallback
+    // =========================================================================
 
     void Renderer::drawEnemyStatSlots() const
     {
-        const int iconX = EnemyStatIconX;
-        const int numberX = EnemyStatNumberX;
+        const int iconX =
+            EnemyStatIconX;
+
+        const int numberX =
+            EnemyStatNumberX;
 
         struct EnemyStatSlot
         {
@@ -1135,13 +1130,13 @@ namespace dungeon
 
         constexpr EnemyStatSlot slots[] =
         {
-            { "ATK",  EnemyStatAtkY },
-            { "STR",  EnemyStatStrY },
-            { "PRE",  EnemyStatPrecY },
-            { "DMG",  EnemyStatDmgY },
-            { "DEF",  EnemyStatDefY },
-            { "TGH",  EnemyStatToughY },
-            { "HP",   EnemyStatHpY }
+            { "ATK", EnemyStatAtkY },
+            { "STR", EnemyStatStrY },
+            { "PRE", EnemyStatPrecY },
+            { "DMG", EnemyStatDmgY },
+            { "DEF", EnemyStatDefY },
+            { "TGH", EnemyStatToughY },
+            { "HP",  EnemyStatHpY }
         };
 
         for (const EnemyStatSlot& slot : slots)
@@ -1182,68 +1177,12 @@ namespace dungeon
         }
     }
 
-    void Renderer::drawStatSlots() const
-    {
-        // ---------------------------------------------------------------------
-        // Temporary Stat PNG placeholders
-        //
-        // Every slot is exactly 32x32.
-        //
-        // The final Stat Icon / Number PNGs will be drawn in these exact
-        // positions.
-        // so These temporary rectangles can then be commented out.
-        // ---------------------------------------------------------------------
-
-        const int iconX = StatIconX;
-        const int numberX = StatNumberX;
-
-        const int statYPositions[] =
-        {
-            StatAtkY,
-            StatStrY,
-            StatPrecY,
-            StatDmgY,
-            StatDefY,
-            StatToughY,
-            StatHpY
-        };
-
-        for (const int y : statYPositions)
-        {
-            const Rectangle icon = toRaylibRectangle(
-                iconX,
-                y,
-                StatIconSize,
-                StatIconSize);
-
-            const Rectangle number = toRaylibRectangle(
-                numberX,
-                y,
-                StatNumberSize,
-                StatNumberSize);
-
-            DrawRectangleLinesEx(
-                icon,
-                1.0f,
-                GRAY);
-
-            DrawRectangleLinesEx(
-                number,
-                1.0f,
-                GRAY);
-        }
-    }
+    // =========================================================================
+    // Player Gear Slot Fallback
+    // =========================================================================
 
     void Renderer::drawGearSlots() const
     {
-        // ---------------------------------------------------------------------
-        // Temporary Gear PNG placeholders
-        //
-        // Every Gear Icon / Number is exactly 48x48.
-        //
-        // The final PNGs will be drawn in these exact positions.
-        // ---------------------------------------------------------------------
-
         // Health Potion
         DrawRectangleLinesEx(
             toRaylibRectangle(
@@ -1333,31 +1272,12 @@ namespace dungeon
             GRAY);
     }
 
-    void Renderer::drawTitleAssets() const
-    {
-        drawTexture(
-            m_mainScreenAssets.titleArt(),
-            TitleArtX,
-            TitleArtY,
-            TitleArtWidth,
-            TitleArtHeight);
+    // =========================================================================
+    // Player Stat PNGs / Fallbacks
+    // =========================================================================
 
-        drawTexture(
-            m_mainScreenAssets.statsTitle(),
-            StatsTitleX,
-            StatsTitleY,
-            StatsTitleWidth,
-            StatsTitleHeight);
-
-        drawTexture(
-            m_mainScreenAssets.gearTitle(),
-            GearTitleX,
-            GearTitleY,
-            GearTitleWidth,
-            GearTitleHeight);
-    }
-
-    void Renderer::drawStatAssets(const Game& game) const
+    void Renderer::drawStatAssets(
+        const Game& game) const
     {
         const CombatStats stats =
             game.player().combatStats();
@@ -1383,12 +1303,10 @@ namespace dungeon
         const int hp =
             game.player().currentHp();
 
-        // -------------------------------------------------------------------------
-        // Static Stat Icons
-        // -------------------------------------------------------------------------
+        // ---------------------------------------------------------------------
+        // ATK
+        // ---------------------------------------------------------------------
 
-
-        //ATK Icon
         if (m_mainScreenAssets.atkIcon().id != 0)
         {
             drawTexture(
@@ -1409,8 +1327,10 @@ namespace dungeon
                 10);
         }
 
+        // ---------------------------------------------------------------------
+        // STR
+        // ---------------------------------------------------------------------
 
-        //STR Icon
         if (m_mainScreenAssets.strIcon().id != 0)
         {
             drawTexture(
@@ -1431,8 +1351,10 @@ namespace dungeon
                 10);
         }
 
+        // ---------------------------------------------------------------------
+        // PREC
+        // ---------------------------------------------------------------------
 
-        //PREC Icon
         if (m_mainScreenAssets.precIcon().id != 0)
         {
             drawTexture(
@@ -1453,8 +1375,10 @@ namespace dungeon
                 10);
         }
 
+        // ---------------------------------------------------------------------
+        // DMG
+        // ---------------------------------------------------------------------
 
-        //DMG Icon
         if (m_mainScreenAssets.dmgIcon().id != 0)
         {
             drawTexture(
@@ -1475,8 +1399,10 @@ namespace dungeon
                 10);
         }
 
+        // ---------------------------------------------------------------------
+        // DEF
+        // ---------------------------------------------------------------------
 
-        //DEF Icon
         if (m_mainScreenAssets.defIcon().id != 0)
         {
             drawTexture(
@@ -1497,8 +1423,10 @@ namespace dungeon
                 10);
         }
 
+        // ---------------------------------------------------------------------
+        // TOUGH
+        // ---------------------------------------------------------------------
 
-        //TOUGH Icon
         if (m_mainScreenAssets.toughIcon().id != 0)
         {
             drawTexture(
@@ -1519,8 +1447,10 @@ namespace dungeon
                 10);
         }
 
+        // ---------------------------------------------------------------------
+        // HP
+        // ---------------------------------------------------------------------
 
-        //HP Icon
         if (m_mainScreenAssets.hpIcon().id != 0)
         {
             drawTexture(
@@ -1541,196 +1471,61 @@ namespace dungeon
                 10);
         }
 
+        // ---------------------------------------------------------------------
+        // Numbers
+        // ---------------------------------------------------------------------
 
-
-        // -------------------------------------------------------------------------
-        // Dynamic Number PNGs
-        // -------------------------------------------------------------------------
-
-
-        
-        //ATK Num
-        const Texture2D& attackNumber =
-            m_mainScreenAssets.number(attack);
-
-        if (attackNumber.id != 0)
+        struct StatNumber
         {
-            drawTexture(
-                attackNumber,
-                StatNumberX,
-                StatAtkY,
-                StatNumberSize,
-                StatNumberSize);
-        }
-        else
+            int value;
+            int y;
+        };
+
+        const StatNumber numbers[] =
         {
-            drawFallbackText(
-                std::to_string(attack),
-                StatNumberX,
-                StatAtkY,
-                StatNumberSize,
-                StatNumberSize,
-                18);
-        }
+            { attack,    StatAtkY },
+            { strength,  StatStrY },
+            { precision, StatPrecY },
+            { damage,    StatDmgY },
+            { defense,   StatDefY },
+            { toughness, StatToughY },
+            { hp,        StatHpY }
+        };
 
-
-
-        //STR Num
-        const Texture2D& strengthNumber =
-            m_mainScreenAssets.number(strength);
-
-        if (strengthNumber.id != 0)
+        for (const StatNumber& stat : numbers)
         {
-            drawTexture(
-                strengthNumber,
-                StatNumberX,
-                StatStrY,
-                StatNumberSize,
-                StatNumberSize);
-        }
-        else
-        {
-            drawFallbackText(
-                std::to_string(strength),
-                StatNumberX,
-                StatStrY,
-                StatNumberSize,
-                StatNumberSize,
-                18);
-        }
+            const Texture2D& numberTexture =
+                m_mainScreenAssets.number(
+                    stat.value);
 
-
-
-        //PREC Num
-        const Texture2D& precisionNumber =
-            m_mainScreenAssets.number(precision);
-
-        if (precisionNumber.id != 0)
-        {
-            drawTexture(
-                precisionNumber,
-                StatNumberX,
-                StatPrecY,
-                StatNumberSize,
-                StatNumberSize);
-        }
-        else
-        {
-            drawFallbackText(
-                std::to_string(precision),
-                StatNumberX,
-                StatPrecY,
-                StatNumberSize,
-                StatNumberSize,
-                18);
-        }
-
-
-
-        //DMG Num
-        const Texture2D& damageNumber =
-            m_mainScreenAssets.number(damage);
-
-        if (damageNumber.id != 0)
-        {
-            drawTexture(
-                damageNumber,
-                StatNumberX,
-                StatDmgY,
-                StatNumberSize,
-                StatNumberSize);
-        }
-        else
-        {
-            drawFallbackText(
-                std::to_string(damage),
-                StatNumberX,
-                StatDmgY,
-                StatNumberSize,
-                StatNumberSize,
-                18);
-        }
-
-
-
-        //DEF Num
-        const Texture2D& defenseNumber =
-            m_mainScreenAssets.number(defense);
-
-        if (defenseNumber.id != 0)
-        {
-            drawTexture(
-                defenseNumber,
-                StatNumberX,
-                StatDefY,
-                StatNumberSize,
-                StatNumberSize);
-        }
-        else
-        {
-            drawFallbackText(
-                std::to_string(defense),
-                StatNumberX,
-                StatDefY,
-                StatNumberSize,
-                StatNumberSize,
-                18);
-        }
-
-
-
-        //TOUGH Num
-        const Texture2D& toughnessNumber =
-            m_mainScreenAssets.number(toughness);
-
-        if (toughnessNumber.id != 0)
-        {
-            drawTexture(
-                toughnessNumber,
-                StatNumberX,
-                StatToughY,
-                StatNumberSize,
-                StatNumberSize);
-        }
-        else
-        {
-            drawFallbackText(
-                std::to_string(toughness),
-                StatNumberX,
-                StatToughY,
-                StatNumberSize,
-                StatNumberSize,
-                18);
-        }
-
-
-
-        //HP Num
-        const Texture2D& hpNumber =
-            m_mainScreenAssets.number(hp);
-
-        if (hpNumber.id != 0)
-        {
-            drawTexture(
-                hpNumber,
-                StatNumberX,
-                StatHpY,
-                StatNumberSize,
-                StatNumberSize);
-        }
-        else
-        {
-            drawFallbackText(
-                std::to_string(hp),
-                StatNumberX,
-                StatHpY,
-                StatNumberSize,
-                StatNumberSize,
-                18);
+            if (numberTexture.id != 0)
+            {
+                drawTexture(
+                    numberTexture,
+                    StatNumberX,
+                    stat.y,
+                    StatNumberSize,
+                    StatNumberSize);
+            }
+            else
+            {
+                drawFallbackText(
+                    std::to_string(stat.value),
+                    StatNumberX,
+                    stat.y,
+                    StatNumberSize,
+                    StatNumberSize,
+                    18);
+            }
         }
     }
 
-    void Renderer::drawGearAssets(const Game& game) const
+    // =========================================================================
+    // Player Gear PNGs / Fallbacks
+    // =========================================================================
+
+    void Renderer::drawGearAssets(
+        const Game& game) const
     {
         const Player& player =
             game.player();
@@ -1738,11 +1533,10 @@ namespace dungeon
         const Inventory& inventory =
             player.inventory();
 
-        // -------------------------------------------------------------------------
-        // Potion Icons
-        // -------------------------------------------------------------------------
+        // ---------------------------------------------------------------------
+        // Health Potion
+        // ---------------------------------------------------------------------
 
-        // Health Potion Icon
         if (m_mainScreenAssets.healthPotionIcon().id != 0)
         {
             drawTexture(
@@ -1763,37 +1557,10 @@ namespace dungeon
                 14);
         }
 
-
-        // Rage Potion Icon
-        if (m_mainScreenAssets.ragePotionIcon().id != 0)
-        {
-            drawTexture(
-                m_mainScreenAssets.ragePotionIcon(),
-                PotionIconX,
-                RagePotionY,
-                GearIconSize,
-                GearIconSize);
-        }
-        else
-        {
-            drawFallbackText(
-                "RPC",
-                PotionIconX,
-                RagePotionY,
-                GearIconSize,
-                GearIconSize,
-                14);
-        }
-
-        // -------------------------------------------------------------------------
-        // Potion Amounts
-        // -------------------------------------------------------------------------
-
-
-        // Health Potion Amount
         const int healthAmount =
             static_cast<int>(
-                inventory.amount(HealthPotion{}));
+                inventory.amount(
+                    HealthPotion{}));
 
         const Texture2D& healthAmountTexture =
             m_mainScreenAssets.healthPotionAmount(
@@ -1819,11 +1586,34 @@ namespace dungeon
                 18);
         }
 
+        // ---------------------------------------------------------------------
+        // Rage Potion
+        // ---------------------------------------------------------------------
 
-        // Rage Potion Amount
+        if (m_mainScreenAssets.ragePotionIcon().id != 0)
+        {
+            drawTexture(
+                m_mainScreenAssets.ragePotionIcon(),
+                PotionIconX,
+                RagePotionY,
+                GearIconSize,
+                GearIconSize);
+        }
+        else
+        {
+            drawFallbackText(
+                "RPC",
+                PotionIconX,
+                RagePotionY,
+                GearIconSize,
+                GearIconSize,
+                14);
+        }
+
         const int rageAmount =
             static_cast<int>(
-                inventory.amount(RagePotion{}));
+                inventory.amount(
+                    RagePotion{}));
 
         const Texture2D& rageAmountTexture =
             m_mainScreenAssets.ragePotionAmount(
@@ -1849,9 +1639,9 @@ namespace dungeon
                 18);
         }
 
-        // -------------------------------------------------------------------------
+        // ---------------------------------------------------------------------
         // Weapon
-        // -------------------------------------------------------------------------
+        // ---------------------------------------------------------------------
 
         const Weapon* weapon =
             player.equipment().weapon();
@@ -1874,7 +1664,9 @@ namespace dungeon
             else
             {
                 drawFallbackText(
-                    std::string("W") + std::to_string(weapon->tier()),
+                    std::string("W") +
+                    std::to_string(
+                        weapon->tier()),
                     WeaponIconX,
                     WeaponArmorY,
                     GearIconSize,
@@ -1893,9 +1685,9 @@ namespace dungeon
                 14);
         }
 
-        // -------------------------------------------------------------------------
+        // ---------------------------------------------------------------------
         // Armor
-        // -------------------------------------------------------------------------
+        // ---------------------------------------------------------------------
 
         const Armor* armor =
             player.equipment().armor();
@@ -1918,7 +1710,9 @@ namespace dungeon
             else
             {
                 drawFallbackText(
-                    std::string("A") + std::to_string(armor->tier()),
+                    std::string("A") +
+                    std::to_string(
+                        armor->tier()),
                     ArmorIconX,
                     WeaponArmorY,
                     GearIconSize,
@@ -1937,9 +1731,9 @@ namespace dungeon
                 14);
         }
 
-        // -------------------------------------------------------------------------
+        // ---------------------------------------------------------------------
         // Accessories
-        // -------------------------------------------------------------------------
+        // ---------------------------------------------------------------------
 
         const auto& accessories =
             player.equipment().accessories();
@@ -1967,178 +1761,109 @@ namespace dungeon
             }
         }
 
-        // Magic Skull
-        if (hasMagicSkull)
+        // Tier 1 / Magic Skull
+        if (hasMagicSkull &&
+            m_mainScreenAssets.magicSkull().id != 0)
         {
-            const Texture2D& texture =
-                m_mainScreenAssets.magicSkull();
-
-            if (texture.id != 0)
-            {
-                drawTexture(
-                    texture,
-                    Tier1AccessoryX,
-                    AccessoriesY,
-                    GearIconSize,
-                    GearIconSize);
-            }
-            else
-            {
-                drawFallbackText(
-                    "MS",
-                    Tier1AccessoryX,
-                    AccessoriesY,
-                    GearIconSize,
-                    GearIconSize,
-                    14);
-            }
+            drawTexture(
+                m_mainScreenAssets.magicSkull(),
+                Tier1AccessoryX,
+                AccessoriesY,
+                GearIconSize,
+                GearIconSize);
+        }
+        else if (!hasMagicSkull &&
+            m_mainScreenAssets.noAccessory().id != 0)
+        {
+            drawTexture(
+                m_mainScreenAssets.noAccessory(),
+                Tier1AccessoryX,
+                AccessoriesY,
+                GearIconSize,
+                GearIconSize);
         }
         else
         {
-            const Texture2D& texture =
-                m_mainScreenAssets.noAccessory();
-
-            if (texture.id != 0)
-            {
-                drawTexture(
-                    texture,
-                    Tier1AccessoryX,
-                    AccessoriesY,
-                    GearIconSize,
-                    GearIconSize);
-            }
-            else
-            {
-                drawFallbackText(
-                    "--",
-                    Tier1AccessoryX,
-                    AccessoriesY,
-                    GearIconSize,
-                    GearIconSize,
-                    14);
-            }
+            drawFallbackText(
+                hasMagicSkull ? "MS" : "--",
+                Tier1AccessoryX,
+                AccessoriesY,
+                GearIconSize,
+                GearIconSize,
+                14);
         }
 
-        // Orc Fang
-        if (hasOrcFang)
+        // Tier 2 / Orc Fang
+        if (hasOrcFang &&
+            m_mainScreenAssets.orcFang().id != 0)
         {
-            const Texture2D& texture =
-                m_mainScreenAssets.orcFang();
-
-            if (texture.id != 0)
-            {
-                drawTexture(
-                    texture,
-                    Tier2AccessoryX,
-                    AccessoriesY,
-                    GearIconSize,
-                    GearIconSize);
-            }
-            else
-            {
-                drawFallbackText(
-                    "OF",
-                    Tier2AccessoryX,
-                    AccessoriesY,
-                    GearIconSize,
-                    GearIconSize,
-                    14);
-            }
+            drawTexture(
+                m_mainScreenAssets.orcFang(),
+                Tier2AccessoryX,
+                AccessoriesY,
+                GearIconSize,
+                GearIconSize);
+        }
+        else if (!hasOrcFang &&
+            m_mainScreenAssets.noAccessory().id != 0)
+        {
+            drawTexture(
+                m_mainScreenAssets.noAccessory(),
+                Tier2AccessoryX,
+                AccessoriesY,
+                GearIconSize,
+                GearIconSize);
         }
         else
         {
-            const Texture2D& texture =
-                m_mainScreenAssets.noAccessory();
-
-            if (texture.id != 0)
-            {
-                drawTexture(
-                    texture,
-                    Tier2AccessoryX,
-                    AccessoriesY,
-                    GearIconSize,
-                    GearIconSize);
-            }
-            else
-            {
-                drawFallbackText(
-                    "--",
-                    Tier2AccessoryX,
-                    AccessoriesY,
-                    GearIconSize,
-                    GearIconSize,
-                    14);
-            }
+            drawFallbackText(
+                hasOrcFang ? "OF" : "--",
+                Tier2AccessoryX,
+                AccessoriesY,
+                GearIconSize,
+                GearIconSize,
+                14);
         }
 
-        // Troll's Heart
-        if (hasTrollHeart)
+        // Tier 3 / Troll's Heart
+        if (hasTrollHeart &&
+            m_mainScreenAssets.trollHeart().id != 0)
         {
-            const Texture2D& texture =
-                m_mainScreenAssets.trollHeart();
-
-            if (texture.id != 0)
-            {
-                drawTexture(
-                    texture,
-                    Tier3AccessoryX,
-                    AccessoriesY,
-                    GearIconSize,
-                    GearIconSize);
-            }
-            else
-            {
-                drawFallbackText(
-                    "TH",
-                    Tier3AccessoryX,
-                    AccessoriesY,
-                    GearIconSize,
-                    GearIconSize,
-                    14);
-            }
+            drawTexture(
+                m_mainScreenAssets.trollHeart(),
+                Tier3AccessoryX,
+                AccessoriesY,
+                GearIconSize,
+                GearIconSize);
+        }
+        else if (!hasTrollHeart &&
+            m_mainScreenAssets.noAccessory().id != 0)
+        {
+            drawTexture(
+                m_mainScreenAssets.noAccessory(),
+                Tier3AccessoryX,
+                AccessoriesY,
+                GearIconSize,
+                GearIconSize);
         }
         else
         {
-            const Texture2D& texture =
-                m_mainScreenAssets.noAccessory();
-
-            if (texture.id != 0)
-            {
-                drawTexture(
-                    texture,
-                    Tier3AccessoryX,
-                    AccessoriesY,
-                    GearIconSize,
-                    GearIconSize);
-            }
-            else
-            {
-                drawFallbackText(
-                    "--",
-                    Tier3AccessoryX,
-                    AccessoriesY,
-                    GearIconSize,
-                    GearIconSize,
-                    14);
-            }
+            drawFallbackText(
+                hasTrollHeart ? "TH" : "--",
+                Tier3AccessoryX,
+                AccessoriesY,
+                GearIconSize,
+                GearIconSize,
+                14);
         }
     }
 
-
-
-        // ---------------------------------------------------------------------
-        // Action Render area
-        // ---------------------------------------------------------------------
+    // =========================================================================
+    // Traversal Action Bar
+    // =========================================================================
 
     void Renderer::drawActionBar() const
     {
-        const Rectangle actionBar =
-            toRaylibRectangle(
-                ActionBarX,
-                ActionBarY,
-                ActionBarWidth,
-                ActionBarHeight);
-
         if (m_mainScreenAssets.traversalActionBar().id != 0)
         {
             drawTexture(
@@ -2151,9 +1876,12 @@ namespace dungeon
             return;
         }
 
-        // ---------------------------------------------------------------------
-        // Temporary traversal action-bar fallback.
-        // ---------------------------------------------------------------------
+        const Rectangle actionBar =
+            toRaylibRectangle(
+                ActionBarX,
+                ActionBarY,
+                ActionBarWidth,
+                ActionBarHeight);
 
         DrawRectangleRec(
             actionBar,
@@ -2173,46 +1901,49 @@ namespace dungeon
             22);
 
         drawFallbackText(
-            "MOVE",
-            ActionBarX + 40,
+            "W / UP  -  MOVE UP",
+            ActionBarX + 25,
             ActionBarY + 85,
-            220,
+            250,
             35,
-            18);
+            16);
 
         drawFallbackText(
-            "ATTACK",
-            ActionBarX + 270,
+            "S / DOWN  -  MOVE DOWN",
+            ActionBarX + 275,
             ActionBarY + 85,
-            220,
+            250,
             35,
-            18);
+            16);
 
         drawFallbackText(
-            "INVENTORY",
-            ActionBarX + 500,
+            "A / LEFT  -  MOVE LEFT",
+            ActionBarX + 525,
             ActionBarY + 85,
-            220,
+            250,
             35,
-            18);
+            16);
 
         drawFallbackText(
-            "ESCAPE",
-            ActionBarX + 730,
+            "D / RIGHT  -  MOVE RIGHT",
+            ActionBarX + 775,
             ActionBarY + 85,
-            220,
+            250,
             35,
-            18);
+            16);
 
         drawFallbackText(
-            "TAB  -  Game Instructions",
+            "TAB  -  GAME INSTRUCTIONS",
             ActionBarX,
-            ActionBarY + 20,
+            ActionBarY + 25,
             ActionBarWidth,
             35,
             16);
     }
 
+    // =========================================================================
+    // Combat Action Bar
+    // =========================================================================
 
     void Renderer::drawCombatActionBar() const
     {
@@ -2232,10 +1963,6 @@ namespace dungeon
             1.0f,
             DARKGRAY);
 
-        // ---------------------------------------------------------------------
-        // Heading
-        // ---------------------------------------------------------------------
-
         drawFallbackText(
             "COMBAT ACTIONS",
             ActionBarX,
@@ -2243,10 +1970,6 @@ namespace dungeon
             ActionBarWidth,
             35,
             22);
-
-        // ---------------------------------------------------------------------
-        // Actions
-        // ---------------------------------------------------------------------
 
         drawFallbackText(
             "F1 / 1  -  ATTACK",
@@ -2281,42 +2004,331 @@ namespace dungeon
             17);
     }
 
-    void Renderer::drawMap(const Game& game) const
+    // =========================================================================
+    // Dice Roll
+    // =========================================================================
+
+    void Renderer::drawDiceRoll(
+        const Game& game) const
     {
-        const Map& map = game.map();
+        const CombatPresentation& presentation =
+            game.combatPresentation();
+
+        constexpr int DiceWindowX = 230;
+        constexpr int DiceWindowY = 260;
+        constexpr int DiceWindowWidth = 240;
+        constexpr int DiceWindowHeight = 360;
+
+        constexpr int DieSize = 110;
+
+        const int dieX =
+            DiceWindowX +
+            (DiceWindowWidth - DieSize) / 2;
+
+        const int dieY =
+            DiceWindowY +
+            175;
 
         // ---------------------------------------------------------------------
-        // Map Render area
+        // Idle
         // ---------------------------------------------------------------------
 
-        const Rectangle mapRender = toRaylibRectangle(
-            MapRenderX,
-            MapRenderY,
-            MapRenderWidth,
-            MapRenderHeight);
+        if (!presentation.active())
+        {
+            drawWrappedFallbackText(
+                "Waiting for Dice Action",
+                DiceWindowX,
+                DiceWindowY,
+                DiceWindowWidth,
+                DiceWindowHeight,
+                22,
+                28);
+
+            return;
+        }
+
+        // ---------------------------------------------------------------------
+        // Rolling
+        // ---------------------------------------------------------------------
+
+        if (presentation.phase() ==
+            CombatPresentation::Phase::Rolling)
+        {
+            // Decorative only.
+            // It has NO connection to the actual combat roll.
+            const int dieValue =
+                static_cast<int>(
+                    presentation.phaseElapsed() *
+                    10.0f)
+                % 6 + 1;
+
+            drawFallbackDie(
+                dieValue,
+                dieX,
+                dieY,
+                DieSize);
+
+            return;
+        }
+
+        // ---------------------------------------------------------------------
+        // Result
+        // ---------------------------------------------------------------------
+
+        if (presentation.phase() ==
+            CombatPresentation::Phase::Result)
+        {
+            const AttackResult* result =
+                presentation.currentAttack();
+
+            if (result == nullptr)
+            {
+                return;
+            }
+
+            int dieValue = 1;
+
+            switch (presentation.rollType())
+            {
+            case CombatPresentation::RollType::Precision:
+                dieValue =
+                    result->precisionRoll;
+                break;
+
+            case CombatPresentation::RollType::Wound:
+                dieValue =
+                    result->woundRoll;
+                break;
+
+            case CombatPresentation::RollType::Defense:
+                dieValue =
+                    result->defenseRoll;
+                break;
+
+            case CombatPresentation::RollType::None:
+            default:
+                return;
+            }
+
+            drawFallbackDie(
+                dieValue,
+                dieX,
+                dieY,
+                DieSize);
+        }
+    }
+
+    // =========================================================================
+    // Fallback Die
+    // =========================================================================
+
+    void Renderer::drawFallbackDie(
+        int value,
+        int x,
+        int y,
+        int size) const
+    {
+        if (value < 1 ||
+            value > 6)
+        {
+            value = 1;
+        }
+
+        const Rectangle die =
+            toRaylibRectangle(
+                x,
+                y,
+                size,
+                size);
+
+        DrawRectangleRec(
+            die,
+            WHITE);
+
+        DrawRectangleLinesEx(
+            die,
+            3.0f,
+            BLACK);
+
+        const float left =
+            die.x +
+            size * 0.25f;
+
+        const float centerX =
+            die.x +
+            size * 0.5f;
+
+        const float right =
+            die.x +
+            size * 0.75f;
+
+        const float top =
+            die.y +
+            size * 0.25f;
+
+        const float centerY =
+            die.y +
+            size * 0.5f;
+
+        const float bottom =
+            die.y +
+            size * 0.75f;
+
+        const float radius =
+            size * 0.07f;
+
+        auto drawPip =
+            [radius](
+                float px,
+                float py)
+            {
+                DrawCircle(
+                    static_cast<int>(px),
+                    static_cast<int>(py),
+                    radius,
+                    BLACK);
+            };
+
+        switch (value)
+        {
+        case 1:
+            drawPip(
+                centerX,
+                centerY);
+            break;
+
+        case 2:
+            drawPip(left, top);
+            drawPip(right, bottom);
+            break;
+
+        case 3:
+            drawPip(left, top);
+            drawPip(centerX, centerY);
+            drawPip(right, bottom);
+            break;
+
+        case 4:
+            drawPip(left, top);
+            drawPip(right, top);
+            drawPip(left, bottom);
+            drawPip(right, bottom);
+            break;
+
+        case 5:
+            drawPip(left, top);
+            drawPip(right, top);
+            drawPip(centerX, centerY);
+            drawPip(left, bottom);
+            drawPip(right, bottom);
+            break;
+
+        case 6:
+            drawPip(left, top);
+            drawPip(right, top);
+            drawPip(left, centerY);
+            drawPip(right, centerY);
+            drawPip(left, bottom);
+            drawPip(right, bottom);
+            break;
+        }
+    }
+
+    // =========================================================================
+    // Combat Info
+    // =========================================================================
+
+    void Renderer::drawCombatInfo(
+        const Game& game) const
+    {
+        const CombatPresentation& presentation =
+            game.combatPresentation();
+
+        constexpr int CombatInfoX = 230;
+        constexpr int CombatInfoY = 260;
+        constexpr int CombatInfoWidth = 240;
+        constexpr int CombatInfoHeight = 100;
+
+        // ---------------------------------------------------------------------
+        // Idle
+        // ---------------------------------------------------------------------
+
+        if (!presentation.active())
+        {
+            drawWrappedFallbackText(
+                "Select a Combat Action",
+                CombatInfoX,
+                CombatInfoY,
+                CombatInfoWidth,
+                CombatInfoHeight,
+                16,
+                22);
+
+            return;
+        }
+
+        // ---------------------------------------------------------------------
+        // Active presentation
+        // ---------------------------------------------------------------------
+
+        drawWrappedFallbackText(
+            presentation.infoMessage(),
+            CombatInfoX,
+            CombatInfoY,
+            CombatInfoWidth,
+            CombatInfoHeight,
+            16,
+            22);
+    }
+
+    // =========================================================================
+    // Map
+    // =========================================================================
+
+    void Renderer::drawMap(
+        const Game& game) const
+    {
+        const Map& map =
+            game.map();
+
+        // ---------------------------------------------------------------------
+        // Map Render
+        // ---------------------------------------------------------------------
+
+        const Rectangle mapRender =
+            toRaylibRectangle(
+                MapRenderX,
+                MapRenderY,
+                MapRenderWidth,
+                MapRenderHeight);
 
         // Temporary frame fallback.
-        DrawRectangleRec(
-            mapRender,
-            DARKGRAY);
+        if (m_mainScreenAssets.mapFrame().id == 0)
+        {
+            DrawRectangleRec(
+                mapRender,
+                DARKGRAY);
+        }
 
         // ---------------------------------------------------------------------
-        // Visible map area
+        // Visible Map Area
         // ---------------------------------------------------------------------
 
         const int visibleMapX =
-            MapRenderX + MapFrameThickness;
+            MapRenderX +
+            MapFrameThickness;
 
         const int visibleMapY =
-            MapRenderY + MapFrameThickness;
+            MapRenderY +
+            MapFrameThickness;
 
-        const Rectangle visibleMap = toRaylibRectangle(
-            visibleMapX,
-            visibleMapY,
-            VisibleMapWidth,
-            VisibleMapHeight);
+        const Rectangle visibleMap =
+            toRaylibRectangle(
+                visibleMapX,
+                visibleMapY,
+                VisibleMapWidth,
+                VisibleMapHeight);
 
-        // Temporary floor/background fallback.
         DrawRectangleRec(
             visibleMap,
             BLACK);
@@ -2326,40 +2338,53 @@ namespace dungeon
         // ---------------------------------------------------------------------
 
         const int renderedMapWidth =
-            static_cast<int>(map.width()) * TemporaryMapTileSize;
+            static_cast<int>(
+                map.width()) *
+            TemporaryMapTileSize;
 
         const int renderedMapHeight =
-            static_cast<int>(map.height()) * TemporaryMapTileSize;
+            static_cast<int>(
+                map.height()) *
+            TemporaryMapTileSize;
 
         const int mapOffsetX =
             visibleMapX +
-            (VisibleMapWidth - renderedMapWidth) / 2;
+            (VisibleMapWidth -
+                renderedMapWidth) / 2;
 
         const int mapOffsetY =
             visibleMapY +
-            (VisibleMapHeight - renderedMapHeight) / 2;
+            (VisibleMapHeight -
+                renderedMapHeight) / 2;
 
         // ---------------------------------------------------------------------
-        // Map tiles
+        // Static Map Tiles
         // ---------------------------------------------------------------------
 
-        for (std::size_t y = 0; y < map.height(); ++y)
+        for (std::size_t y = 0;
+            y < map.height();
+            ++y)
         {
-            for (std::size_t x = 0; x < map.width(); ++x)
+            for (std::size_t x = 0;
+                x < map.width();
+                ++x)
             {
-                const char tile = map.tileAt(
-                    static_cast<int>(x),
-                    static_cast<int>(y));
+                const char tile =
+                    map.tileAt(
+                        static_cast<int>(x),
+                        static_cast<int>(y));
 
                 const int tileX =
                     mapOffsetX +
-                    static_cast<int>(x) * TemporaryMapTileSize;
+                    static_cast<int>(x) *
+                    TemporaryMapTileSize;
 
                 const int tileY =
                     mapOffsetY +
                     renderedMapHeight -
                     TemporaryMapTileSize -
-                    static_cast<int>(y) * TemporaryMapTileSize;
+                    static_cast<int>(y) *
+                    TemporaryMapTileSize;
 
                 const Rectangle tileRectangle =
                     toRaylibRectangle(
@@ -2373,11 +2398,8 @@ namespace dungeon
                         m_mainScreenAssets,
                         tile);
 
-                // -------------------------------------------------------------
-                // PNG version
-                // -------------------------------------------------------------
-
-                if (texture != nullptr && texture->id != 0)
+                if (texture != nullptr &&
+                    texture->id != 0)
                 {
                     drawTexture(
                         *texture,
@@ -2388,10 +2410,6 @@ namespace dungeon
 
                     continue;
                 }
-
-                // -------------------------------------------------------------
-                // Temporary fallback version
-                // -------------------------------------------------------------
 
                 if (tile == '#')
                 {
@@ -2412,17 +2430,20 @@ namespace dungeon
         // Player
         // ---------------------------------------------------------------------
 
-        const Player& player = game.player();
+        const Player& player =
+            game.player();
 
         const int playerX =
             mapOffsetX +
-            player.x() * TemporaryMapTileSize;
+            player.x() *
+            TemporaryMapTileSize;
 
         const int playerY =
             mapOffsetY +
             renderedMapHeight -
             TemporaryMapTileSize -
-            player.y() * TemporaryMapTileSize;
+            player.y() *
+            TemporaryMapTileSize;
 
         const Texture2D& playerTexture =
             m_mainScreenAssets.playerTile();
@@ -2452,44 +2473,59 @@ namespace dungeon
         // Enemies
         // ---------------------------------------------------------------------
 
-        const auto& enemies = game.enemies();
+        const auto& enemies =
+            game.enemies();
 
         for (const auto& enemy : enemies)
         {
             const int enemyX =
                 mapOffsetX +
-                enemy->x() * TemporaryMapTileSize;
+                enemy->x() *
+                TemporaryMapTileSize;
 
             const int enemyY =
                 mapOffsetY +
                 renderedMapHeight -
                 TemporaryMapTileSize -
-                enemy->y() * TemporaryMapTileSize;
+                enemy->y() *
+                TemporaryMapTileSize;
 
-            const std::string_view type = enemy->type();
+            const std::string_view type =
+                enemy->type();
 
             const Texture2D* enemyTexture =
                 &m_mainScreenAssets.goblinTile();
+
+            const char* identifier =
+                "G";
 
             if (type == "Skeleton")
             {
                 enemyTexture =
                     &m_mainScreenAssets.skeletonTile();
+
+                identifier = "S";
             }
             else if (type == "Orc")
             {
                 enemyTexture =
                     &m_mainScreenAssets.orcTile();
+
+                identifier = "O";
             }
             else if (type == "Troll")
             {
                 enemyTexture =
                     &m_mainScreenAssets.trollTile();
+
+                identifier = "T";
             }
             else if (type == "Dragon")
             {
                 enemyTexture =
                     &m_mainScreenAssets.dragonTile();
+
+                identifier = "D";
             }
 
             if (enemyTexture->id != 0)
@@ -2503,25 +2539,6 @@ namespace dungeon
             }
             else
             {
-                const char* identifier = "G";
-
-                if (type == "Skeleton")
-                {
-                    identifier = "S";
-                }
-                else if (type == "Orc")
-                {
-                    identifier = "O";
-                }
-                else if (type == "Troll")
-                {
-                    identifier = "T";
-                }
-                else if (type == "Dragon")
-                {
-                    identifier = "D";
-                }
-
                 DrawRectangle(
                     enemyX,
                     toRaylibY(
@@ -2545,19 +2562,22 @@ namespace dungeon
         // Chests
         // ---------------------------------------------------------------------
 
-        const auto& chests = game.chests();
+        const auto& chests =
+            game.chests();
 
         for (const auto& chest : chests)
         {
             const int chestX =
                 mapOffsetX +
-                chest->x() * TemporaryMapTileSize;
+                chest->x() *
+                TemporaryMapTileSize;
 
             const int chestY =
                 mapOffsetY +
                 renderedMapHeight -
                 TemporaryMapTileSize -
-                chest->y() * TemporaryMapTileSize;
+                chest->y() *
+                TemporaryMapTileSize;
 
             const Texture2D& chestTexture =
                 m_mainScreenAssets.chestTile();
@@ -2581,20 +2601,25 @@ namespace dungeon
                     TemporaryMapTileSize,
                     TemporaryMapTileSize,
                     GOLD);
+
+                drawFallbackText(
+                    "C",
+                    chestX,
+                    chestY,
+                    TemporaryMapTileSize,
+                    TemporaryMapTileSize,
+                    11);
             }
         }
 
         // ---------------------------------------------------------------------
-        // Map Frame PNG
+        // Map Frame
         // ---------------------------------------------------------------------
 
-        const Texture2D& frameTexture =
-            m_mainScreenAssets.mapFrame();
-
-        if (frameTexture.id != 0)
+        if (m_mainScreenAssets.mapFrame().id != 0)
         {
             drawTexture(
-                frameTexture,
+                m_mainScreenAssets.mapFrame(),
                 MapRenderX,
                 MapRenderY,
                 MapRenderWidth,
@@ -2602,113 +2627,11 @@ namespace dungeon
         }
         else
         {
-            // Keep the temporary frame visible if the PNG isn't available.
             DrawRectangleLinesEx(
                 mapRender,
-                static_cast<float>(MapFrameThickness),
+                static_cast<float>(
+                    MapFrameThickness),
                 DARKGRAY);
-        }
-
-
-
-    }
-
-    void Renderer::drawWrappedFallbackText(
-        std::string_view text,
-        int x,
-        int y,
-        int width,
-        int height,
-        int fontSize,
-        int lineSpacing) const
-    {
-        const std::string value(text);
-
-        if (value.empty())
-        {
-            return;
-        }
-
-        const int maxTextWidth =
-            width - 12;
-
-        std::vector<std::string> lines;
-        std::string currentLine;
-
-        std::size_t start = 0;
-
-        while (start < value.size())
-        {
-            std::size_t end =
-                value.find(' ', start);
-
-            if (end == std::string::npos)
-            {
-                end = value.size();
-            }
-
-            const std::string word =
-                value.substr(
-                    start,
-                    end - start);
-
-            const std::string candidate =
-                currentLine.empty()
-                ? word
-                : currentLine + " " + word;
-
-            if (MeasureText(
-                candidate.c_str(),
-                fontSize) <= maxTextWidth)
-            {
-                currentLine = candidate;
-            }
-            else
-            {
-                if (!currentLine.empty())
-                {
-                    lines.push_back(currentLine);
-                }
-
-                currentLine = word;
-            }
-
-            start =
-                end == value.size()
-                ? value.size()
-                : end + 1;
-        }
-
-        if (!currentLine.empty())
-        {
-            lines.push_back(currentLine);
-        }
-
-        const int totalHeight =
-            static_cast<int>(lines.size()) * lineSpacing;
-
-        int currentY =
-            y + (height - totalHeight) / 2;
-
-        for (const std::string& line : lines)
-        {
-            const int lineWidth =
-                MeasureText(
-                    line.c_str(),
-                    fontSize);
-
-            const int lineX =
-                x + (width - lineWidth) / 2;
-
-            drawFallbackText(
-                line,
-                lineX,
-                currentY,
-                lineWidth,
-                lineSpacing,
-                fontSize);
-
-            currentY += lineSpacing;
         }
     }
 }

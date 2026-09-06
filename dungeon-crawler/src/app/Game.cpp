@@ -414,6 +414,18 @@ namespace dungeon
 
             return;
         }
+
+        // ---------------------------------------------------------------------
+        // No enemy turn remains.
+        // The combat itself has ended, so finish it now.
+        // ---------------------------------------------------------------------
+
+        if (m_pendingCombatFinish)
+        {
+            m_pendingCombatFinish = false;
+
+            finishCombatIfNeeded();
+        }
     }
 
     void Game::handleAction(Action action)
