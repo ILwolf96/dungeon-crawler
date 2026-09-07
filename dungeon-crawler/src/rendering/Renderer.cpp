@@ -413,7 +413,7 @@ namespace dungeon
         //
         // sooo I first calculate the bottom of the entire block, then move upward
         // to find the Y position of the first/top line.
-        // 
+        //
         // DO NOT FORGET IT!
         // -------------------------------------------------------------------------
 
@@ -470,7 +470,7 @@ namespace dungeon
 
         if (game.inCombat())
         {
-            drawCombatScreenLayout();
+            drawCombatScreenLayout(game);
         }
         else
         {
@@ -498,7 +498,14 @@ namespace dungeon
             drawLootTable(game);
             drawDiceRoll(game);
             drawCombatInfo(game);
-            drawCombatActionBar();
+            if (game.inventoryOpen())
+            {
+                drawInventoryActionBar();
+            }
+            else
+            {
+                drawCombatActionBar();
+            }
         }
         else
         {
@@ -706,8 +713,7 @@ namespace dungeon
     // =========================================================================
     // Combat Screen Layout
     // =========================================================================
-
-    void Renderer::drawCombatScreenLayout() const
+    void Renderer::drawCombatScreenLayout(const Game& game) const
     {
         // ---------------------------------------------------------------------
         // Player Stats Window
@@ -1069,7 +1075,9 @@ namespace dungeon
         if (m_gameInstructionsOpen)
         {
             drawFallbackText(
-                "GAME COMBAT INSTRUCTIONS",
+                game.inventoryOpen()
+                ? "GAME INVENTORY INSTRUCTIONS"
+                : "GAME COMBAT INSTRUCTIONS",
                 PovRenderX,
                 PovRenderY + 330,
                 PovRenderWidth,
@@ -1086,7 +1094,9 @@ namespace dungeon
                 24);
 
             drawFallbackText(
-                "Press TAB to return to the Combat POV.",
+                game.inventoryOpen()
+                ? "Press TAB to return to the Inventory."
+                : "Press TAB to return to the Combat POV.",
                 PovRenderX,
                 PovRenderY + 35,
                 PovRenderWidth,
@@ -1426,8 +1436,14 @@ namespace dungeon
             }
             else
             {
+                const bool threshold =
+                    slot.y == EnemyStatPrecY ||
+                    slot.y == EnemyStatDefY;
+
                 drawFallbackText(
-                    std::to_string(slot.value),
+                    threshold && slot.value > 0
+                    ? std::to_string(slot.value) + "+"
+                    : std::to_string(slot.value),
                     numberX,
                     slot.y,
                     StatNumberSize,
@@ -1552,8 +1568,10 @@ namespace dungeon
             stats.precision;
 
         const int damage =
-            game.player().weaponDamage();
-
+            game.player().weaponDamage() +
+            (game.combat() != nullptr
+                ? game.combat()->playerDamageBonus()
+                : 0);
         const int defense =
             stats.defense;
 
@@ -1561,7 +1579,7 @@ namespace dungeon
             stats.toughness;
         /*
         const int hp =
-            game.player().currentHp();
+            game.displayedPlayerHp();
         */
 
         const int hp =
@@ -1758,14 +1776,24 @@ namespace dungeon
 
         for (const StatNumber& stat : numbers)
         {
-            const bool thresholdStat =
+            const bool threshold =
                 stat.y == StatPrecY ||
                 stat.y == StatDefY;
-
+            if (threshold)
+            {
+                drawFallbackText(
+                    stat.value > 0
+                    ? std::to_string(stat.value) + "+"
+                    : "--",
+                    StatNumberX,
+                    stat.y,
+                    StatNumberSize,
+                    StatNumberSize,
+                    18);
+                continue;
+            }
             const Texture2D& numberTexture =
-                m_mainScreenAssets.number(
-                    stat.value);
-
+                m_mainScreenAssets.number(stat.value);
             if (numberTexture.id != 0)
             {
                 drawTexture(
@@ -1774,24 +1802,12 @@ namespace dungeon
                     stat.y,
                     StatNumberSize,
                     StatNumberSize);
-
-                if (thresholdStat)
-                {
-                    drawFallbackText(
-                        "+",
-                        StatNumberX + 24,
-                        stat.y,
-                        12,
-                        StatNumberSize,
-                        18);
-                }
             }
+
             else
             {
                 drawFallbackText(
-                    thresholdStat
-                    ? std::to_string(stat.value) + "+"
-                    : std::to_string(stat.value),
+                    std::to_string(stat.value),
                     StatNumberX,
                     stat.y,
                     StatNumberSize,
@@ -2288,7 +2304,22 @@ namespace dungeon
     // =========================================================================
     // Dice Roll
     // =========================================================================
-
+    void Renderer::drawInventoryActionBar() const
+    {
+        const Rectangle actionBar =
+            toRaylibRectangle(
+                ActionBarX,
+                ActionBarY,
+                ActionBarWidth,
+                ActionBarHeight);
+        DrawRectangleRec(actionBar, LIGHTGRAY);
+        DrawRectangleLinesEx(actionBar, 1.0f, DARKGRAY);
+        drawFallbackText("INVENTORY ACTIONS", ActionBarX, ActionBarY + 145, ActionBarWidth, 35, 22);
+        drawFallbackText("1  -  HEALTH POTION", ActionBarX + 25, ActionBarY + 85, 250, 35, 17);
+        drawFallbackText("2  -  RAGE POTION", ActionBarX + 275, ActionBarY + 85, 250, 35, 17);
+        drawFallbackText("3  -  CLOSE INVENTORY", ActionBarX + 525, ActionBarY + 85, 250, 35, 17);
+        drawFallbackText("TAB  -  GAME INVENTORY INSTRUCTIONS", ActionBarX, ActionBarY + 25, ActionBarWidth, 35, 17);
+    }
     void Renderer::drawDiceRoll(
         const Game& game) const
     {
@@ -2573,9 +2604,12 @@ namespace dungeon
         // ---------------------------------------------------------------------
         // Active presentation
         // ---------------------------------------------------------------------
-
+        const std::string_view message =
+            !game.combatInfoMessage().empty()
+            ? std::string_view(game.combatInfoMessage())
+            : std::string_view(presentation.infoMessage());
         drawWrappedFallbackText(
-            presentation.infoMessage(),
+            message,
             CombatInfoX,
             CombatInfoY,
             CombatInfoWidth,

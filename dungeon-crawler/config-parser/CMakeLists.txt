@@ -19,7 +19,7 @@ add_library(configparser STATIC
     src/IniParser.cpp
     src/JsonParser.cpp
     src/ParserFactory.cpp
-)
+ "include/config/DataRepository.h")
 
 target_include_directories(configparser
     PUBLIC

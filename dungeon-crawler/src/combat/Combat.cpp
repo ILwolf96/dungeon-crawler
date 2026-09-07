@@ -5,7 +5,7 @@
 #include "combat/IDice.h"
 #include "entities/Player.h"
 
-#include <algorithm>
+
 #include <iostream>
 #include <sstream>
 #include <stdexcept>
@@ -124,9 +124,9 @@ namespace dungeon
         {
             message << " Player defeated.";
         }
-
+      
         std::clog << '\n';
-
+        
         return {
             defenderDefeated,
             attackerDefeated,
@@ -144,12 +144,11 @@ namespace dungeon
                 "Combat is no longer active."
             };
         }
-
+    
         m_lastEnemyAttacks.clear();
-
-        const CombatStats targetStats =
-            m_target.combatStats();
-
+        
+        const CombatStats targetStats = m_target.combatStats();
+        
         if (targetStats.attacks <= 0)
         {
             return {
@@ -158,15 +157,14 @@ namespace dungeon
                 "The target has no attacks."
             };
         }
-
+        
         std::clog << "[COMBAT] " << m_target.targetType() << " attacks Player.\n";
-
-        const CombatStats attackerStats =
-            m_target.combatStats();
-
+        
+        const CombatStats attackerStats = m_target.combatStats();
+        
         std::vector<AttackResult>& results = m_lastEnemyAttacks;
         int damage = 1;
-
+        
         for (int attack = 0;
             attack < attackerStats.attacks;
             ++attack)
@@ -175,17 +173,17 @@ namespace dungeon
             {
                 break;
             }
-
+           
             const int playerHpBefore = m_player.currentHp();
-
+            
             results.push_back(
                 resolveAttack(
                     m_target,
                     m_player,
                     damage));
-
+            
             const int playerHpAfter = m_player.currentHp();
-
+            
             std::clog
                 << "[COMBAT] Player HP: "
                 << playerHpBefore
@@ -195,51 +193,49 @@ namespace dungeon
                 << m_player.maxHp()
                 << '\n';
         }
-
-        const bool defenderDefeated =
-            m_player.isDefeated();
-
-        const bool attackerDefeated =
-            m_target.isDefeated();
-
+        
+        const bool defenderDefeated = m_player.isDefeated();
+        
+        const bool attackerDefeated = m_target.isDefeated();
+        
         if (defenderDefeated ||
             attackerDefeated)
         {
             m_active = false;
         }
-
+        
         std::ostringstream message;
-
+        
         message
             << results.size()
             << " attack";
-
+        
         if (results.size() != 1)
         {
             message << "s";
         }
-
+        
         message << " resolved.";
-
+        
         if (defenderDefeated)
         {
             message << " Player defeated.";
         }
-
+        
         if (attackerDefeated)
         {
             message << " Target defeated.";
         }
-
+    
         std::clog << '\n';
-
+        
         return {
             attackerDefeated,
             defenderDefeated,
             message.str()
         };
     }
-
+    
     CombatResult Combat::escape()
     {
         if (!isActive())
@@ -281,43 +277,43 @@ namespace dungeon
             !m_playerEscaped &&
             m_player.isDefeated();
     }
-
+    
     bool Combat::escaped() const noexcept
     {
         return m_playerEscaped;
     }
-
+    
     CombatTarget& Combat::target() noexcept
     {
         return m_target;
     }
-
+    
     const CombatTarget& Combat::target() const noexcept
     {
         return m_target;
     }
-
+    
     const std::vector<AttackResult>&
         Combat::lastPlayerAttacks() const noexcept
     {
         return m_lastPlayerAttacks;
     }
-
+    
     const std::vector<AttackResult>&
         Combat::lastEnemyAttacks() const noexcept
     {
         return m_lastEnemyAttacks;
     }
-
+    
     void Combat::addPlayerDamageBonus(int amount)
     {
         if (amount <= 0)
         {
             return;
         }
-
+    
         m_playerDamageBonus += amount;
-
+        
         std::clog
             << "[COMBAT] Player temporary damage bonus increased by "
             << amount
@@ -325,12 +321,12 @@ namespace dungeon
             << m_playerDamageBonus
             << '\n';
     }
-
+    
     int Combat::playerDamageBonus() const noexcept
     {
         return m_playerDamageBonus;
     }
-
+    
     AttackResult Combat::resolveAttack(
         CombatTarget& attacker,
         CombatTarget& defender,
@@ -338,18 +334,16 @@ namespace dungeon
     {
         const CombatStats attackerStats =
             attacker.combatStats();
-
+    
         const CombatStats defenderStats =
             defender.combatStats();
-
+        
         AttackResult result;
-
-
-        result.precisionTarget = attackerStats.precision;
-
+        result.precisionTarget =
+            attackerStats.precision;
         result.precisionRoll =
             m_dice.rollD6();
-
+        
         if (!CombatRules::passesRoll(
             result.precisionRoll,
             result.precisionTarget))
@@ -363,10 +357,10 @@ namespace dungeon
                 CombatRules::woundTarget(
                     attackerStats.strength,
                     defenderStats.toughness);
-
+        
             result.woundRoll =
                 m_dice.rollD6();
-
+            
             if (!CombatRules::passesRoll(
                 result.woundRoll,
                 result.woundTarget))
@@ -376,11 +370,12 @@ namespace dungeon
             }
             else
             {
-                if (!defender.canDefend() || defenderStats.defense <= 0)
+                if (!defender.canDefend() ||
+                    defenderStats.defense <= 0)
                 {
                     result.damage = damage;
                     defender.takeDamage(result.damage);
-
+            
                     if (defender.isDefeated())
                     {
                         result.resolution = AttackResolution::Defeated;
@@ -389,21 +384,20 @@ namespace dungeon
                     {
                         result.resolution = AttackResolution::Damaged;
                     }
-
+                    
                     std::clog
                         << "[COMBAT]   - Precision: " << result.precisionRoll << " / " << result.precisionTarget << " (PASSED)\n"
                         << "[COMBAT]   - Wound:     " << result.woundRoll << " / " << result.woundTarget << " (PASSED)\n"
                         << "[COMBAT]   - Defense:   " << defender.targetType() << " cannot defend.\n"
                         << "[COMBAT]   - Result:    Hit! Damage=" << result.damage << '\n';
-
+                    
                     return result;
                 }
-
-                result.defenseTarget = defenderStats.defense;
-
+                result.defenseTarget =
+                    defenderStats.defense;
                 result.defenseRoll =
                     m_dice.rollD6();
-
+                
                 if (CombatRules::passesRoll(
                     result.defenseRoll,
                     result.defenseTarget))
@@ -414,9 +408,9 @@ namespace dungeon
                 else
                 {
                     defender.takeDamage(damage);
-
+                
                     result.damage = damage;
-
+                    
                     if (defender.isDefeated())
                     {
                         result.resolution =

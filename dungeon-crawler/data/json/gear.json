@@ -1,0 +1,89 @@
+{
+  "gear.weapon.club": {
+    "name": "Club",
+    "tier": 1,
+    "strength": 3,
+    "damage": 1
+  },
+  "gear.armor.gambeson": {
+    "name": "Gambeson",
+    "tier": 1,
+    "defense": 0
+  },
+  "gear.weapon.sword": {
+    "name": "Sword",
+    "tier": 2,
+    "strength": 4,
+    "damage": 1
+  },
+  "gear.armor.chainmail": {
+    "name": "Chainmail",
+    "tier": 2,
+    "defense": 6
+  },
+  "gear.weapon.greatsword": {
+    "name": "Greatsword",
+    "tier": 3,
+    "strength": 5,
+    "damage": 1
+  },
+  "gear.armor.plate": {
+    "name": "Plate",
+    "tier": 3,
+    "defense": 5
+  },
+  "gear.accessory.magic_skull": {
+    "name": "Magic Skull",
+    "tier": 3,
+    "attacks_bonus": 0,
+    "precision_bonus": 1,
+    "max_hp_bonus": 0
+  },
+  "gear.weapon.orcish_axe": {
+    "name": "Orcish Axe",
+    "tier": 4,
+    "strength": 6,
+    "damage": 1
+  },
+  "gear.armor.orcish_plate": {
+    "name": "Orcish Plate",
+    "tier": 4,
+    "defense": 4
+  },
+  "gear.accessory.orc_fang": {
+    "name": "Orc Fang",
+    "tier": 4,
+    "attacks_bonus": 1,
+    "precision_bonus": 0,
+    "max_hp_bonus": 0
+  },
+  "gear.weapon.troll_arm": {
+    "name": "Troll's Arm",
+    "tier": 5,
+    "strength": 8,
+    "damage": 1
+  },
+  "gear.armor.troll_hide": {
+    "name": "Troll's Hide",
+    "tier": 5,
+    "defense": 3
+  },
+  "gear.accessory.troll_heart": {
+    "name": "Troll's Heart",
+    "tier": 5,
+    "attacks_bonus": 0,
+    "precision_bonus": 0,
+    "max_hp_bonus": 4
+  },
+  "gear.weapon.dragonbone_blade": {
+    "name": "DragonBone Blade",
+    "tier": 6,
+    "strength": 10,
+    "damage": 1
+  },
+  "gear.armor.dragonscale_plate": {
+    "name": "DragonScale Plate",
+    "tier": 6,
+    "defense": 2
+  }
+}

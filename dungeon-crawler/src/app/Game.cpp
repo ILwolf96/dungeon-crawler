@@ -4,10 +4,12 @@
 #include "entities/Chest.h"
 #include "config/ParserFactory.h"
 
+#include "config/DataRepository.h"
+
 #include "gear/GearFactory.h"
 #include "loot/LootGenerator.h"
-
 #include "loot/LootTable.h"
+
 #include "inventory/HealthPotion.h"
 #include "inventory/RagePotion.h"
 
@@ -120,8 +122,16 @@ namespace dungeon
 
     void Game::load(std::string_view filePath)
     {
+
+        //The Old parser, keeping it for now.
+        /*
         auto parser = config::makeParser(filePath);
         m_configData = parser->parse(filePath);
+        */
+
+        //The New Parser
+        config::DataRepository dataRepository;
+        m_configData = dataRepository.load(filePath);
 
         // Window configuration.
         const int windowWidth =
@@ -133,6 +143,7 @@ namespace dungeon
         const std::string title =
             getRequiredString(m_configData, "window", "title");
 
+        std::clog << "[CONFIG] Loaded configuration: " << filePath << std::endl;
         if (windowWidth <= 0 || windowHeight <= 0)
         {
             throw std::runtime_error(
@@ -223,74 +234,74 @@ namespace dungeon
                         throw std::runtime_error(
                             "Map contains more than one player.");
                     }
-
+                   
                     playerFound = true;
-
+                    
                     m_player.setPosition(
                         static_cast<int>(x),
                         static_cast<int>(y));
-
+                
                     continue;
                 }
-
+         
                 if (tile == 'C')
                 {
                     m_chests.push_back(
                         std::make_unique<Chest>(
                             static_cast<int>(x),
                             static_cast<int>(y)));
-
+                
                     continue;
                 }
-
+                
                 const auto enemyDefinition =
                     enemyDefinitions.find(tile);
-
+                
                 if (enemyDefinition == enemyDefinitions.end())
                 {
                     continue;
                 }
-
+                
                 const std::string& sectionName =
                     enemyDefinition->second;
-
+                
                 const std::string type =
                     sectionName.substr(EnemySectionPrefix.size());
-
+                
                 const int maxHp =
                     getRequiredInt(
                         m_configData,
                         sectionName,
                         "max_hp");
-
+                
                 const int tier =
                     getRequiredInt(
                         m_configData,
                         sectionName,
                         "tier");
-
+             
                 const CombatStats stats{
                     getRequiredInt(
                         m_configData,
                         sectionName,
                         "attacks"),
 
-                    getRequiredInt(
+                        getRequiredInt(
                         m_configData,
                         sectionName,
                         "precision"),
 
-                    getRequiredInt(
+                        getRequiredInt(
                         m_configData,
                         sectionName,
                         "strength"),
 
-                    getRequiredInt(
+                        getRequiredInt(
                         m_configData,
                         sectionName,
                         "toughness"),
 
-                    getRequiredInt(
+                        getRequiredInt(
                         m_configData,
                         sectionName,
                         "defense")
@@ -353,7 +364,27 @@ namespace dungeon
             m_player.currentHp();
 
         m_displayedCombatTargetHp = 0;
+        m_combatInfoMessage.clear();
+        m_combatActionMessage.clear();
+        m_combatInfoMessageTime = 0.0f;
+        m_pendingPotionEnemyTurn = false;
 
+        m_healthPotionRestoreAmount =
+            getRequiredInt(
+                m_configData,
+                "gear.consumable.health_potion",
+                "restore_amount");
+     
+        m_ragePotionDamageBonus =
+            getRequiredInt(
+                m_configData,
+                "gear.consumable.rage_potion",
+                "damage_bonus");
+
+        std::clog
+            << "[CONFIG] player.precision = "
+            << playerBaseStats.precision
+            << std::endl;
         m_combatPresentationActor =
             CombatPresentationActor::None;
 
@@ -364,40 +395,46 @@ namespace dungeon
 
     void Game::update(float deltaSeconds)
     {
-        if (!m_combat ||
-            !m_combatPresentation.active())
+        if (!m_combat)
         {
             return;
         }
-
+        if (m_combatInfoMessageTime > 0.0f)
+        {
+            m_combatInfoMessageTime =
+                std::max(0.0f, m_combatInfoMessageTime - deltaSeconds);
+            if (m_combatInfoMessageTime <= 0.0f)
+            {
+                m_combatInfoMessage.clear();
+                if (m_pendingPotionEnemyTurn)
+                {
+                    m_pendingPotionEnemyTurn = false;
+                    beginEnemyTurnPresentation();
+                }
+            }
+        }
+        if (!m_combatPresentation.active())
+        {
+            return;
+        }
         const bool presentationCompleted =
             m_combatPresentation.update(deltaSeconds);
 
-        // -------------------------------------------------------------------------
-        // A Result phase means the actual combat result has reached the point
-        // where its damage should now become visible in the HUD.
-        //
-        // The actual HP was already modified by Combat::resolveAttack().
-        // Here we reveal that damage in the presentation state.
-        // -------------------------------------------------------------------------
+
         if (m_combatPresentation.phase() ==
             CombatPresentation::Phase::Result)
         {
             const AttackResult* result =
                 m_combatPresentation.currentAttack();
-
-            if (result != nullptr &&
-                result->damage > 0)
+            if (result != nullptr && result->damage > 0)
             {
                 const auto rollType =
                     m_combatPresentation.rollType();
 
                 const bool damageStep =
-                    rollType ==
-                    CombatPresentation::RollType::Defense
+                    rollType == CombatPresentation::RollType::Defense
                     ||
-                    (rollType ==
-                        CombatPresentation::RollType::Wound &&
+                    (rollType == CombatPresentation::RollType::Wound &&
                         result->defenseRoll == 0);
 
                 if (damageStep)
@@ -412,27 +449,16 @@ namespace dungeon
                             CombatPresentationActor::Player)
                         {
                             m_displayedCombatTargetHp =
-                                std::max(
-                                    0,
-                                    m_displayedCombatTargetHp -
-                                    result->damage);
+                                std::max(0, m_displayedCombatTargetHp - result->damage);
                         }
-                        else if (
-                            m_combatPresentationActor ==
+                        else if (m_combatPresentationActor ==
                             CombatPresentationActor::Enemy)
                         {
                             m_displayedPlayerHp =
-                                std::max(
-                                    0,
-                                    m_displayedPlayerHp -
-                                    result->damage);
+                                std::max(0, m_displayedPlayerHp - result->damage);
                         }
-
-                        m_lastPresentedDamageAttackIndex =
-                            attackIndex;
-
-                        m_lastPresentedDamageRollType =
-                            rollType;
+                        m_lastPresentedDamageAttackIndex = attackIndex;
+                        m_lastPresentedDamageRollType = rollType;
                     }
                 }
             }
@@ -443,104 +469,75 @@ namespace dungeon
             advanceCombatPresentation();
         }
     }
+    void Game::beginEnemyTurnPresentation()
+    {
+        if (!m_combat || !m_combat->isActive())
+        {
+            if (m_combat != nullptr)
+            {
+                finishCombatIfNeeded();
+            }
+            return;
+        }
+        std::clog << "[COMBAT] Enemy turn begins." << std::endl;
+        const CombatResult enemyResult = m_combat->enemyTurn();
+        std::clog << "[COMBAT] " << enemyResult.message << std::endl;
+        m_pendingCombatFinish = !m_combat->isActive();
+        const auto& attackResults = m_combat->lastEnemyAttacks();
+        if (attackResults.empty())
+        {
+            m_combatPresentationActor = CombatPresentationActor::None;
+            if (m_pendingCombatFinish)
+            {
+                m_pendingCombatFinish = false;
+                finishCombatIfNeeded();
+            }
 
+            return;
+        }
+        m_combatPresentationActor = CombatPresentationActor::Enemy;
+        m_lastPresentedDamageAttackIndex = static_cast<std::size_t>(-1);
+        m_lastPresentedDamageRollType = CombatPresentation::RollType::None;
+        const std::string enemyName =
+            std::string(m_combat->target().targetType());
+        m_combatPresentation.start(
+            enemyName,
+            "Player",
+            enemyName + "\nSelected Attack",
+            std::vector<AttackResult>(
+                attackResults.begin(),
+                attackResults.end()));
+    }
     void Game::advanceCombatPresentation()
     {
         if (!m_combat)
         {
             return;
         }
-
-        // -------------------------------------------------------------------------
-        // Player attack presentation has finished.
-        // -------------------------------------------------------------------------
         if (m_pendingEnemyTurn)
         {
             m_pendingEnemyTurn = false;
-
-            std::clog
-                << "[COMBAT] Enemy turn begins.\n";
-
-            const CombatResult enemyResult =
-                m_combat->enemyTurn();
-
-            std::clog
-                << "[COMBAT] "
-                << enemyResult.message
-                << '\n';
-
-            m_pendingCombatFinish =
-                !m_combat->isActive();
-
-            const std::string enemyName =
-                std::string(
-                    m_combat->target().targetType());
-
-            const auto& attackResults =
-                m_combat->lastEnemyAttacks();
-
-            if (attackResults.empty())
-            {
-                m_combatPresentationActor =
-                    CombatPresentationActor::None;
-
-                if (m_pendingCombatFinish)
-                {
-                    m_pendingCombatFinish = false;
-                    finishCombatIfNeeded();
-                }
-
-                return;
-            }
-
-            m_combatPresentationActor =
-                CombatPresentationActor::Enemy;
-
-            m_lastPresentedDamageAttackIndex =
-                static_cast<std::size_t>(-1);
-
-            m_lastPresentedDamageRollType =
-                CombatPresentation::RollType::None;
-
-            m_combatPresentation.start(
-                enemyName,
-                "Player",
-                enemyName + "\nSelected Attack",
-                std::vector<AttackResult>(
-                    attackResults.begin(),
-                    attackResults.end()));
-
+            beginEnemyTurnPresentation();
             return;
         }
 
-        // -------------------------------------------------------------------------
-        // Combat has finished.
-        // -------------------------------------------------------------------------
+
         if (m_pendingCombatFinish)
         {
             m_pendingCombatFinish = false;
-
-            m_combatPresentationActor =
-                CombatPresentationActor::None;
-
+            m_combatPresentationActor = CombatPresentationActor::None;
             finishCombatIfNeeded();
 
             return;
         }
-
-        // -------------------------------------------------------------------------
-        // Enemy presentation finished and combat continues.
-        // -------------------------------------------------------------------------
-        m_combatPresentationActor =
-            CombatPresentationActor::None;
+        m_combatPresentationActor = CombatPresentationActor::None;
     }
 
     void Game::handleAction(Action action)
     {
         if (m_combat)
         {
-            if (m_combat &&
-                m_combatPresentation.active())
+            if (m_combatPresentation.active())
             {
                 return;
             }
@@ -552,42 +549,16 @@ namespace dungeon
                 case Action::Attack:
                     if (useHealthPotion())
                     {
-                        std::clog
-                            << "[INVENTORY] Health Potion used.\n";
-
-                        const CombatResult enemyResult =
-                            m_combat->enemyTurn();
-
-                        std::clog
-                            << "[COMBAT] "
-                            << enemyResult.message
-                            << '\n';
-
-                        if (!m_combat->isActive())
-                        {
-                            finishCombatIfNeeded();
-                        }
+                        m_pendingPotionEnemyTurn = true;
+                        m_combatInfoMessageTime = 1.0f;
                     }
                     break;
 
                 case Action::Inventory:
                     if (useRagePotion())
                     {
-                        std::clog
-                            << "[INVENTORY] Rage Potion used.\n";
-
-                        const CombatResult enemyResult =
-                            m_combat->enemyTurn();
-
-                        std::clog
-                            << "[COMBAT] "
-                            << enemyResult.message
-                            << '\n';
-
-                        if (!m_combat->isActive())
-                        {
-                            finishCombatIfNeeded();
-                        }
+                        m_pendingPotionEnemyTurn = true;
+                        m_combatInfoMessageTime = 1.0f;
                     }
                     break;
 
@@ -617,8 +588,7 @@ namespace dungeon
                 break;
 
             default:
-                std::clog
-                    << "[COMBAT] Movement/input ignored during combat.\n";
+                std::clog << "[COMBAT] Movement/input ignored during combat." << std::endl;
                 break;
             }
 
@@ -659,10 +629,7 @@ namespace dungeon
         }
 
         m_player.setPosition(targetX, targetY);
-
-        CombatTarget* target =
-            combatTargetAt(targetX, targetY);
-
+        CombatTarget* target = combatTargetAt(targetX, targetY);
         if (target != nullptr)
         {
             startCombat(*target);
@@ -755,24 +722,24 @@ namespace dungeon
         std::vector<CombatLootPreviewSlot> preview;
         preview.reserve(PreviewSlotCount);
         const auto makeNone = []()
-        {
+            {
                 return CombatLootPreviewSlot{
                     CombatLootPreviewType::None,
                     {},
                     0
                 };
-        };
+            };
 
         const auto appendNone = [&]()
-        {
+            {
                 if (preview.size() < PreviewSlotCount)
                 {
                     preview.push_back(makeNone());
                 }
-        };
+            };
 
         const auto appendHealthPotion = [&]()
-        {
+            {
                 if (preview.size() < PreviewSlotCount)
                 {
                     preview.push_back(CombatLootPreviewSlot{
@@ -781,10 +748,10 @@ namespace dungeon
                         0
                         });
                 }
-        };
+            };
 
         const auto appendRagePotion = [&]()
-        {
+            {
                 if (preview.size() < PreviewSlotCount)
                 {
                     preview.push_back(CombatLootPreviewSlot{
@@ -793,7 +760,7 @@ namespace dungeon
                         0
                         });
                 }
-        };
+            };
 
         // Chests have no gear candidates in the current loot table.
         // Their five-slot preview is explicitly: Health Potion, Rage Potion, None, None, None.
@@ -819,8 +786,9 @@ namespace dungeon
         const auto& equippedAccessories =
             m_player.equipment().accessories();
 
-        const auto accessoryAlreadyOwned = [&](std::string_view rewardId)
-        {
+        const auto accessoryAlreadyOwned =
+            [&](std::string_view rewardId)
+            {
                 for (const auto& accessory : equippedAccessories)
                 {
                     if (!accessory)
@@ -843,10 +811,10 @@ namespace dungeon
                 }
 
                 return false;
-        };
-
-        const auto appendGearReward = [&](const LootReward& reward)
-        {
+            };
+        const auto appendGearReward =
+            [&](const LootReward& reward)
+            {
                 bool available = false;
 
                 switch (reward.type)
@@ -899,7 +867,7 @@ namespace dungeon
                 {
                     preview.push_back(std::move(slot));
                 }
-        };
+            };
 
         const std::vector<LootReward> rewards =
             LootTable::rewardsForTier(lootTier);
@@ -1027,6 +995,8 @@ namespace dungeon
         }
 
         m_inventoryOpen = true;
+        m_combatActionMessage = "Opening Inventory";
+
 
         std::clog
             << "[INVENTORY] ====================\n"
@@ -1057,67 +1027,54 @@ namespace dungeon
         {
             return;
         }
-
+    
         m_inventoryOpen = false;
-
+        m_combatActionMessage = "Closing Inventory";
+        
         std::clog
             << "[INVENTORY] Combat inventory closed.\n";
     }
-
+    
     bool Game::useHealthPotion()
     {
         if (!m_combat)
         {
             return false;
         }
-
-        constexpr int HealAmount = 3;
-
+        
+        
         const int currentHp = m_player.currentHp();
         const int maximumHp = m_player.maxHp();
-
+        
         if (!m_player.inventory().hasConsumable(HealthPotion{}))
         {
-            std::clog
-                << "[INVENTORY] Cannot use Health Potion: none available.\n";
-
+            std::clog << "[INVENTORY] Cannot use Health Potion: none available." << std::endl;
             return false;
         }
-
+        
         if (currentHp >= maximumHp)
         {
             std::clog
                 << "[INVENTORY] Cannot use Health Potion: Player HP is already full ("
-                << currentHp
-                << "/"
-                << maximumHp
-                << ").\n";
-
+                << currentHp << "/" << maximumHp << ")." << std::endl;
             return false;
         }
-
+    
         m_player.inventory().removeConsumable(HealthPotion{});
-
+        
         const int hpBefore = m_player.currentHp();
-
-        m_player.heal(HealAmount);
-        m_displayedPlayerHp =
-            m_player.currentHp();
-
+        m_player.heal(m_healthPotionRestoreAmount);
         const int hpAfter = m_player.currentHp();
-
-        std::clog
-            << "[INVENTORY] Health Potion: Player HP "
-            << hpBefore
-            << " -> "
-            << hpAfter
-            << " / "
-            << maximumHp
-            << '\n';
-
+        const int restored = hpAfter - hpBefore;
+        
+        m_displayedPlayerHp = hpAfter;
+        
+        m_combatInfoMessage =
+            "Player used Health Potion, HP Restored by " +
+            std::to_string(restored);
         return true;
     }
-
+    
     bool Game::useRagePotion()
     {
         if (!m_combat)
@@ -1125,24 +1082,23 @@ namespace dungeon
             return false;
         }
 
-        constexpr int DamageBonus = 1;
 
         if (!m_player.inventory().hasConsumable(RagePotion{}))
         {
-            std::clog
-                << "[INVENTORY] Cannot use Rage Potion: none available.\n";
-
+            std::clog << "[INVENTORY] Cannot use Rage Potion: none available." << std::endl;
             return false;
         }
 
         m_player.inventory().removeConsumable(RagePotion{});
+        const int damageBefore = m_combat->playerDamageBonus();
+        m_combat->addPlayerDamageBonus(m_ragePotionDamageBonus);
 
-        m_combat->addPlayerDamageBonus(DamageBonus);
+        const int increasedDamage =
+            m_combat->playerDamageBonus() - damageBefore;
 
-        std::clog
-            << "[INVENTORY] Rage Potion consumed. Player damage bonus for this encounter is now +"
-            << m_combat->playerDamageBonus()
-            << ".\n";
+        m_combatInfoMessage =
+            "Player used Rage Potion, DMG Increased by " +
+            std::to_string(increasedDamage);
 
         return true;
     }
@@ -1292,35 +1248,46 @@ namespace dungeon
     {
         return m_enemies;
     }
-
+    
     const std::vector<std::unique_ptr<Chest>>& Game::chests() const noexcept
     {
         return m_chests;
     }
-
+    
     int Game::displayedPlayerHp() const noexcept
     {
         if (!m_combat)
         {
             return m_player.currentHp();
         }
-
+    
         return m_displayedPlayerHp;
     }
-
+ 
     int Game::displayedCombatTargetHp() const noexcept
     {
         if (!m_combat)
         {
             return 0;
         }
-
+ 
         return m_displayedCombatTargetHp;
     }
-
+    bool Game::inventoryOpen() const noexcept
+    {
+        return m_inventoryOpen;
+    }
+    const std::string& Game::combatInfoMessage() const noexcept
+    {
+        return m_combatInfoMessage;
+    }
+    const std::string& Game::combatActionMessage() const noexcept
+    {
+        return m_combatActionMessage;
+    }
     const std::vector<CombatLootPreviewSlot>&
         Game::combatLootPreview() const noexcept
-        {
+    {
         return m_combatLootPreview;
-        }
+    }
 }

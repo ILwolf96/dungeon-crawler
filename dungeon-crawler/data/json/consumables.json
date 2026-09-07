@@ -1,0 +1,12 @@
+{
+  "gear.consumable.health_potion": {
+    "name": "Health Potion",
+    "tier": 1,
+    "restore_amount": 3
+  },
+  "gear.consumable.rage_potion": {
+    "name": "Rage Potion",
+    "tier": 1,
+    "damage_bonus": 1
+  }
+}

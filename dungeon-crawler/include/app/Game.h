@@ -68,6 +68,9 @@ namespace dungeon
         int displayedPlayerHp() const noexcept;
         int displayedCombatTargetHp() const noexcept;
 
+        bool inventoryOpen() const noexcept;
+        const std::string& combatInfoMessage() const noexcept;
+        const std::string& combatActionMessage() const noexcept;
 
         [[nodiscard]]
         int windowWidth() const noexcept;
@@ -113,6 +116,7 @@ namespace dungeon
         void openCombatInventory();
         void closeCombatInventory();
         void advanceCombatPresentation();
+        void beginEnemyTurnPresentation();
 
         std::vector<CombatLootPreviewSlot> buildCombatLootPreview(
             const CombatTarget& target,
@@ -149,8 +153,14 @@ namespace dungeon
         bool m_inventoryOpen{ false };
         bool m_pendingEnemyTurn{ false };
         bool m_pendingCombatFinish{ false };
-
-
+        bool m_pendingPotionEnemyTurn{ false };
+      
+        float m_combatInfoMessageTime{ 0.0f };
+        std::string m_combatInfoMessage;
+        std::string m_combatActionMessage;
+        int m_healthPotionRestoreAmount{ 0 };
+        int m_ragePotionDamageBonus{ 0 };
+        
         bool useHealthPotion();
         bool useRagePotion();
 

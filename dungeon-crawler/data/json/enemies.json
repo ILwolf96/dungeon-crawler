@@ -1,0 +1,57 @@
+{
+  "chest": {
+    "symbol": "C",
+    "tier": 1,
+    "max_hp": 1
+  },
+  "enemy.goblin": {
+    "symbol": "G",
+    "tier": 2,
+    "max_hp": 2,
+    "attacks": 1,
+    "precision": 4,
+    "strength": 3,
+    "toughness": 3,
+    "defense": 6
+  },
+  "enemy.skeleton": {
+    "symbol": "S",
+    "tier": 3,
+    "max_hp": 4,
+    "attacks": 1,
+    "precision": 4,
+    "strength": 4,
+    "toughness": 4,
+    "defense": 5
+  },
+  "enemy.orc": {
+    "symbol": "O",
+    "tier": 4,
+    "max_hp": 6,
+    "attacks": 2,
+    "precision": 3,
+    "strength": 4,
+    "toughness": 5,
+    "defense": 4
+  },
+  "enemy.troll": {
+    "symbol": "T",
+    "tier": 5,
+    "max_hp": 8,
+    "attacks": 2,
+    "precision": 4,
+    "strength": 6,
+    "toughness": 6,
+    "defense": 3
+  },
+  "enemy.dragon": {
+    "symbol": "D",
+    "tier": 6,
+    "max_hp": 15,
+    "attacks": 4,
+    "precision": 2,
+    "strength": 8,
+    "toughness": 8,
+    "defense": 3
+  }
+}
