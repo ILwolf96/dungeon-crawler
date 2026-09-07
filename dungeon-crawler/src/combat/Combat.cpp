@@ -5,6 +5,7 @@
 #include "combat/IDice.h"
 #include "entities/Player.h"
 
+#include <algorithm>
 #include <iostream>
 #include <sstream>
 #include <stdexcept>
@@ -343,8 +344,8 @@ namespace dungeon
 
         AttackResult result;
 
-        result.precisionTarget =
-            attackerStats.precision;
+
+        result.precisionTarget = attackerStats.precision;
 
         result.precisionRoll =
             m_dice.rollD6();
@@ -375,7 +376,7 @@ namespace dungeon
             }
             else
             {
-                if (!defender.canDefend())
+                if (!defender.canDefend() || defenderStats.defense <= 0)
                 {
                     result.damage = damage;
                     defender.takeDamage(result.damage);
@@ -398,8 +399,7 @@ namespace dungeon
                     return result;
                 }
 
-                result.defenseTarget =
-                    defenderStats.defense;
+                result.defenseTarget = defenderStats.defense;
 
                 result.defenseRoll =
                     m_dice.rollD6();

@@ -1758,6 +1758,10 @@ namespace dungeon
 
         for (const StatNumber& stat : numbers)
         {
+            const bool thresholdStat =
+                stat.y == StatPrecY ||
+                stat.y == StatDefY;
+
             const Texture2D& numberTexture =
                 m_mainScreenAssets.number(
                     stat.value);
@@ -1770,11 +1774,24 @@ namespace dungeon
                     stat.y,
                     StatNumberSize,
                     StatNumberSize);
+
+                if (thresholdStat)
+                {
+                    drawFallbackText(
+                        "+",
+                        StatNumberX + 24,
+                        stat.y,
+                        12,
+                        StatNumberSize,
+                        18);
+                }
             }
             else
             {
                 drawFallbackText(
-                    std::to_string(stat.value),
+                    thresholdStat
+                    ? std::to_string(stat.value) + "+"
+                    : std::to_string(stat.value),
                     StatNumberX,
                     stat.y,
                     StatNumberSize,
