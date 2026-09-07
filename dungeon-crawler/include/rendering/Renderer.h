@@ -203,6 +203,7 @@ namespace dungeon
         void drawCombatActionBar() const;
 
 
+        void drawLootTable(const Game& game) const;
         void drawDiceRoll(const Game& game) const;
         void drawCombatInfo(const Game& game) const;
         void drawFallbackDie(int value, int x, int y, int size) const;

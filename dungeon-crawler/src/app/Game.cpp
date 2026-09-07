@@ -7,6 +7,7 @@
 #include "gear/GearFactory.h"
 #include "loot/LootGenerator.h"
 
+#include "loot/LootTable.h"
 #include "inventory/HealthPotion.h"
 #include "inventory/RagePotion.h"
 
@@ -716,7 +717,216 @@ namespace dungeon
             target.currentHp();
 
         //m_pendingPlayerHpSync = false;
+
+        // -------------------------------------------------------------------------
+        // Loot preview
+        //
+        // Enemies use their configured loot tier.
+        // Chests currently use Tier 1.
+        // This only reads the loot table; it does not roll or award anything.
+        // -------------------------------------------------------------------------
+
+        int lootTier = 1;
+
+        for (const auto& enemy : m_enemies)
+        {
+            if (enemy.get() != &target)
+            {
+                continue;
+            }
+
+            lootTier = enemy->tier();
+            break;
+        }
+
+
+        m_combatLootPreview =
+            buildCombatLootPreview(
+                target,
+                lootTier);
     }
+
+
+    std::vector<CombatLootPreviewSlot> Game::buildCombatLootPreview(
+        const CombatTarget& target,
+        int lootTier) const
+    {
+        constexpr std::size_t PreviewSlotCount = 5;
+        std::vector<CombatLootPreviewSlot> preview;
+        preview.reserve(PreviewSlotCount);
+        const auto makeNone = []()
+        {
+                return CombatLootPreviewSlot{
+                    CombatLootPreviewType::None,
+                    {},
+                    0
+                };
+        };
+
+        const auto appendNone = [&]()
+        {
+                if (preview.size() < PreviewSlotCount)
+                {
+                    preview.push_back(makeNone());
+                }
+        };
+
+        const auto appendHealthPotion = [&]()
+        {
+                if (preview.size() < PreviewSlotCount)
+                {
+                    preview.push_back(CombatLootPreviewSlot{
+                        CombatLootPreviewType::HealthPotion,
+                        "health_potion",
+                        0
+                        });
+                }
+        };
+
+        const auto appendRagePotion = [&]()
+        {
+                if (preview.size() < PreviewSlotCount)
+                {
+                    preview.push_back(CombatLootPreviewSlot{
+                        CombatLootPreviewType::RagePotion,
+                        "rage_potion",
+                        0
+                        });
+                }
+        };
+
+        // Chests have no gear candidates in the current loot table.
+        // Their five-slot preview is explicitly: Health Potion, Rage Potion, None, None, None.
+        if (dynamic_cast<const Chest*>(&target) != nullptr)
+        {
+            appendHealthPotion();
+            appendRagePotion();
+
+            while (preview.size() < PreviewSlotCount)
+            {
+                appendNone();
+            }
+
+            return preview;
+        }
+
+        const auto& equippedWeapon =
+            m_player.equipment().weapon();
+
+        const auto& equippedArmor =
+            m_player.equipment().armor();
+
+        const auto& equippedAccessories =
+            m_player.equipment().accessories();
+
+        const auto accessoryAlreadyOwned = [&](std::string_view rewardId)
+        {
+                for (const auto& accessory : equippedAccessories)
+                {
+                    if (!accessory)
+                    {
+                        continue;
+                    }
+
+                    const std::string_view name =
+                        accessory->name();
+
+                    if ((rewardId == "magic_skull" &&
+                        name == "Magic Skull") ||
+                        (rewardId == "orc_fang" &&
+                            name == "Orc Fang") ||
+                        (rewardId == "troll_heart" &&
+                            name == "Troll's Heart"))
+                    {
+                        return true;
+                    }
+                }
+
+                return false;
+        };
+
+        const auto appendGearReward = [&](const LootReward& reward)
+        {
+                bool available = false;
+
+                switch (reward.type)
+                {
+                case LootType::Weapon:
+                    available =
+                        equippedWeapon == nullptr ||
+                        equippedWeapon->tier() < reward.tier;
+                    break;
+
+                case LootType::Armor:
+                    available =
+                        equippedArmor == nullptr ||
+                        equippedArmor->tier() < reward.tier;
+                    break;
+
+                case LootType::Accessory:
+                    available =
+                        equippedAccessories.size() < 3 &&
+                        !accessoryAlreadyOwned(reward.id);
+                    break;
+                }
+
+                if (!available)
+                {
+                    appendNone();
+                    return;
+                }
+
+                CombatLootPreviewSlot slot;
+                slot.id = reward.id;
+                slot.tier = reward.tier;
+
+                switch (reward.type)
+                {
+                case LootType::Weapon:
+                    slot.type = CombatLootPreviewType::Weapon;
+                    break;
+
+                case LootType::Armor:
+                    slot.type = CombatLootPreviewType::Armor;
+                    break;
+
+                case LootType::Accessory:
+                    slot.type = CombatLootPreviewType::Accessory;
+                    break;
+                }
+
+                if (preview.size() < PreviewSlotCount)
+                {
+                    preview.push_back(std::move(slot));
+                }
+        };
+
+        const std::vector<LootReward> rewards =
+            LootTable::rewardsForTier(lootTier);
+
+        for (const LootReward& reward : rewards)
+        {
+            appendGearReward(reward);
+
+            if (preview.size() >= PreviewSlotCount)
+            {
+                break;
+            }
+        }
+
+        // Potions are the two remaining possible reward categories.
+        appendHealthPotion();
+        appendRagePotion();
+
+        while (preview.size() < PreviewSlotCount)
+        {
+            appendNone();
+        }
+
+        return preview;
+    }
+
+
 
     CombatTarget* Game::combatTargetAt(int x, int y) noexcept
     {
@@ -946,7 +1156,7 @@ namespace dungeon
         }
 
         m_inventoryOpen = false;
-
+        m_combatLootPreview.clear();
         CombatTarget* target = &m_combat->target();
 
         const bool targetDefeated =
@@ -1037,6 +1247,7 @@ namespace dungeon
         }
     }
 
+    // ----------------------------------------------- Thy Getters Here (tired of forgetting)
     bool Game::combatPresentationActive() const noexcept
     {
         return m_combatPresentation.active();
@@ -1107,4 +1318,9 @@ namespace dungeon
         return m_displayedCombatTargetHp;
     }
 
+    const std::vector<CombatLootPreviewSlot>&
+        Game::combatLootPreview() const noexcept
+        {
+        return m_combatLootPreview;
+        }
 }

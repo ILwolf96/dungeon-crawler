@@ -12,6 +12,7 @@
 #include "entities/Skeleton.h"
 #include "entities/Troll.h"
 
+#include "loot/LootReward.h"
 #include "inventory/HealthPotion.h"
 #include "inventory/RagePotion.h"
 
@@ -19,6 +20,8 @@
 #include <string>
 #include <string_view>
 #include <vector>
+
+
 
 namespace dungeon
 {
@@ -34,6 +37,86 @@ namespace dungeon
             }
 
             return &assets.floorTile();
+        }
+
+
+
+        // Enemy Loot render
+        const Texture2D* lootTextureForPreview(
+            const MainScreenAssets& assets,
+            const CombatLootPreviewSlot& slot)
+        {
+            switch (slot.type)
+            {
+            case CombatLootPreviewType::Weapon:
+                return &assets.weaponTier(slot.tier);
+
+            case CombatLootPreviewType::Armor:
+                return &assets.armorTier(slot.tier);
+
+            case CombatLootPreviewType::Accessory:
+                if (slot.id == "magic_skull")
+                {
+                    return &assets.magicSkull();
+                }
+
+                if (slot.id == "orc_fang")
+                {
+                    return &assets.orcFang();
+                }
+
+                if (slot.id == "troll_heart")
+                {
+                    return &assets.trollHeart();
+                }
+
+                if (slot.id == "no_accessory")
+                {
+                    return &assets.noAccessory();
+                }
+
+                break;
+
+            case CombatLootPreviewType::HealthPotion:
+                return &assets.healthPotionIcon();
+
+            case CombatLootPreviewType::RagePotion:
+                return &assets.ragePotionIcon();
+
+            case CombatLootPreviewType::None:
+                break;
+            }
+
+            return nullptr;
+        }
+
+
+
+        std::string lootFallbackLabel(
+            const CombatLootPreviewSlot& slot)
+        {
+            switch (slot.type)
+            {
+            case CombatLootPreviewType::Weapon:
+                return "W" + std::to_string(slot.tier);
+
+            case CombatLootPreviewType::Armor:
+                return "A" + std::to_string(slot.tier);
+
+            case CombatLootPreviewType::Accessory:
+                return "ACC";
+
+            case CombatLootPreviewType::HealthPotion:
+                return "HP";
+
+            case CombatLootPreviewType::RagePotion:
+                return "RAGE";
+
+            case CombatLootPreviewType::None:
+                return "None";
+            }
+
+            return "None";
         }
     }
 
@@ -412,6 +495,7 @@ namespace dungeon
         if (game.inCombat())
         {
             drawEnemyStatSlots(game);
+            drawLootTable(game);
             drawDiceRoll(game);
             drawCombatInfo(game);
             drawCombatActionBar();
@@ -1034,6 +1118,72 @@ namespace dungeon
         // Actual fallback contents are drawn by drawCombatActionBar().
         // ---------------------------------------------------------------------
     }
+
+
+    void Renderer::drawLootTable(
+        const Game& game) const
+    {
+        constexpr int LootIconSize = 48;
+        constexpr int LootIconY = 206;
+
+        constexpr int LootIconXs[] =
+        {
+            125,
+            194,
+            263,
+            332,
+            401
+        };
+
+        const auto& preview =
+            game.combatLootPreview();
+
+        for (std::size_t index = 0; index < 5; ++index)
+        {
+            const CombatLootPreviewSlot& slot =
+                preview[index];
+
+            if (slot.type == CombatLootPreviewType::None)
+            {
+                drawFallbackText(
+                    "None",
+                    LootIconXs[index],
+                    LootIconY,
+                    LootIconSize,
+                    LootIconSize,
+                    10);
+
+                continue;
+            }
+
+            const Texture2D* texture =
+                lootTextureForPreview(
+                    m_mainScreenAssets,
+                    slot);
+
+            if (texture != nullptr &&
+                texture->id != 0)
+            {
+                drawTexture(
+                    *texture,
+                    LootIconXs[index],
+                    LootIconY,
+                    LootIconSize,
+                    LootIconSize);
+
+                continue;
+            }
+
+            drawFallbackText(
+                lootFallbackLabel(slot),
+                LootIconXs[index],
+                LootIconY,
+                LootIconSize,
+                LootIconSize,
+                10);
+        }
+    }
+
 
     // =========================================================================
     // Titles
