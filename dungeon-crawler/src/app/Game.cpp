@@ -1136,6 +1136,13 @@ namespace dungeon
         if (!m_player.inventory().hasConsumable(HealthPotion{}))
         {
             std::clog << "[INVENTORY] Cannot use Health Potion: none available." << std::endl;
+
+            m_combatInfoMessage =
+                "No Health Potion available";
+
+            m_combatInfoMessageTime =
+                CombatInfoMessageDuration;
+
             return false;
         }
 
@@ -1174,6 +1181,13 @@ namespace dungeon
         if (!m_player.inventory().hasConsumable(RagePotion{}))
         {
             std::clog << "[INVENTORY] Cannot use Rage Potion: none available." << std::endl;
+
+            m_combatInfoMessage =
+                "No Rage Potion available";
+
+            m_combatInfoMessageTime =
+                CombatInfoMessageDuration;
+
             return false;
         }
 
