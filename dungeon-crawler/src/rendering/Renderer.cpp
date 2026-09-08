@@ -2301,9 +2301,6 @@ namespace dungeon
             17);
     }
 
-    // =========================================================================
-    // Dice Roll
-    // =========================================================================
     void Renderer::drawInventoryActionBar() const
     {
         const Rectangle actionBar =
@@ -2312,6 +2309,7 @@ namespace dungeon
                 ActionBarY,
                 ActionBarWidth,
                 ActionBarHeight);
+
         DrawRectangleRec(actionBar, LIGHTGRAY);
         DrawRectangleLinesEx(actionBar, 1.0f, DARKGRAY);
         drawFallbackText("INVENTORY ACTIONS", ActionBarX, ActionBarY + 145, ActionBarWidth, 35, 22);
@@ -2320,6 +2318,11 @@ namespace dungeon
         drawFallbackText("3  -  CLOSE INVENTORY", ActionBarX + 525, ActionBarY + 85, 250, 35, 17);
         drawFallbackText("TAB  -  GAME INVENTORY INSTRUCTIONS", ActionBarX, ActionBarY + 25, ActionBarWidth, 35, 17);
     }
+
+
+    // =========================================================================
+    // Dice Roll
+    // =========================================================================
     void Renderer::drawDiceRoll(
         const Game& game) const
     {
@@ -2584,6 +2587,24 @@ namespace dungeon
         constexpr int CombatInfoHeight = 100;
 
         // ---------------------------------------------------------------------
+        // Temporary Combat Info message
+        // ---------------------------------------------------------------------
+
+        if (!game.combatInfoMessage().empty())
+        {
+            drawWrappedFallbackText(
+                game.combatInfoMessage(),
+                CombatInfoX,
+                CombatInfoY,
+                CombatInfoWidth,
+                CombatInfoHeight,
+                16,
+                22);
+
+            return;
+        }
+
+        // ---------------------------------------------------------------------
         // Idle
         // ---------------------------------------------------------------------
 
@@ -2604,12 +2625,9 @@ namespace dungeon
         // ---------------------------------------------------------------------
         // Active presentation
         // ---------------------------------------------------------------------
-        const std::string_view message =
-            !game.combatInfoMessage().empty()
-            ? std::string_view(game.combatInfoMessage())
-            : std::string_view(presentation.infoMessage());
+
         drawWrappedFallbackText(
-            message,
+            presentation.infoMessage(),
             CombatInfoX,
             CombatInfoY,
             CombatInfoWidth,
