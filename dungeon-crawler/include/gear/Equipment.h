@@ -6,6 +6,7 @@
 
 #include <memory>
 #include <vector>
+#include <string_view>
 
 namespace dungeon
 {
@@ -18,6 +19,12 @@ namespace dungeon
         void equipArmor(std::unique_ptr<Armor> armor);
 
         bool addAccessory(std::unique_ptr<Accessory> accessory);
+
+
+        void debugEquipWeapon(std::unique_ptr<Weapon> weapon) noexcept;
+        void debugEquipArmor(std::unique_ptr<Armor> armor) noexcept;
+        bool debugRemoveAccessory(std::string_view accessoryName) noexcept;
+
 
         [[nodiscard]]
         const Weapon* weapon() const noexcept;

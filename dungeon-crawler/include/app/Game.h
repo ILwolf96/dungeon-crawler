@@ -58,6 +58,12 @@ namespace dungeon
         void handleAction(Action action);
         void update(float deltaSeconds);
 
+        bool isDungeonZoo() const noexcept;
+        bool m_dungeonZoo{ false };
+        int m_zooSpawnX{ 0 };
+        int m_zooSpawnY{ 0 };
+
+
         bool inCombat() const noexcept;
 
         Combat* combat() noexcept;

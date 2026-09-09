@@ -90,4 +90,43 @@ namespace dungeon
         return !m_armor ||
             armor.tier() > m_armor->tier();
     }
+
+
+    //---------------------------------------------- DEBUG FOR ZOO HHERE!
+
+    void Equipment::debugEquipWeapon(
+        std::unique_ptr<Weapon> weapon) noexcept
+    {
+        m_weapon = std::move(weapon);
+    }
+
+    void Equipment::debugEquipArmor(
+        std::unique_ptr<Armor> armor) noexcept
+    {
+        m_armor = std::move(armor);
+    }
+
+    bool Equipment::debugRemoveAccessory(
+        std::string_view accessoryName) noexcept
+    {
+        for (auto it = m_accessories.begin();
+            it != m_accessories.end();
+            ++it)
+        {
+            if (!*it)
+            {
+                continue;
+            }
+
+            if ((*it)->name() == accessoryName)
+            {
+                m_accessories.erase(it);
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+
 }

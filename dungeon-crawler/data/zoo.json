@@ -1,0 +1,11 @@
+{
+  "data": {
+    "game": "json/zoo_game.json",
+    "map": "json/zoo_map.json",
+    "player": "json/player.json",
+    "enemies": "json/enemies.json",
+    "gear": "json/gear.json",
+    "consumables": "json/consumables.json",
+    "loot": "json/loot.json"
+  }
+}
