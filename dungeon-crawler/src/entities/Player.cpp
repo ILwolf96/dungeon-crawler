@@ -214,8 +214,12 @@ namespace dungeon
             result.attacks +=
                 accessory->attacksBonus();
 
-            result.precision +=
-                accessory->precisionBonus();
+            result.precision =
+                std::clamp(
+                    result.precision -
+                    accessory->precisionBonus(),
+                    1,
+                    6);
         }
 
         return result;
