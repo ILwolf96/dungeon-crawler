@@ -26,7 +26,6 @@
 namespace
 {
     constexpr std::string_view EnemySectionPrefix = "enemy.";
-    constexpr float CombatInfoMessageDuration = 2.0f; // --------------- Message Duration HERE!
 
     bool isEnemyDefinition(std::string_view sectionName)
     {
@@ -110,6 +109,374 @@ namespace
         return symbol.front();
     }
 
+    struct ConfiguredGearEntry
+    {
+        std::string id;
+        std::string name;
+        int tier{ 0 };
+    };
+
+    std::vector<ConfiguredGearEntry> configuredGearEntries(
+        const config::ConfigData& data,
+        std::string_view sectionPrefix)
+    {
+        std::vector<ConfiguredGearEntry> entries;
+
+        for (const auto& [sectionName, sectionData] : data.sections())
+        {
+            static_cast<void>(sectionData);
+
+            if (!sectionName.starts_with(sectionPrefix) ||
+                !data.hasValue(sectionName, "tier"))
+            {
+                continue;
+            }
+
+            ConfiguredGearEntry entry;
+            entry.id = sectionName.substr(sectionPrefix.size());
+
+            if (entry.id.empty())
+            {
+                continue;
+            }
+
+            entry.tier =
+                getRequiredInt(
+                    data,
+                    sectionName,
+                    "tier");
+
+            if (data.hasValue(sectionName, "name"))
+            {
+                entry.name =
+                    data.getValue(
+                        sectionName,
+                        "name");
+            }
+            else
+            {
+                entry.name = entry.id;
+            }
+
+            entries.push_back(std::move(entry));
+        }
+
+        std::sort(
+            entries.begin(),
+            entries.end(),
+            [](const ConfiguredGearEntry& left,
+                const ConfiguredGearEntry& right)
+            {
+                if (left.tier != right.tier)
+                {
+                    return left.tier < right.tier;
+                }
+
+                return left.id < right.id;
+            });
+
+        return entries;
+    }
+
+    const ConfiguredGearEntry* findNextConfiguredTier(
+        const std::vector<ConfiguredGearEntry>& entries,
+        int currentTier)
+    {
+        for (const ConfiguredGearEntry& entry : entries)
+        {
+            if (entry.tier > currentTier)
+            {
+                return &entry;
+            }
+        }
+
+        return nullptr;
+    }
+
+    const ConfiguredGearEntry* findPreviousConfiguredTier(
+        const std::vector<ConfiguredGearEntry>& entries,
+        int currentTier)
+    {
+        for (auto it = entries.rbegin();
+            it != entries.rend();
+            ++it)
+        {
+            if (it->tier < currentTier)
+            {
+                return &*it;
+            }
+        }
+
+        return nullptr;
+    }
+
+    template <typename PlayerLike, typename WeaponPtr>
+    bool replaceWeaponForZoo(
+        PlayerLike& player,
+        WeaponPtr weapon)
+    {
+        if (!weapon)
+        {
+            return false;
+        }
+
+        if constexpr (requires { player.setWeapon(std::move(weapon)); })
+        {
+            player.setWeapon(std::move(weapon));
+            return true;
+        }
+        else if constexpr (requires { player.equipWeapon(std::move(weapon)); })
+        {
+            player.equipWeapon(std::move(weapon));
+            return true;
+        }
+        else if constexpr (requires { player.equipment().setWeapon(std::move(weapon)); })
+        {
+            player.equipment().setWeapon(std::move(weapon));
+            return true;
+        }
+        else if constexpr (requires { player.equipment().equipWeapon(std::move(weapon)); })
+        {
+            player.equipment().equipWeapon(std::move(weapon));
+            return true;
+        }
+        else if constexpr (requires { player.setWeapon(*weapon); })
+        {
+            player.setWeapon(*weapon);
+            return true;
+        }
+        else if constexpr (requires { player.equipWeapon(*weapon); })
+        {
+            player.equipWeapon(*weapon);
+            return true;
+        }
+        else if constexpr (requires { player.equipment().setWeapon(*weapon); })
+        {
+            player.equipment().setWeapon(*weapon);
+            return true;
+        }
+        else if constexpr (requires { player.equipment().equipWeapon(*weapon); })
+        {
+            player.equipment().equipWeapon(*weapon);
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+
+    template <typename PlayerLike, typename ArmorPtr>
+    bool replaceArmorForZoo(
+        PlayerLike& player,
+        ArmorPtr armor)
+    {
+        if (!armor)
+        {
+            return false;
+        }
+
+        if constexpr (requires { player.setArmor(std::move(armor)); })
+        {
+            player.setArmor(std::move(armor));
+            return true;
+        }
+        else if constexpr (requires { player.equipArmor(std::move(armor)); })
+        {
+            player.equipArmor(std::move(armor));
+            return true;
+        }
+        else if constexpr (requires { player.equipment().setArmor(std::move(armor)); })
+        {
+            player.equipment().setArmor(std::move(armor));
+            return true;
+        }
+        else if constexpr (requires { player.equipment().equipArmor(std::move(armor)); })
+        {
+            player.equipment().equipArmor(std::move(armor));
+            return true;
+        }
+        else if constexpr (requires { player.setArmor(*armor); })
+        {
+            player.setArmor(*armor);
+            return true;
+        }
+        else if constexpr (requires { player.equipArmor(*armor); })
+        {
+            player.equipArmor(*armor);
+            return true;
+        }
+        else if constexpr (requires { player.equipment().setArmor(*armor); })
+        {
+            player.equipment().setArmor(*armor);
+            return true;
+        }
+        else if constexpr (requires { player.equipment().equipArmor(*armor); })
+        {
+            player.equipment().equipArmor(*armor);
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+
+    template <typename PlayerLike, typename AccessoryPtr>
+    bool addAccessoryForZoo(
+        PlayerLike& player,
+        AccessoryPtr accessory)
+    {
+        if (!accessory)
+        {
+            return false;
+        }
+
+        if constexpr (requires { player.addAccessory(std::move(accessory)); })
+        {
+            player.addAccessory(std::move(accessory));
+            return true;
+        }
+        else if constexpr (requires { player.equipAccessory(std::move(accessory)); })
+        {
+            player.equipAccessory(std::move(accessory));
+            return true;
+        }
+        else if constexpr (requires { player.equipment().addAccessory(std::move(accessory)); })
+        {
+            player.equipment().addAccessory(std::move(accessory));
+            return true;
+        }
+        else if constexpr (requires { player.equipment().equipAccessory(std::move(accessory)); })
+        {
+            player.equipment().equipAccessory(std::move(accessory));
+            return true;
+        }
+        else if constexpr (requires { player.addAccessory(*accessory); })
+        {
+            player.addAccessory(*accessory);
+            return true;
+        }
+        else if constexpr (requires { player.equipAccessory(*accessory); })
+        {
+            player.equipAccessory(*accessory);
+            return true;
+        }
+        else if constexpr (requires { player.equipment().addAccessory(*accessory); })
+        {
+            player.equipment().addAccessory(*accessory);
+            return true;
+        }
+        else if constexpr (requires { player.equipment().equipAccessory(*accessory); })
+        {
+            player.equipment().equipAccessory(*accessory);
+            return true;
+        }
+        else if constexpr (requires { player.equipment().accessories().push_back(std::move(accessory)); })
+        {
+            player.equipment().accessories().push_back(std::move(accessory));
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+
+    template <typename PlayerLike>
+    bool removeLastAccessoryForZoo(PlayerLike& player)
+    {
+        auto& accessories = player.equipment().accessories();
+
+        if (accessories.empty())
+        {
+            return false;
+        }
+
+        if constexpr (requires { player.removeLastAccessory(); })
+        {
+            player.removeLastAccessory();
+            return true;
+        }
+        else if constexpr (requires { player.equipment().removeLastAccessory(); })
+        {
+            player.equipment().removeLastAccessory();
+            return true;
+        }
+        else if constexpr (requires { player.removeAccessory(); })
+        {
+            player.removeAccessory();
+            return true;
+        }
+        else if constexpr (requires { player.equipment().removeAccessory(); })
+        {
+            player.equipment().removeAccessory();
+            return true;
+        }
+        else if constexpr (requires { player.removeAccessory(accessories.size() - 1); })
+        {
+            player.removeAccessory(accessories.size() - 1);
+            return true;
+        }
+        else if constexpr (requires { player.equipment().removeAccessory(accessories.size() - 1); })
+        {
+            player.equipment().removeAccessory(accessories.size() - 1);
+            return true;
+        }
+        else if constexpr (requires { player.removeAccessory(accessories.back().get()); })
+        {
+            player.removeAccessory(accessories.back().get());
+            return true;
+        }
+        else if constexpr (requires { player.equipment().removeAccessory(accessories.back().get()); })
+        {
+            player.equipment().removeAccessory(accessories.back().get());
+            return true;
+        }
+        else if constexpr (requires { player.removeAccessory(accessories.back()->name()); })
+        {
+            player.removeAccessory(accessories.back()->name());
+            return true;
+        }
+        else if constexpr (requires { player.equipment().removeAccessory(accessories.back()->name()); })
+        {
+            player.equipment().removeAccessory(accessories.back()->name());
+            return true;
+        }
+        else if constexpr (requires { player.equipment().accessories().pop_back(); })
+        {
+            player.equipment().accessories().pop_back();
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+
+    bool accessoryEquipped(
+        const dungeon::Player& player,
+        const ConfiguredGearEntry& entry)
+    {
+        const auto& accessories =
+            player.equipment().accessories();
+
+        for (const auto& accessory : accessories)
+        {
+            if (!accessory)
+            {
+                continue;
+            }
+
+            if (accessory->name() == entry.name)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
 
 }
 
@@ -133,6 +500,15 @@ namespace dungeon
         //The New Parser
         config::DataRepository dataRepository;
         m_configData = dataRepository.load(filePath);
+
+        m_isZoo =
+            m_configData.hasValue("game", "mode") &&
+            m_configData.getValue("game", "mode") == "zoo";
+
+        std::clog
+            << "[CONFIG] Game mode = "
+            << (m_isZoo ? "zoo" : "normal")
+            << std::endl;
 
         // Window configuration.
         const int windowWidth =
@@ -287,22 +663,22 @@ namespace dungeon
                         sectionName,
                         "attacks"),
 
-                    getRequiredInt(
+                        getRequiredInt(
                         m_configData,
                         sectionName,
                         "precision"),
 
-                    getRequiredInt(
+                        getRequiredInt(
                         m_configData,
                         sectionName,
                         "strength"),
 
-                    getRequiredInt(
+                        getRequiredInt(
                         m_configData,
                         sectionName,
                         "toughness"),
 
-                    getRequiredInt(
+                        getRequiredInt(
                         m_configData,
                         sectionName,
                         "defense")
@@ -368,24 +744,20 @@ namespace dungeon
         m_combatInfoMessage.clear();
         m_combatInfoMessageTime = 0.0f;
         m_pendingPotionEnemyTurn = false;
-
         m_healthPotionRestoreAmount =
             getRequiredInt(
                 m_configData,
                 "gear.consumable.health_potion",
                 "restore_amount");
-
         m_ragePotionDamageBonus =
             getRequiredInt(
                 m_configData,
                 "gear.consumable.rage_potion",
                 "damage_bonus");
-
         std::clog
             << "[CONFIG] player.precision = "
             << playerBaseStats.precision
             << std::endl;
-
         m_combatPresentationActor =
             CombatPresentationActor::None;
 
@@ -400,18 +772,13 @@ namespace dungeon
         {
             return;
         }
-
         if (m_combatInfoMessageTime > 0.0f)
         {
             m_combatInfoMessageTime =
-                std::max(
-                    0.0f,
-                    m_combatInfoMessageTime - deltaSeconds);
-
+                std::max(0.0f, m_combatInfoMessageTime - deltaSeconds);
             if (m_combatInfoMessageTime <= 0.0f)
             {
                 m_combatInfoMessage.clear();
-
                 if (m_pendingPotionEnemyTurn)
                 {
                     m_pendingPotionEnemyTurn = false;
@@ -419,21 +786,19 @@ namespace dungeon
                 }
             }
         }
-
         if (!m_combatPresentation.active())
         {
             return;
         }
-
         const bool presentationCompleted =
             m_combatPresentation.update(deltaSeconds);
+
 
         if (m_combatPresentation.phase() ==
             CombatPresentation::Phase::Result)
         {
             const AttackResult* result =
                 m_combatPresentation.currentAttack();
-
             if (result != nullptr && result->damage > 0)
             {
                 const auto rollType =
@@ -457,26 +822,16 @@ namespace dungeon
                             CombatPresentationActor::Player)
                         {
                             m_displayedCombatTargetHp =
-                                std::max(
-                                    0,
-                                    m_displayedCombatTargetHp -
-                                    result->damage);
+                                std::max(0, m_displayedCombatTargetHp - result->damage);
                         }
                         else if (m_combatPresentationActor ==
                             CombatPresentationActor::Enemy)
                         {
                             m_displayedPlayerHp =
-                                std::max(
-                                    0,
-                                    m_displayedPlayerHp -
-                                    result->damage);
+                                std::max(0, m_displayedPlayerHp - result->damage);
                         }
-
-                        m_lastPresentedDamageAttackIndex =
-                            attackIndex;
-
-                        m_lastPresentedDamageRollType =
-                            rollType;
+                        m_lastPresentedDamageAttackIndex = attackIndex;
+                        m_lastPresentedDamageRollType = rollType;
                     }
                 }
             }
@@ -487,7 +842,6 @@ namespace dungeon
             advanceCombatPresentation();
         }
     }
-
     void Game::beginEnemyTurnPresentation()
     {
         if (!m_combat || !m_combat->isActive())
@@ -496,33 +850,16 @@ namespace dungeon
             {
                 finishCombatIfNeeded();
             }
-
             return;
         }
-
-        std::clog
-            << "[COMBAT] Enemy turn begins."
-            << std::endl;
-
-        const CombatResult enemyResult =
-            m_combat->enemyTurn();
-
-        std::clog
-            << "[COMBAT] "
-            << enemyResult.message
-            << std::endl;
-
-        m_pendingCombatFinish =
-            !m_combat->isActive();
-
-        const auto& attackResults =
-            m_combat->lastEnemyAttacks();
-
+        std::clog << "[COMBAT] Enemy turn begins." << std::endl;
+        const CombatResult enemyResult = m_combat->enemyTurn();
+        std::clog << "[COMBAT] " << enemyResult.message << std::endl;
+        m_pendingCombatFinish = !m_combat->isActive();
+        const auto& attackResults = m_combat->lastEnemyAttacks();
         if (attackResults.empty())
         {
-            m_combatPresentationActor =
-                CombatPresentationActor::None;
-
+            m_combatPresentationActor = CombatPresentationActor::None;
             if (m_pendingCombatFinish)
             {
                 m_pendingCombatFinish = false;
@@ -531,20 +868,11 @@ namespace dungeon
 
             return;
         }
-
-        m_combatPresentationActor =
-            CombatPresentationActor::Enemy;
-
-        m_lastPresentedDamageAttackIndex =
-            static_cast<std::size_t>(-1);
-
-        m_lastPresentedDamageRollType =
-            CombatPresentation::RollType::None;
-
+        m_combatPresentationActor = CombatPresentationActor::Enemy;
+        m_lastPresentedDamageAttackIndex = static_cast<std::size_t>(-1);
+        m_lastPresentedDamageRollType = CombatPresentation::RollType::None;
         const std::string enemyName =
-            std::string(
-                m_combat->target().targetType());
-
+            std::string(m_combat->target().targetType());
         m_combatPresentation.start(
             enemyName,
             "Player",
@@ -553,14 +881,12 @@ namespace dungeon
                 attackResults.begin(),
                 attackResults.end()));
     }
-
     void Game::advanceCombatPresentation()
     {
         if (!m_combat)
         {
             return;
         }
-
         if (m_pendingEnemyTurn)
         {
             m_pendingEnemyTurn = false;
@@ -568,19 +894,16 @@ namespace dungeon
             return;
         }
 
+
         if (m_pendingCombatFinish)
         {
             m_pendingCombatFinish = false;
-            m_combatPresentationActor =
-                CombatPresentationActor::None;
-
+            m_combatPresentationActor = CombatPresentationActor::None;
             finishCombatIfNeeded();
 
             return;
         }
-
-        m_combatPresentationActor =
-            CombatPresentationActor::None;
+        m_combatPresentationActor = CombatPresentationActor::None;
     }
 
     void Game::handleAction(Action action)
@@ -600,8 +923,7 @@ namespace dungeon
                     if (useHealthPotion())
                     {
                         m_pendingPotionEnemyTurn = true;
-                        m_combatInfoMessageTime =
-                            CombatInfoMessageDuration;
+                        m_combatInfoMessageTime = 1.0f;
                     }
                     break;
 
@@ -609,8 +931,7 @@ namespace dungeon
                     if (useRagePotion())
                     {
                         m_pendingPotionEnemyTurn = true;
-                        m_combatInfoMessageTime =
-                            CombatInfoMessageDuration;
+                        m_combatInfoMessageTime = 1.0f;
                     }
                     break;
 
@@ -640,9 +961,7 @@ namespace dungeon
                 break;
 
             default:
-                std::clog
-                    << "[COMBAT] Movement/input ignored during combat."
-                    << std::endl;
+                std::clog << "[COMBAT] Movement/input ignored during combat." << std::endl;
                 break;
             }
 
@@ -682,19 +1001,322 @@ namespace dungeon
             return;
         }
 
-        m_player.setPosition(
-            targetX,
-            targetY);
-
-        CombatTarget* target =
-            combatTargetAt(
-                targetX,
-                targetY);
-
+        m_player.setPosition(targetX, targetY);
+        CombatTarget* target = combatTargetAt(targetX, targetY);
         if (target != nullptr)
         {
             startCombat(*target);
+            return;
         }
+
+        if (m_isZoo)
+        {
+            handleZooInteraction(
+                m_map.tileAt(
+                    targetX,
+                    targetY));
+        }
+    }
+
+    void Game::handleZooInteraction(char tile)
+    {
+        switch (tile)
+        {
+        case 'H':
+        {
+            const int hpBefore = m_player.currentHp();
+            const int maximumHp = m_player.maxHp();
+
+            if (hpBefore < maximumHp)
+            {
+                m_player.heal(maximumHp - hpBefore);
+            }
+
+            std::clog
+                << "[ZOO] Heal station: HP "
+                << hpBefore
+                << " -> "
+                << m_player.currentHp()
+                << "/"
+                << m_player.maxHp()
+                << std::endl;
+            break;
+        }
+
+        case 'W':
+        case 'w':
+        {
+            const std::vector<ConfiguredGearEntry> entries =
+                configuredGearEntries(
+                    m_configData,
+                    "gear.weapon.");
+
+            if (entries.empty())
+            {
+                std::clog
+                    << "[ZOO] No configured weapons found."
+                    << std::endl;
+                break;
+            }
+
+            const Weapon* currentWeapon =
+                m_player.equipment().weapon();
+
+            const int currentTier =
+                currentWeapon != nullptr
+                ? currentWeapon->tier()
+                : 0;
+
+            const ConfiguredGearEntry* targetEntry =
+                tile == 'W'
+                ? (currentWeapon == nullptr
+                    ? &entries.front()
+                    : findNextConfiguredTier(entries, currentTier))
+                : findPreviousConfiguredTier(entries, currentTier);
+
+            if (targetEntry == nullptr)
+            {
+                std::clog
+                    << "[ZOO] No weapon tier available in requested direction."
+                    << std::endl;
+                break;
+            }
+
+            auto weapon =
+                GearFactory::createWeapon(
+                    m_configData,
+                    targetEntry->id);
+
+            if (!replaceWeaponForZoo(
+                m_player,
+                std::move(weapon)))
+            {
+                std::clog
+                    << "[ZOO] Could not mutate player weapon with the available Equipment API."
+                    << std::endl;
+                break;
+            }
+
+            std::clog
+                << "[ZOO] Weapon set to "
+                << targetEntry->name
+                << " (Tier "
+                << targetEntry->tier
+                << ")."
+                << std::endl;
+            break;
+        }
+
+        case 'A':
+        case 'a':
+        {
+            const std::vector<ConfiguredGearEntry> entries =
+                configuredGearEntries(
+                    m_configData,
+                    "gear.armor.");
+
+            if (entries.empty())
+            {
+                std::clog
+                    << "[ZOO] No configured armor found."
+                    << std::endl;
+                break;
+            }
+
+            const Armor* currentArmor =
+                m_player.equipment().armor();
+
+            const int currentTier =
+                currentArmor != nullptr
+                ? currentArmor->tier()
+                : 0;
+
+            const ConfiguredGearEntry* targetEntry =
+                tile == 'A'
+                ? (currentArmor == nullptr
+                    ? &entries.front()
+                    : findNextConfiguredTier(entries, currentTier))
+                : findPreviousConfiguredTier(entries, currentTier);
+
+            if (targetEntry == nullptr)
+            {
+                std::clog
+                    << "[ZOO] No armor tier available in requested direction."
+                    << std::endl;
+                break;
+            }
+
+            auto armor =
+                GearFactory::createArmor(
+                    m_configData,
+                    targetEntry->id);
+
+            if (!replaceArmorForZoo(
+                m_player,
+                std::move(armor)))
+            {
+                std::clog
+                    << "[ZOO] Could not mutate player armor with the available Equipment API."
+                    << std::endl;
+                break;
+            }
+
+            const int maximumHp = m_player.maxHp();
+            if (m_player.currentHp() > maximumHp)
+            {
+                m_player.takeDamage(
+                    m_player.currentHp() - maximumHp);
+            }
+
+            std::clog
+                << "[ZOO] Armor set to "
+                << targetEntry->name
+                << " (Tier "
+                << targetEntry->tier
+                << ")."
+                << std::endl;
+            break;
+        }
+
+        case 'X':
+        {
+            const auto& accessories =
+                m_player.equipment().accessories();
+
+            if (accessories.size() >= 3)
+            {
+                std::clog
+                    << "[ZOO] Accessory slots are full."
+                    << std::endl;
+                break;
+            }
+
+            const std::vector<ConfiguredGearEntry> entries =
+                configuredGearEntries(
+                    m_configData,
+                    "gear.accessory.");
+
+            bool added = false;
+
+            for (const ConfiguredGearEntry& entry : entries)
+            {
+                if (accessoryEquipped(m_player, entry))
+                {
+                    continue;
+                }
+
+                auto accessory =
+                    GearFactory::createAccessory(
+                        m_configData,
+                        entry.id);
+
+                if (!addAccessoryForZoo(
+                    m_player,
+                    std::move(accessory)))
+                {
+                    std::clog
+                        << "[ZOO] Could not add accessory with the available Equipment API."
+                        << std::endl;
+                    break;
+                }
+
+                std::clog
+                    << "[ZOO] Accessory added: "
+                    << entry.name
+                    << " (Tier "
+                    << entry.tier
+                    << ")."
+                    << std::endl;
+
+                added = true;
+                break;
+            }
+
+            if (!added)
+            {
+                std::clog
+                    << "[ZOO] No new configured accessory is available."
+                    << std::endl;
+            }
+
+            break;
+        }
+
+        case 'x':
+        {
+            const auto& accessories =
+                m_player.equipment().accessories();
+
+            if (accessories.empty())
+            {
+                std::clog
+                    << "[ZOO] No accessory is equipped."
+                    << std::endl;
+                break;
+            }
+
+            const std::string removedName =
+                accessories.back()
+                ? std::string(accessories.back()->name())
+                : std::string("Unknown");
+
+            if (!removeLastAccessoryForZoo(m_player))
+            {
+                std::clog
+                    << "[ZOO] Could not remove the last accessory with the available Equipment API."
+                    << std::endl;
+                break;
+            }
+
+            const int maximumHp = m_player.maxHp();
+            if (m_player.currentHp() > maximumHp)
+            {
+                m_player.takeDamage(
+                    m_player.currentHp() - maximumHp);
+            }
+
+            std::clog
+                << "[ZOO] Accessory removed: "
+                << removedName
+                << "."
+                << std::endl;
+            break;
+        }
+
+        case 'R':
+        {
+            std::size_t respawned = 0;
+
+            for (const auto& enemy : m_enemies)
+            {
+                if (!enemy)
+                {
+                    continue;
+                }
+
+                if (enemy->isDefeated())
+                {
+                    enemy->respawn();
+                    ++respawned;
+                }
+            }
+
+            std::clog
+                << "[ZOO] Respawn station restored "
+                << respawned
+                << " defeated enemy/enemies."
+                << std::endl;
+            break;
+        }
+
+        default:
+            break;
+        }
+    }
+
+    bool Game::isZoo() const noexcept
+    {
+        return m_isZoo;
     }
 
     bool Game::inCombat() const noexcept
@@ -733,17 +1355,18 @@ namespace dungeon
             << target.maxHp()
             << '\n';
 
-        m_combat =
-            std::make_unique<Combat>(
-                m_player,
-                target,
-                m_combatDice);
+        m_combat = std::make_unique<Combat>(
+            m_player,
+            target,
+            m_combatDice);
 
         m_displayedPlayerHp =
             m_player.currentHp();
 
         m_displayedCombatTargetHp =
             target.currentHp();
+
+        //m_pendingPlayerHpSync = false;
 
         // -------------------------------------------------------------------------
         // Loot preview
@@ -762,11 +1385,10 @@ namespace dungeon
                 continue;
             }
 
-            lootTier =
-                enemy->tier();
-
+            lootTier = enemy->tier();
             break;
         }
+
 
         m_combatLootPreview =
             buildCombatLootPreview(
@@ -774,17 +1396,14 @@ namespace dungeon
                 lootTier);
     }
 
-    std::vector<CombatLootPreviewSlot>
-        Game::buildCombatLootPreview(
-            const CombatTarget& target,
-            int lootTier) const
+
+    std::vector<CombatLootPreviewSlot> Game::buildCombatLootPreview(
+        const CombatTarget& target,
+        int lootTier) const
     {
         constexpr std::size_t PreviewSlotCount = 5;
-
         std::vector<CombatLootPreviewSlot> preview;
-        preview.reserve(
-            PreviewSlotCount);
-
+        preview.reserve(PreviewSlotCount);
         const auto makeNone = []()
             {
                 return CombatLootPreviewSlot{
@@ -798,8 +1417,7 @@ namespace dungeon
             {
                 if (preview.size() < PreviewSlotCount)
                 {
-                    preview.push_back(
-                        makeNone());
+                    preview.push_back(makeNone());
                 }
             };
 
@@ -807,11 +1425,10 @@ namespace dungeon
             {
                 if (preview.size() < PreviewSlotCount)
                 {
-                    preview.push_back(
-                        CombatLootPreviewSlot{
-                            CombatLootPreviewType::HealthPotion,
-                            "health_potion",
-                            0
+                    preview.push_back(CombatLootPreviewSlot{
+                        CombatLootPreviewType::HealthPotion,
+                        "health_potion",
+                        0
                         });
                 }
             };
@@ -820,18 +1437,16 @@ namespace dungeon
             {
                 if (preview.size() < PreviewSlotCount)
                 {
-                    preview.push_back(
-                        CombatLootPreviewSlot{
-                            CombatLootPreviewType::RagePotion,
-                            "rage_potion",
-                            0
+                    preview.push_back(CombatLootPreviewSlot{
+                        CombatLootPreviewType::RagePotion,
+                        "rage_potion",
+                        0
                         });
                 }
             };
 
         // Chests have no gear candidates in the current loot table.
-        // Their five-slot preview is explicitly:
-        // Health Potion, Rage Potion, None, None, None.
+        // Their five-slot preview is explicitly: Health Potion, Rage Potion, None, None, None.
         if (dynamic_cast<const Chest*>(&target) != nullptr)
         {
             appendHealthPotion();
@@ -880,7 +1495,6 @@ namespace dungeon
 
                 return false;
             };
-
         const auto appendGearReward =
             [&](const LootReward& reward)
             {
@@ -903,8 +1517,7 @@ namespace dungeon
                 case LootType::Accessory:
                     available =
                         equippedAccessories.size() < 3 &&
-                        !accessoryAlreadyOwned(
-                            reward.id);
+                        !accessoryAlreadyOwned(reward.id);
                     break;
                 }
 
@@ -921,36 +1534,30 @@ namespace dungeon
                 switch (reward.type)
                 {
                 case LootType::Weapon:
-                    slot.type =
-                        CombatLootPreviewType::Weapon;
+                    slot.type = CombatLootPreviewType::Weapon;
                     break;
 
                 case LootType::Armor:
-                    slot.type =
-                        CombatLootPreviewType::Armor;
+                    slot.type = CombatLootPreviewType::Armor;
                     break;
 
                 case LootType::Accessory:
-                    slot.type =
-                        CombatLootPreviewType::Accessory;
+                    slot.type = CombatLootPreviewType::Accessory;
                     break;
                 }
 
                 if (preview.size() < PreviewSlotCount)
                 {
-                    preview.push_back(
-                        std::move(slot));
+                    preview.push_back(std::move(slot));
                 }
             };
 
         const std::vector<LootReward> rewards =
-            LootTable::rewardsForTier(
-                lootTier);
+            LootTable::rewardsForTier(lootTier);
 
         for (const LootReward& reward : rewards)
         {
-            appendGearReward(
-                reward);
+            appendGearReward(reward);
 
             if (preview.size() >= PreviewSlotCount)
             {
@@ -970,14 +1577,13 @@ namespace dungeon
         return preview;
     }
 
-    CombatTarget* Game::combatTargetAt(
-        int x,
-        int y) noexcept
+
+
+    CombatTarget* Game::combatTargetAt(int x, int y) noexcept
     {
         for (const auto& enemy : m_enemies)
         {
-            if (enemy->x() == x &&
-                enemy->y() == y &&
+            if (enemy->x() == x && enemy->y() == y &&
                 !enemy->isDefeated())
             {
                 return enemy.get();
@@ -986,8 +1592,7 @@ namespace dungeon
 
         for (const auto& chest : m_chests)
         {
-            if (chest->x() == x &&
-                chest->y() == y &&
+            if (chest->x() == x && chest->y() == y &&
                 !chest->isDefeated())
             {
                 return chest.get();
@@ -1074,12 +1679,6 @@ namespace dungeon
 
         m_inventoryOpen = true;
 
-        m_combatInfoMessage =
-            "Opening Inventory";
-
-        m_combatInfoMessageTime =
-            CombatInfoMessageDuration;
-
         std::clog
             << "[INVENTORY] ====================\n"
             << "[INVENTORY] Combat Inventory\n"
@@ -1112,12 +1711,6 @@ namespace dungeon
 
         m_inventoryOpen = false;
 
-        m_combatInfoMessage =
-            "Closing Inventory";
-
-        m_combatInfoMessageTime =
-            CombatInfoMessageDuration;
-
         std::clog
             << "[INVENTORY] Combat inventory closed.\n";
     }
@@ -1136,13 +1729,6 @@ namespace dungeon
         if (!m_player.inventory().hasConsumable(HealthPotion{}))
         {
             std::clog << "[INVENTORY] Cannot use Health Potion: none available." << std::endl;
-
-            m_combatInfoMessage =
-                "No Health Potion available";
-
-            m_combatInfoMessageTime =
-                CombatInfoMessageDuration;
-
             return false;
         }
 
@@ -1166,7 +1752,6 @@ namespace dungeon
         m_combatInfoMessage =
             "Player used Health Potion, HP Restored by " +
             std::to_string(restored);
-
         return true;
     }
 
@@ -1181,13 +1766,6 @@ namespace dungeon
         if (!m_player.inventory().hasConsumable(RagePotion{}))
         {
             std::clog << "[INVENTORY] Cannot use Rage Potion: none available." << std::endl;
-
-            m_combatInfoMessage =
-                "No Rage Potion available";
-
-            m_combatInfoMessageTime =
-                CombatInfoMessageDuration;
-
             return false;
         }
 
@@ -1215,9 +1793,7 @@ namespace dungeon
 
         m_inventoryOpen = false;
         m_combatLootPreview.clear();
-
-        CombatTarget* target =
-            &m_combat->target();
+        CombatTarget* target = &m_combat->target();
 
         const bool targetDefeated =
             target->isDefeated();
@@ -1243,8 +1819,7 @@ namespace dungeon
                 continue;
             }
 
-            const int tier =
-                (*it)->tier();
+            const int tier = (*it)->tier();
 
             std::clog
                 << "[LOOT] Defeated "
@@ -1253,24 +1828,20 @@ namespace dungeon
                 << tier
                 << ". Generating reward...\n";
 
-            static_cast<void>(
-                LootGenerator::award(
-                    m_player,
-                    tier,
-                    m_combatDice,
-                    m_configData,
-                    lootMessage));
+            static_cast<void>(LootGenerator::award(
+                m_player,
+                tier,
+                m_combatDice,
+                m_configData,
+                lootMessage));
 
             std::clog
                 << "[LOOT] "
                 << lootMessage
                 << '\n';
 
-            static_cast<void>(
-                m_enemies.erase(it));
-
             std::clog
-                << "[COMBAT] Enemy removed from map.\n";
+                << "[COMBAT] Enemy remains on map as defeated world state.\n";
 
             return;
         }
@@ -1289,24 +1860,20 @@ namespace dungeon
             std::clog
                 << "[LOOT] Chest opened. Generating reward...\n";
 
-            static_cast<void>(
-                LootGenerator::award(
-                    m_player,
-                    tier,
-                    m_combatDice,
-                    m_configData,
-                    lootMessage));
+            static_cast<void>(LootGenerator::award(
+                m_player,
+                tier,
+                m_combatDice,
+                m_configData,
+                lootMessage));
 
             std::clog
                 << "[LOOT] "
                 << lootMessage
                 << '\n';
 
-            static_cast<void>(
-                m_chests.erase(it));
-
             std::clog
-                << "[COMBAT] Chest removed from map.\n";
+                << "[COMBAT] Chest remains on map as opened world state.\n";
 
             return;
         }
@@ -1318,8 +1885,7 @@ namespace dungeon
         return m_combatPresentation.active();
     }
 
-    const CombatPresentation&
-        Game::combatPresentation() const noexcept
+    const CombatPresentation& Game::combatPresentation() const noexcept
     {
         return m_combatPresentation;
     }
@@ -1354,14 +1920,12 @@ namespace dungeon
         return m_player;
     }
 
-    const std::vector<std::unique_ptr<Enemy>>&
-        Game::enemies() const noexcept
+    const std::vector<std::unique_ptr<Enemy>>& Game::enemies() const noexcept
     {
         return m_enemies;
     }
 
-    const std::vector<std::unique_ptr<Chest>>&
-        Game::chests() const noexcept
+    const std::vector<std::unique_ptr<Chest>>& Game::chests() const noexcept
     {
         return m_chests;
     }
@@ -1385,18 +1949,14 @@ namespace dungeon
 
         return m_displayedCombatTargetHp;
     }
-
     bool Game::inventoryOpen() const noexcept
     {
         return m_inventoryOpen;
     }
-
-    const std::string&
-        Game::combatInfoMessage() const noexcept
+    const std::string& Game::combatInfoMessage() const noexcept
     {
         return m_combatInfoMessage;
     }
-
     const std::vector<CombatLootPreviewSlot>&
         Game::combatLootPreview() const noexcept
     {

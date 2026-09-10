@@ -97,6 +97,11 @@ namespace dungeon
         m_currentHp = std::max(0, m_currentHp - amount);
     }
 
+    void Enemy::respawn() noexcept
+    {
+        m_currentHp = m_maxHp;
+    }
+
     bool Enemy::isDefeated() const noexcept
     {
         return m_currentHp <= 0;

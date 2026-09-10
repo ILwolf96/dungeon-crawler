@@ -16,6 +16,7 @@
 #include "inventory/HealthPotion.h"
 #include "inventory/RagePotion.h"
 
+#include <algorithm>
 #include <cstddef>
 #include <string>
 #include <string_view>
@@ -2587,24 +2588,6 @@ namespace dungeon
         constexpr int CombatInfoHeight = 100;
 
         // ---------------------------------------------------------------------
-        // Temporary Combat Info message
-        // ---------------------------------------------------------------------
-
-        if (!game.combatInfoMessage().empty())
-        {
-            drawWrappedFallbackText(
-                game.combatInfoMessage(),
-                CombatInfoX,
-                CombatInfoY,
-                CombatInfoWidth,
-                CombatInfoHeight,
-                16,
-                22);
-
-            return;
-        }
-
-        // ---------------------------------------------------------------------
         // Idle
         // ---------------------------------------------------------------------
 
@@ -2625,9 +2608,12 @@ namespace dungeon
         // ---------------------------------------------------------------------
         // Active presentation
         // ---------------------------------------------------------------------
-
+        const std::string_view message =
+            !game.combatInfoMessage().empty()
+            ? std::string_view(game.combatInfoMessage())
+            : std::string_view(presentation.infoMessage());
         drawWrappedFallbackText(
-            presentation.infoMessage(),
+            message,
             CombatInfoX,
             CombatInfoY,
             CombatInfoWidth,
@@ -2640,11 +2626,114 @@ namespace dungeon
     // Map
     // =========================================================================
 
-    void Renderer::drawMap(
-        const Game& game) const
+    void Renderer::updateMapCamera(const Game& game) const
     {
         const Map& map =
             game.map();
+
+        const Player& player =
+            game.player();
+
+        const int mapWidth =
+            static_cast<int>(map.width());
+
+        const int mapHeight =
+            static_cast<int>(map.height());
+
+        const int visibleTilesX =
+            VisibleMapWidth /
+            TemporaryMapTileSize;
+
+        const int visibleTilesY =
+            VisibleMapHeight /
+            TemporaryMapTileSize;
+
+        const int maxCameraX =
+            std::max(
+                0,
+                mapWidth - visibleTilesX);
+
+        const int maxCameraY =
+            std::max(
+                0,
+                mapHeight - visibleTilesY);
+
+        if (!m_mapCameraInitialized ||
+            m_lastCameraMapWidth != mapWidth ||
+            m_lastCameraMapHeight != mapHeight)
+        {
+            m_mapCameraX =
+                std::clamp(
+                    player.x() -
+                    (visibleTilesX / 2),
+                    0,
+                    maxCameraX);
+
+            m_mapCameraY =
+                std::clamp(
+                    player.y() -
+                    (visibleTilesY / 2),
+                    0,
+                    maxCameraY);
+
+            m_mapCameraInitialized = true;
+            m_lastCameraMapWidth = mapWidth;
+            m_lastCameraMapHeight = mapHeight;
+        }
+
+        const int playerCameraX =
+            player.x() -
+            m_mapCameraX;
+
+        if (playerCameraX < CameraDeadZoneLeft)
+        {
+            m_mapCameraX =
+                player.x() -
+                CameraDeadZoneLeft;
+        }
+        else if (playerCameraX > CameraDeadZoneRight)
+        {
+            m_mapCameraX =
+                player.x() -
+                CameraDeadZoneRight;
+        }
+
+        const int playerCameraY =
+            player.y() -
+            m_mapCameraY;
+
+        if (playerCameraY < CameraDeadZoneBottom)
+        {
+            m_mapCameraY =
+                player.y() -
+                CameraDeadZoneBottom;
+        }
+        else if (playerCameraY > CameraDeadZoneTop)
+        {
+            m_mapCameraY =
+                player.y() -
+                CameraDeadZoneTop;
+        }
+
+        m_mapCameraX =
+            std::clamp(
+                m_mapCameraX,
+                0,
+                maxCameraX);
+
+        m_mapCameraY =
+            std::clamp(
+                m_mapCameraY,
+                0,
+                maxCameraY);
+    }
+
+    void Renderer::drawMap(const Game& game) const
+    {
+        const Map& map =
+            game.map();
+
+        updateMapCamera(game);
 
         // ---------------------------------------------------------------------
         // Map Render
@@ -2666,7 +2755,7 @@ namespace dungeon
         }
 
         // ---------------------------------------------------------------------
-        // Visible Map Area
+        // Fixed World Viewport
         // ---------------------------------------------------------------------
 
         const int visibleMapX =
@@ -2688,57 +2777,98 @@ namespace dungeon
             visibleMap,
             BLACK);
 
-        // ---------------------------------------------------------------------
-        // Map dimensions
-        // ---------------------------------------------------------------------
+        const int mapWidth =
+            static_cast<int>(map.width());
 
-        const int renderedMapWidth =
-            static_cast<int>(
-                map.width()) *
+        const int mapHeight =
+            static_cast<int>(map.height());
+
+        const int visibleTilesX =
+            VisibleMapWidth /
             TemporaryMapTileSize;
 
-        const int renderedMapHeight =
-            static_cast<int>(
-                map.height()) *
+        const int visibleTilesY =
+            VisibleMapHeight /
+            TemporaryMapTileSize;
+
+        const int mapPixelWidth =
+            mapWidth *
+            TemporaryMapTileSize;
+
+        const int mapPixelHeight =
+            mapHeight *
             TemporaryMapTileSize;
 
         const int mapOffsetX =
-            visibleMapX +
-            (VisibleMapWidth -
-                renderedMapWidth) / 2;
+            std::max(
+                0,
+                (VisibleMapWidth - mapPixelWidth) / 2);
 
         const int mapOffsetY =
-            visibleMapY +
-            (VisibleMapHeight -
-                renderedMapHeight) / 2;
+            std::max(
+                0,
+                (VisibleMapHeight - mapPixelHeight) / 2);
+
+
+        const int firstWorldX =
+            m_mapCameraX;
+
+        const int firstWorldY =
+            m_mapCameraY;
+
+        const int lastWorldX =
+            std::min(
+                mapWidth - 1,
+                m_mapCameraX + visibleTilesX - 1);
+
+        const int lastWorldY =
+            std::min(
+                mapHeight - 1,
+                m_mapCameraY + visibleTilesY - 1);
+
+        BeginScissorMode(
+            static_cast<int>(visibleMap.x),
+            static_cast<int>(visibleMap.y),
+            VisibleMapWidth,
+            VisibleMapHeight);
 
         // ---------------------------------------------------------------------
         // Static Map Tiles
         // ---------------------------------------------------------------------
 
-        for (std::size_t y = 0;
-            y < map.height();
-            ++y)
+        for (int worldY = firstWorldY;
+            worldY <= lastWorldY;
+            ++worldY)
         {
-            for (std::size_t x = 0;
-                x < map.width();
-                ++x)
+            for (int worldX = firstWorldX;
+                worldX <= lastWorldX;
+                ++worldX)
             {
                 const char tile =
                     map.tileAt(
-                        static_cast<int>(x),
-                        static_cast<int>(y));
+                        worldX,
+                        worldY);
+
+                const int localX =
+                    worldX -
+                    m_mapCameraX;
+
+                const int localY =
+                    worldY -
+                    m_mapCameraY;
 
                 const int tileX =
+                    visibleMapX +
                     mapOffsetX +
-                    static_cast<int>(x) *
+                    localX *
                     TemporaryMapTileSize;
 
                 const int tileY =
+                    visibleMapY -
                     mapOffsetY +
-                    renderedMapHeight -
+                    VisibleMapHeight -
                     TemporaryMapTileSize -
-                    static_cast<int>(y) *
+                    localY *
                     TemporaryMapTileSize;
 
                 const Rectangle tileRectangle =
@@ -2762,11 +2892,8 @@ namespace dungeon
                         tileY,
                         TemporaryMapTileSize,
                         TemporaryMapTileSize);
-
-                    continue;
                 }
-
-                if (tile == '#')
+                else if (tile == '#')
                 {
                     DrawRectangleRec(
                         tileRectangle,
@@ -2778,8 +2905,65 @@ namespace dungeon
                         tileRectangle,
                         GRAY);
                 }
+
+                if (game.isZoo())
+                {
+                    const bool zooStation =
+                        tile == 'H' ||
+                        tile == 'W' ||
+                        tile == 'w' ||
+                        tile == 'A' ||
+                        tile == 'a' ||
+                        tile == 'X' ||
+                        tile == 'x' ||
+                        tile == 'R';
+
+                    if (zooStation)
+                    {
+                        DrawRectangleRec(
+                            tileRectangle,
+                            GOLD);
+
+                        drawFallbackText(
+                            std::string(1, tile),
+                            tileX,
+                            tileY,
+                            TemporaryMapTileSize,
+                            TemporaryMapTileSize,
+                            11);
+                    }
+                }
             }
         }
+
+        const auto isVisible =
+            [&](int worldX, int worldY)
+            {
+                return worldX >= firstWorldX &&
+                    worldX <= lastWorldX &&
+                    worldY >= firstWorldY &&
+                    worldY <= lastWorldY;
+            };
+
+        const auto worldToViewX =
+            [&](int worldX)
+            {
+                return visibleMapX +
+                    mapOffsetX +
+                    (worldX - m_mapCameraX) *
+                    TemporaryMapTileSize;
+            };
+
+        const auto worldToViewY =
+            [&](int worldY)
+            {
+                return visibleMapY -
+                    mapOffsetY +
+                    VisibleMapHeight -
+                    TemporaryMapTileSize -
+                    (worldY - m_mapCameraY) *
+                    TemporaryMapTileSize;
+            };
 
         // ---------------------------------------------------------------------
         // Player
@@ -2788,40 +2972,37 @@ namespace dungeon
         const Player& player =
             game.player();
 
-        const int playerX =
-            mapOffsetX +
-            player.x() *
-            TemporaryMapTileSize;
-
-        const int playerY =
-            mapOffsetY +
-            renderedMapHeight -
-            TemporaryMapTileSize -
-            player.y() *
-            TemporaryMapTileSize;
-
-        const Texture2D& playerTexture =
-            m_mainScreenAssets.playerTile();
-
-        if (playerTexture.id != 0)
+        if (isVisible(player.x(), player.y()))
         {
-            drawTexture(
-                playerTexture,
-                playerX,
-                playerY,
-                TemporaryMapTileSize,
-                TemporaryMapTileSize);
-        }
-        else
-        {
-            DrawRectangle(
-                playerX,
-                toRaylibY(
+            const int playerX =
+                worldToViewX(player.x());
+
+            const int playerY =
+                worldToViewY(player.y());
+
+            const Texture2D& playerTexture =
+                m_mainScreenAssets.playerTile();
+
+            if (playerTexture.id != 0)
+            {
+                drawTexture(
+                    playerTexture,
+                    playerX,
                     playerY,
-                    TemporaryMapTileSize),
-                TemporaryMapTileSize,
-                TemporaryMapTileSize,
-                BLUE);
+                    TemporaryMapTileSize,
+                    TemporaryMapTileSize);
+            }
+            else
+            {
+                DrawRectangle(
+                    playerX,
+                    toRaylibY(
+                        playerY,
+                        TemporaryMapTileSize),
+                    TemporaryMapTileSize,
+                    TemporaryMapTileSize,
+                    BLUE);
+            }
         }
 
         // ---------------------------------------------------------------------
@@ -2833,17 +3014,39 @@ namespace dungeon
 
         for (const auto& enemy : enemies)
         {
+            if (!enemy ||
+                !isVisible(enemy->x(), enemy->y()))
+            {
+                continue;
+            }
+
             const int enemyX =
-                mapOffsetX +
-                enemy->x() *
-                TemporaryMapTileSize;
+                worldToViewX(enemy->x());
 
             const int enemyY =
-                mapOffsetY +
-                renderedMapHeight -
-                TemporaryMapTileSize -
-                enemy->y() *
-                TemporaryMapTileSize;
+                worldToViewY(enemy->y());
+
+            if (enemy->isDefeated())
+            {
+                DrawRectangle(
+                    enemyX,
+                    toRaylibY(
+                        enemyY,
+                        TemporaryMapTileSize),
+                    TemporaryMapTileSize,
+                    TemporaryMapTileSize,
+                    DARKGRAY);
+
+                drawFallbackText(
+                    "X",
+                    enemyX,
+                    enemyY,
+                    TemporaryMapTileSize,
+                    TemporaryMapTileSize,
+                    11);
+
+                continue;
+            }
 
             const std::string_view type =
                 enemy->type();
@@ -2922,17 +3125,39 @@ namespace dungeon
 
         for (const auto& chest : chests)
         {
+            if (!chest ||
+                !isVisible(chest->x(), chest->y()))
+            {
+                continue;
+            }
+
             const int chestX =
-                mapOffsetX +
-                chest->x() *
-                TemporaryMapTileSize;
+                worldToViewX(chest->x());
 
             const int chestY =
-                mapOffsetY +
-                renderedMapHeight -
-                TemporaryMapTileSize -
-                chest->y() *
-                TemporaryMapTileSize;
+                worldToViewY(chest->y());
+
+            if (chest->isDefeated())
+            {
+                DrawRectangle(
+                    chestX,
+                    toRaylibY(
+                        chestY,
+                        TemporaryMapTileSize),
+                    TemporaryMapTileSize,
+                    TemporaryMapTileSize,
+                    DARKGRAY);
+
+                drawFallbackText(
+                    "O",
+                    chestX,
+                    chestY,
+                    TemporaryMapTileSize,
+                    TemporaryMapTileSize,
+                    11);
+
+                continue;
+            }
 
             const Texture2D& chestTexture =
                 m_mainScreenAssets.chestTile();
@@ -2967,6 +3192,8 @@ namespace dungeon
             }
         }
 
+        EndScissorMode();
+
         // ---------------------------------------------------------------------
         // Map Frame
         // ---------------------------------------------------------------------
@@ -2989,4 +3216,5 @@ namespace dungeon
                 DARKGRAY);
         }
     }
+
 }

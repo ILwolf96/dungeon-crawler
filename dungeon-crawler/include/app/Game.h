@@ -58,10 +58,7 @@ namespace dungeon
         void handleAction(Action action);
         void update(float deltaSeconds);
 
-        bool isDungeonZoo() const noexcept;
-        bool m_dungeonZoo{ false };
-        int m_zooSpawnX{ 0 };
-        int m_zooSpawnY{ 0 };
+        bool isZoo() const noexcept;
 
 
         bool inCombat() const noexcept;
@@ -74,8 +71,10 @@ namespace dungeon
         int displayedPlayerHp() const noexcept;
         int displayedCombatTargetHp() const noexcept;
 
-        bool inventoryOpen() const noexcept;
-        const std::string& combatInfoMessage() const noexcept;
+        /*
+        [[nodiscard]]
+        bool isZoo() const noexcept;
+        */
 
         [[nodiscard]]
         int windowWidth() const noexcept;
@@ -110,6 +109,9 @@ namespace dungeon
         [[nodiscard]]
         const std::vector<CombatLootPreviewSlot>& combatLootPreview() const noexcept;
 
+        bool inventoryOpen() const noexcept;
+        const std::string& combatInfoMessage() const noexcept;
+
     private:
         Map m_map;
         Player m_player;
@@ -122,6 +124,7 @@ namespace dungeon
         void closeCombatInventory();
         void advanceCombatPresentation();
         void beginEnemyTurnPresentation();
+        void handleZooInteraction(char tile);
 
         std::vector<CombatLootPreviewSlot> buildCombatLootPreview(
             const CombatTarget& target,
@@ -159,8 +162,11 @@ namespace dungeon
         bool m_pendingEnemyTurn{ false };
         bool m_pendingCombatFinish{ false };
         bool m_pendingPotionEnemyTurn{ false };
-        float m_combatInfoMessageTime{ 0.0f };
+
         std::string m_combatInfoMessage;
+
+        float m_combatInfoMessageTime{ 0.0f };
+
         int m_healthPotionRestoreAmount{ 0 };
         int m_ragePotionDamageBonus{ 0 };
         bool useHealthPotion();
@@ -168,6 +174,7 @@ namespace dungeon
 
         config::ConfigData m_configData;
 
+        bool m_isZoo{ false };
         int m_windowWidth{ 640 };
         int m_windowHeight{ 360 };
         std::string m_title{ "Dungeon Crawler" };

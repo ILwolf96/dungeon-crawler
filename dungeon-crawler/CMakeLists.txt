@@ -31,7 +31,7 @@ endif()
 
 project ("dungeon-crawler")
 add_subdirectory(config-parser)
-# Add source to this project's executable.
+# Adds source to this project's executable.
 
 #add_executable (dungeon-crawler "dungeon-crawler.cpp" "dungeon-crawler.h"  "config-parser/include/config/IConfigParser.h" "config-parser/include/config/ConfigData.h" "config-parser/include/config/IniParser.h" "config-parser/include/config/JsonParser.h" "config-parser/include/config/ParserFactory.h" "src/IniParser.cpp" "src/JsonParser.cpp" "src/ParserFactory.cpp")
 

@@ -31,6 +31,8 @@ namespace dungeon
 
         void takeDamage(int amount) override;
 
+        void respawn() noexcept;
+
         [[nodiscard]]
         bool isDefeated() const noexcept override;
 
