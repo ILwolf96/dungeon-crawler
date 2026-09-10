@@ -196,13 +196,11 @@ namespace dungeon
 
         void drawMap(const Game& game) const;
         void updateMapCamera(const Game& game) const;
-
-        void drawTitleAssets() const;
-      
         void drawStatSlots() const;
         void drawGearSlots() const;
         void drawEnemyStatSlots(const Game& game) const;
 
+        void drawTitleAssets() const;
         void drawStatAssets(const Game& game) const;
         void drawGearAssets(const Game& game) const;
 
@@ -210,12 +208,14 @@ namespace dungeon
         void drawCombatActionBar() const;
         void drawInventoryActionBar() const;
 
+        void drawTraversalPov(const Game& game) const;
+        void drawCombatPov(const Game& game) const;
         void drawLootTable(const Game& game) const;
-        
+
         void drawDiceRoll(const Game& game) const;
-        void drawFallbackDie(int value, int x, int y, int size) const;
-        
         void drawCombatInfo(const Game& game) const;
+        void drawFallbackDie(int value, int x, int y, int size) const;
+
 
         bool m_gameInstructionsOpen{ false };
 

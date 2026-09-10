@@ -4,6 +4,7 @@
 
 #include <array>
 #include <string>
+#include <string_view>
 
 namespace
 {
@@ -35,6 +36,21 @@ namespace
 
     constexpr const char* ActionBarPath =
         "assets/ui/action_bar/";
+
+    constexpr const char* PovTraversalPath =
+        "assets/ui/pov/traversal/";
+
+    constexpr const char* PovCombatPath =
+        "assets/ui/pov/combat/";
+
+    constexpr const char* EnemyPovNames[] =
+    {
+        "goblin",
+        "skeleton",
+        "orc",
+        "troll",
+        "dragon"
+    };
 }
 
 namespace dungeon
@@ -48,6 +64,37 @@ namespace dungeon
         const Texture2D& texture) noexcept
     {
         return texture.id != 0;
+    }
+
+    int MainScreenAssets::enemyPovIndex(
+        std::string_view type) noexcept
+    {
+        if (type == "Goblin")
+        {
+            return 0;
+        }
+
+        if (type == "Skeleton")
+        {
+            return 1;
+        }
+
+        if (type == "Orc")
+        {
+            return 2;
+        }
+
+        if (type == "Troll")
+        {
+            return 3;
+        }
+
+        if (type == "Dragon")
+        {
+            return 4;
+        }
+
+        return -1;
     }
 
     Texture2D MainScreenAssets::emptyTexture() noexcept
@@ -317,6 +364,88 @@ namespace dungeon
         allLoaded = allLoaded && loaded;
 
         // ---------------------------------------------------------------------
+        // POV - Traversal
+        // ---------------------------------------------------------------------
+
+        for (int index = 0; index < EnemyPovTypeCount; ++index)
+        {
+            const std::string enemyName =
+                EnemyPovNames[index];
+
+            m_seesEnemies[static_cast<std::size_t>(index)] =
+                loadTextureIfPresent(
+                    std::string(PovTraversalPath) +
+                    "sees_" +
+                    enemyName +
+                    ".png",
+                    loaded);
+            allLoaded = allLoaded && loaded;
+
+            m_seesDefeatedEnemies[static_cast<std::size_t>(index)] =
+                loadTextureIfPresent(
+                    std::string(PovTraversalPath) +
+                    "sees_defeated_" +
+                    enemyName +
+                    ".png",
+                    loaded);
+            allLoaded = allLoaded && loaded;
+        }
+
+        m_seesChest = loadTextureIfPresent(
+            std::string(PovTraversalPath) +
+            "sees_chest.png",
+            loaded);
+        allLoaded = allLoaded && loaded;
+
+        m_seesDefeatedChest = loadTextureIfPresent(
+            std::string(PovTraversalPath) +
+            "sees_defeated_chest.png",
+            loaded);
+        allLoaded = allLoaded && loaded;
+
+        // ---------------------------------------------------------------------
+        // POV - Combat
+        // ---------------------------------------------------------------------
+
+        for (int index = 0; index < EnemyPovTypeCount; ++index)
+        {
+            const std::string enemyName =
+                EnemyPovNames[index];
+
+            m_enemyIdle[static_cast<std::size_t>(index)] =
+                loadTextureIfPresent(
+                    std::string(PovCombatPath) +
+                    enemyName +
+                    "_idle.png",
+                    loaded);
+            allLoaded = allLoaded && loaded;
+
+            m_enemyHurt[static_cast<std::size_t>(index)] =
+                loadTextureIfPresent(
+                    std::string(PovCombatPath) +
+                    enemyName +
+                    "_hurt.png",
+                    loaded);
+            allLoaded = allLoaded && loaded;
+
+            m_enemyAttack[static_cast<std::size_t>(index)] =
+                loadTextureIfPresent(
+                    std::string(PovCombatPath) +
+                    enemyName +
+                    "_attack.png",
+                    loaded);
+            allLoaded = allLoaded && loaded;
+
+            m_enemyDeath[static_cast<std::size_t>(index)] =
+                loadTextureIfPresent(
+                    std::string(PovCombatPath) +
+                    enemyName +
+                    "_death.png",
+                    loaded);
+            allLoaded = allLoaded && loaded;
+        }
+
+        // ---------------------------------------------------------------------
         // Action Bar
         // ---------------------------------------------------------------------
 
@@ -329,6 +458,12 @@ namespace dungeon
         m_inventoryActionBar = loadTextureIfPresent(
             std::string(ActionBarPath) +
             "inventory_action_bar.png",
+            loaded);
+        allLoaded = allLoaded && loaded;
+
+        m_combatActionBar = loadTextureIfPresent(
+            std::string(ActionBarPath) +
+            "combat_action_bar.png",
             loaded);
         allLoaded = allLoaded && loaded;
 
@@ -407,6 +542,40 @@ namespace dungeon
 
         unloadTexture(m_traversalActionBar);
         unloadTexture(m_inventoryActionBar);
+        unloadTexture(m_combatActionBar);
+
+        for (Texture2D& texture : m_seesEnemies)
+        {
+            unloadTexture(texture);
+        }
+
+        for (Texture2D& texture : m_seesDefeatedEnemies)
+        {
+            unloadTexture(texture);
+        }
+
+        unloadTexture(m_seesChest);
+        unloadTexture(m_seesDefeatedChest);
+
+        for (Texture2D& texture : m_enemyIdle)
+        {
+            unloadTexture(texture);
+        }
+
+        for (Texture2D& texture : m_enemyHurt)
+        {
+            unloadTexture(texture);
+        }
+
+        for (Texture2D& texture : m_enemyAttack)
+        {
+            unloadTexture(texture);
+        }
+
+        for (Texture2D& texture : m_enemyDeath)
+        {
+            unloadTexture(texture);
+        }
 
         m_loaded = false;
     }
@@ -615,5 +784,98 @@ namespace dungeon
     const Texture2D& MainScreenAssets::inventoryActionBar() const noexcept
     {
         return m_inventoryActionBar;
+    }
+
+    const Texture2D& MainScreenAssets::combatActionBar() const noexcept
+    {
+        return m_combatActionBar;
+    }
+
+    const Texture2D& MainScreenAssets::seesEnemy(
+        std::string_view type) const noexcept
+    {
+        const int index = enemyPovIndex(type);
+        if (index < 0)
+        {
+            static const Texture2D Empty{};
+            return Empty;
+        }
+
+        return m_seesEnemies[static_cast<std::size_t>(index)];
+    }
+
+    const Texture2D& MainScreenAssets::seesDefeatedEnemy(
+        std::string_view type) const noexcept
+    {
+        const int index = enemyPovIndex(type);
+        if (index < 0)
+        {
+            static const Texture2D Empty{};
+            return Empty;
+        }
+
+        return m_seesDefeatedEnemies[static_cast<std::size_t>(index)];
+    }
+
+    const Texture2D& MainScreenAssets::seesChest() const noexcept
+    {
+        return m_seesChest;
+    }
+
+    const Texture2D& MainScreenAssets::seesDefeatedChest() const noexcept
+    {
+        return m_seesDefeatedChest;
+    }
+
+    const Texture2D& MainScreenAssets::enemyIdle(
+        std::string_view type) const noexcept
+    {
+        const int index = enemyPovIndex(type);
+        if (index < 0)
+        {
+            static const Texture2D Empty{};
+            return Empty;
+        }
+
+        return m_enemyIdle[static_cast<std::size_t>(index)];
+    }
+
+    const Texture2D& MainScreenAssets::enemyHurt(
+        std::string_view type) const noexcept
+    {
+        const int index = enemyPovIndex(type);
+        if (index < 0)
+        {
+            static const Texture2D Empty{};
+            return Empty;
+        }
+
+        return m_enemyHurt[static_cast<std::size_t>(index)];
+    }
+
+    const Texture2D& MainScreenAssets::enemyAttack(
+        std::string_view type) const noexcept
+    {
+        const int index = enemyPovIndex(type);
+        if (index < 0)
+        {
+            static const Texture2D Empty{};
+            return Empty;
+        }
+
+        return m_enemyAttack[static_cast<std::size_t>(index)];
+    }
+
+    const Texture2D& MainScreenAssets::enemyDeath(
+        std::string_view type) const noexcept
+    {
+        const int index = enemyPovIndex(type);
+        if (index < 0)
+        {
+            static const Texture2D Empty{};
+            return Empty;
+        }
+
+        return m_enemyDeath[static_cast<std::size_t>(index)];
     }
 }

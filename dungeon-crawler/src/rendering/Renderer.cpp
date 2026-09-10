@@ -499,6 +499,7 @@ namespace dungeon
             drawLootTable(game);
             drawDiceRoll(game);
             drawCombatInfo(game);
+            drawCombatPov(game);
             if (game.inventoryOpen())
             {
                 drawInventoryActionBar();
@@ -512,6 +513,7 @@ namespace dungeon
         {
             drawMap(game);
             drawActionBar();
+            drawTraversalPov(game);
         }
     }
 
@@ -1104,25 +1106,6 @@ namespace dungeon
                 35,
                 16);
         }
-        else
-        {
-            drawFallbackText(
-                "POV ART",
-                PovRenderX,
-                PovRenderY + 210,
-                PovRenderWidth,
-                50,
-                28);
-
-            drawFallbackText(
-                "580x470",
-                PovRenderX,
-                PovRenderY + 145,
-                PovRenderWidth,
-                50,
-                24);
-        }
-
         // ---------------------------------------------------------------------
         // Combat Action Bar background
         //
@@ -2245,6 +2228,18 @@ namespace dungeon
 
     void Renderer::drawCombatActionBar() const
     {
+        if (m_mainScreenAssets.combatActionBar().id != 0)
+        {
+            drawTexture(
+                m_mainScreenAssets.combatActionBar(),
+                ActionBarX,
+                ActionBarY,
+                ActionBarWidth,
+                ActionBarHeight);
+
+            return;
+        }
+
         const Rectangle actionBar =
             toRaylibRectangle(
                 ActionBarX,
@@ -2304,6 +2299,18 @@ namespace dungeon
 
     void Renderer::drawInventoryActionBar() const
     {
+        if (m_mainScreenAssets.inventoryActionBar().id != 0)
+        {
+            drawTexture(
+                m_mainScreenAssets.inventoryActionBar(),
+                ActionBarX,
+                ActionBarY,
+                ActionBarWidth,
+                ActionBarHeight);
+
+            return;
+        }
+
         const Rectangle actionBar =
             toRaylibRectangle(
                 ActionBarX,
@@ -2320,6 +2327,274 @@ namespace dungeon
         drawFallbackText("TAB  -  GAME INVENTORY INSTRUCTIONS", ActionBarX, ActionBarY + 25, ActionBarWidth, 35, 17);
     }
 
+    // =========================================================================
+    // Traversal POV
+    // =========================================================================
+    void Renderer::drawTraversalPov(
+        const Game& game) const
+    {
+        if (m_gameInstructionsOpen)
+        {
+            return;
+        }
+
+        const Player& player =
+            game.player();
+
+        const Enemy* adjacentEnemy = nullptr;
+
+        for (const auto& enemy : game.enemies())
+        {
+            if (!enemy)
+            {
+                continue;
+            }
+
+            const int dx =
+                player.x() - enemy->x();
+            const int dy =
+                player.y() - enemy->y();
+
+            const int distance =
+                (dx < 0 ? -dx : dx) +
+                (dy < 0 ? -dy : dy);
+
+            if (distance == 1)
+            {
+                adjacentEnemy = enemy.get();
+                break;
+            }
+        }
+
+        if (adjacentEnemy != nullptr)
+        {
+            const Texture2D& texture =
+                adjacentEnemy->isDefeated()
+                ? m_mainScreenAssets.seesDefeatedEnemy(
+                    adjacentEnemy->targetType())
+                : m_mainScreenAssets.seesEnemy(
+                    adjacentEnemy->targetType());
+
+            if (texture.id != 0)
+            {
+                drawTexture(
+                    texture,
+                    PovRenderX,
+                    PovRenderY,
+                    PovRenderWidth,
+                    PovRenderHeight);
+            }
+            else
+            {
+                drawFallbackText(
+                    adjacentEnemy->isDefeated()
+                    ? "Defeated " +
+                    std::string(adjacentEnemy->targetType())
+                    : std::string(adjacentEnemy->targetType()),
+                    PovRenderX,
+                    PovRenderY + 210,
+                    PovRenderWidth,
+                    50,
+                    28);
+            }
+
+            return;
+        }
+
+        const Chest* adjacentChest = nullptr;
+
+        for (const auto& chest : game.chests())
+        {
+            if (!chest)
+            {
+                continue;
+            }
+
+            const int dx =
+                player.x() - chest->x();
+            const int dy =
+                player.y() - chest->y();
+
+            const int distance =
+                (dx < 0 ? -dx : dx) +
+                (dy < 0 ? -dy : dy);
+
+            if (distance == 1)
+            {
+                adjacentChest = chest.get();
+                break;
+            }
+        }
+
+        if (adjacentChest != nullptr)
+        {
+            const Texture2D& texture =
+                adjacentChest->isDefeated()
+                ? m_mainScreenAssets.seesDefeatedChest()
+                : m_mainScreenAssets.seesChest();
+
+            if (texture.id != 0)
+            {
+                drawTexture(
+                    texture,
+                    PovRenderX,
+                    PovRenderY,
+                    PovRenderWidth,
+                    PovRenderHeight);
+            }
+            else
+            {
+                drawFallbackText(
+                    adjacentChest->isDefeated()
+                    ? "Defeated Chest"
+                    : "Chest",
+                    PovRenderX,
+                    PovRenderY + 210,
+                    PovRenderWidth,
+                    50,
+                    28);
+            }
+
+            return;
+        }
+
+        drawFallbackText(
+            "No Immediate Threat",
+            PovRenderX,
+            PovRenderY + 210,
+            PovRenderWidth,
+            50,
+            24);
+    }
+
+    // =========================================================================
+    // Combat POV
+    // =========================================================================
+    void Renderer::drawCombatPov(
+        const Game& game) const
+    {
+        if (m_gameInstructionsOpen)
+        {
+            return;
+        }
+
+        const Combat* combat =
+            game.combat();
+
+        if (combat == nullptr)
+        {
+            return;
+        }
+
+        const CombatTarget& target =
+            combat->target();
+
+        if (target.targetType() == "Chest")
+        {
+            const Texture2D& texture =
+                target.isDefeated()
+                ? m_mainScreenAssets.seesDefeatedChest()
+                : m_mainScreenAssets.seesChest();
+
+            if (texture.id != 0)
+            {
+                drawTexture(
+                    texture,
+                    PovRenderX,
+                    PovRenderY,
+                    PovRenderWidth,
+                    PovRenderHeight);
+            }
+            else
+            {
+                drawFallbackText(
+                    target.isDefeated()
+                    ? "Defeated Chest"
+                    : "Chest",
+                    PovRenderX,
+                    PovRenderY + 210,
+                    PovRenderWidth,
+                    50,
+                    28);
+            }
+
+            return;
+        }
+
+        const CombatPresentation& presentation =
+            game.combatPresentation();
+
+        const Texture2D* texture =
+            nullptr;
+
+        if (target.isDefeated())
+        {
+            texture = &m_mainScreenAssets.enemyDeath(
+                target.targetType());
+        }
+        else
+        {
+            texture = &m_mainScreenAssets.enemyIdle(
+                target.targetType());
+
+            if (presentation.phase() ==
+                CombatPresentation::Phase::Result)
+            {
+                const AttackResult* result =
+                    presentation.currentAttack();
+
+                if (result != nullptr &&
+                    result->damage > 0)
+                {
+                    const auto rollType =
+                        presentation.rollType();
+
+                    const bool damageStep =
+                        rollType ==
+                        CombatPresentation::RollType::Defense
+                        ||
+                        (rollType ==
+                            CombatPresentation::RollType::Wound &&
+                            result->defenseRoll == 0);
+
+                    if (damageStep)
+                    {
+                        if (game.combatPresentationPlayerIsAttacking())
+                        {
+                            texture = &m_mainScreenAssets.enemyHurt(
+                                target.targetType());
+                        }
+                        else
+                        {
+                            texture = &m_mainScreenAssets.enemyAttack(
+                                target.targetType());
+                        }
+                    }
+                }
+            }
+        }
+
+        if (texture != nullptr &&
+            texture->id != 0)
+        {
+            drawTexture(
+                *texture,
+                PovRenderX,
+                PovRenderY,
+                PovRenderWidth,
+                PovRenderHeight);
+        }
+        else
+        {
+            drawFallbackText(
+                target.targetType(),
+                PovRenderX,
+                PovRenderY + 210,
+                PovRenderWidth,
+                50,
+                28);
+        }
+    }
 
     // =========================================================================
     // Dice Roll

@@ -4,6 +4,7 @@
 
 #include <array>
 #include <string>
+#include <string_view>
 
 namespace dungeon
 {
@@ -90,11 +91,31 @@ namespace dungeon
 
         const Texture2D& traversalActionBar() const noexcept;
         const Texture2D& inventoryActionBar() const noexcept;
+        const Texture2D& combatActionBar() const noexcept;
+
+        // ---------------------------------------------------------------------
+        // POV - Traversal
+        // ---------------------------------------------------------------------
+
+        const Texture2D& seesEnemy(std::string_view type) const noexcept;
+        const Texture2D& seesDefeatedEnemy(std::string_view type) const noexcept;
+        const Texture2D& seesChest() const noexcept;
+        const Texture2D& seesDefeatedChest() const noexcept;
+
+        // ---------------------------------------------------------------------
+        // POV - Combat
+        // ---------------------------------------------------------------------
+
+        const Texture2D& enemyIdle(std::string_view type) const noexcept;
+        const Texture2D& enemyHurt(std::string_view type) const noexcept;
+        const Texture2D& enemyAttack(std::string_view type) const noexcept;
+        const Texture2D& enemyDeath(std::string_view type) const noexcept;
 
     private:
         static constexpr int NumberAssetCount = 17;
         static constexpr int PotionStateCount = 4;
         static constexpr int GearTierCount = 6;
+        static constexpr int EnemyPovTypeCount = 5;
 
         static Texture2D emptyTexture() noexcept;
         static Texture2D loadTextureIfPresent(
@@ -102,6 +123,7 @@ namespace dungeon
             bool& loadedSuccessfully);
 
         static bool isValidTexture(const Texture2D& texture) noexcept;
+        static int enemyPovIndex(std::string_view type) noexcept;
 
         Texture2D m_titleArt{};
         Texture2D m_statsTitle{};
@@ -144,6 +166,17 @@ namespace dungeon
 
         Texture2D m_traversalActionBar{};
         Texture2D m_inventoryActionBar{};
+        Texture2D m_combatActionBar{};
+
+        std::array<Texture2D, EnemyPovTypeCount> m_seesEnemies{};
+        std::array<Texture2D, EnemyPovTypeCount> m_seesDefeatedEnemies{};
+        Texture2D m_seesChest{};
+        Texture2D m_seesDefeatedChest{};
+
+        std::array<Texture2D, EnemyPovTypeCount> m_enemyIdle{};
+        std::array<Texture2D, EnemyPovTypeCount> m_enemyHurt{};
+        std::array<Texture2D, EnemyPovTypeCount> m_enemyAttack{};
+        std::array<Texture2D, EnemyPovTypeCount> m_enemyDeath{};
 
         bool m_loaded{ false };
     };

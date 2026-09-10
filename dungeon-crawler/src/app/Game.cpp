@@ -455,7 +455,7 @@ namespace
     }
 
     bool accessoryEquipped(
-        const dungeon::Player& player,
+        const dungeon::Player& player, 
         const ConfiguredGearEntry& entry)
     {
         const auto& accessories =
@@ -1017,7 +1017,7 @@ namespace dungeon
                     targetY));
         }
     }
-    /*
+
     void Game::handleZooInteraction(char tile)
     {
         switch (tile)
@@ -1313,322 +1313,6 @@ namespace dungeon
             break;
         }
     }
-    */
-
-void Game::handleZooInteraction(char tile)
-{
-    switch (tile)
-    {
-    case 'H':
-    {
-        const int hpBefore = m_player.currentHp();
-        const int maximumHp = m_player.maxHp();
-
-        if (hpBefore < maximumHp)
-        {
-            m_player.heal(maximumHp - hpBefore);
-        }
-
-        std::clog
-            << "[ZOO] Heal station: HP "
-            << hpBefore
-            << " -> "
-            << m_player.currentHp()
-            << "/"
-            << m_player.maxHp()
-            << std::endl;
-        break;
-    }
-
-    case 'W':
-    case 'w':
-    {
-        const std::vector<ConfiguredGearEntry> entries =
-            configuredGearEntries(
-                m_configData,
-                "gear.weapon.");
-
-        if (entries.empty())
-        {
-            std::clog
-                << "[ZOO] No configured weapons found."
-                << std::endl;
-            break;
-        }
-
-        const Weapon* currentWeapon =
-            m_player.equipment().weapon();
-
-        const int currentTier =
-            currentWeapon != nullptr
-            ? currentWeapon->tier()
-            : 0;
-
-        const ConfiguredGearEntry* targetEntry =
-            tile == 'W'
-            ? (currentWeapon == nullptr
-                ? &entries.front()
-                : findNextConfiguredTier(entries, currentTier))
-            : findPreviousConfiguredTier(entries, currentTier);
-
-        if (targetEntry == nullptr)
-        {
-            std::clog
-                << "[ZOO] No weapon tier available in requested direction."
-                << std::endl;
-            break;
-        }
-
-        auto weapon =
-            GearFactory::createWeapon(
-                m_configData,
-                targetEntry->id);
-
-        if (!weapon)
-        {
-            std::clog
-                << "[ZOO] Could not create the configured weapon."
-                << std::endl;
-            break;
-        }
-
-        m_player.equipment().debugEquipWeapon(
-            std::move(weapon));
-
-        std::clog
-            << "[ZOO] Weapon set to "
-            << targetEntry->name
-            << " (Tier "
-            << targetEntry->tier
-            << ")."
-            << std::endl;
-        break;
-    }
-
-    case 'A':
-    case 'a':
-    {
-        const std::vector<ConfiguredGearEntry> entries =
-            configuredGearEntries(
-                m_configData,
-                "gear.armor.");
-
-        if (entries.empty())
-        {
-            std::clog
-                << "[ZOO] No configured armor found."
-                << std::endl;
-            break;
-        }
-
-        const Armor* currentArmor =
-            m_player.equipment().armor();
-
-        const int currentTier =
-            currentArmor != nullptr
-            ? currentArmor->tier()
-            : 0;
-
-        const ConfiguredGearEntry* targetEntry =
-            tile == 'A'
-            ? (currentArmor == nullptr
-                ? &entries.front()
-                : findNextConfiguredTier(entries, currentTier))
-            : findPreviousConfiguredTier(entries, currentTier);
-
-        if (targetEntry == nullptr)
-        {
-            std::clog
-                << "[ZOO] No armor tier available in requested direction."
-                << std::endl;
-            break;
-        }
-
-        auto armor =
-            GearFactory::createArmor(
-                m_configData,
-                targetEntry->id);
-
-        if (!armor)
-        {
-            std::clog
-                << "[ZOO] Could not create the configured armor."
-                << std::endl;
-            break;
-        }
-
-        m_player.equipment().debugEquipArmor(
-            std::move(armor));
-
-        const int maximumHp = m_player.maxHp();
-
-        if (m_player.currentHp() > maximumHp)
-        {
-            m_player.takeDamage(
-                m_player.currentHp() - maximumHp);
-        }
-
-        std::clog
-            << "[ZOO] Armor set to "
-            << targetEntry->name
-            << " (Tier "
-            << targetEntry->tier
-            << ")."
-            << std::endl;
-        break;
-    }
-
-    case 'X':
-    {
-        const auto& accessories =
-            m_player.equipment().accessories();
-
-        if (accessories.size() >= 3)
-        {
-            std::clog
-                << "[ZOO] Accessory slots are full."
-                << std::endl;
-            break;
-        }
-
-        const std::vector<ConfiguredGearEntry> entries =
-            configuredGearEntries(
-                m_configData,
-                "gear.accessory.");
-
-        bool added = false;
-
-        for (const ConfiguredGearEntry& entry : entries)
-        {
-            if (accessoryEquipped(m_player, entry))
-            {
-                continue;
-            }
-
-            auto accessory =
-                GearFactory::createAccessory(
-                    m_configData,
-                    entry.id);
-
-            if (!addAccessoryForZoo(
-                m_player,
-                std::move(accessory)))
-            {
-                std::clog
-                    << "[ZOO] Could not add accessory with the available Equipment API."
-                    << std::endl;
-                break;
-            }
-
-            std::clog
-                << "[ZOO] Accessory added: "
-                << entry.name
-                << " (Tier "
-                << entry.tier
-                << ")."
-                << std::endl;
-
-            added = true;
-            break;
-        }
-
-        if (!added)
-        {
-            std::clog
-                << "[ZOO] No new configured accessory is available."
-                << std::endl;
-        }
-
-        break;
-    }
-
-    case 'x':
-    {
-        const auto& accessories =
-            m_player.equipment().accessories();
-
-        if (accessories.empty())
-        {
-            std::clog
-                << "[ZOO] No accessory is equipped."
-                << std::endl;
-            break;
-        }
-
-        const std::string removedName =
-            accessories.back()
-            ? std::string(accessories.back()->name())
-            : std::string("Unknown");
-
-        if (!m_player.equipment().debugRemoveAccessory(
-            removedName))
-        {
-            std::clog
-                << "[ZOO] Could not remove the last accessory."
-                << std::endl;
-            break;
-        }
-
-        const int maximumHp = m_player.maxHp();
-
-        if (m_player.currentHp() > maximumHp)
-        {
-            m_player.takeDamage(
-                m_player.currentHp() - maximumHp);
-        }
-
-        std::clog
-            << "[ZOO] Accessory removed: "
-            << removedName
-            << "."
-            << std::endl;
-        break;
-    }
-
-    case 'R':
-    {
-        std::size_t respawned = 0;
-
-        for (const auto& enemy : m_enemies)
-        {
-            if (!enemy)
-            {
-                continue;
-            }
-
-            if (enemy->isDefeated())
-            {
-                enemy->respawn();
-                ++respawned;
-            }
-        }
-
-        for (const auto& chest : m_chests)
-        {
-            if (!chest)
-            {
-                continue;
-            }
-
-            if (chest->isDefeated())
-            {
-                chest->respawn();
-                ++respawned;
-            }
-        }
-
-        std::clog
-            << "[ZOO] Respawn station restored "
-            << respawned
-            << " defeated target(s)."
-            << std::endl;
-        break;
-    }
-
-    default:
-        break;
-    }
-}
 
     bool Game::isZoo() const noexcept
     {
@@ -2204,6 +1888,12 @@ void Game::handleZooInteraction(char tile)
     const CombatPresentation& Game::combatPresentation() const noexcept
     {
         return m_combatPresentation;
+    }
+
+    bool Game::combatPresentationPlayerIsAttacking() const noexcept
+    {
+        return m_combatPresentationActor ==
+            CombatPresentationActor::Player;
     }
 
     int Game::windowWidth() const noexcept

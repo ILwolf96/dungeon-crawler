@@ -71,11 +71,6 @@ namespace dungeon
         int displayedPlayerHp() const noexcept;
         int displayedCombatTargetHp() const noexcept;
 
-        /*
-        [[nodiscard]]
-        bool isZoo() const noexcept;
-        */
-
         [[nodiscard]]
         int windowWidth() const noexcept;
 
@@ -105,6 +100,9 @@ namespace dungeon
 
         [[nodiscard]]
         const CombatPresentation& combatPresentation() const noexcept;
+
+        [[nodiscard]]
+        bool combatPresentationPlayerIsAttacking() const noexcept;
 
         [[nodiscard]]
         const std::vector<CombatLootPreviewSlot>& combatLootPreview() const noexcept;
