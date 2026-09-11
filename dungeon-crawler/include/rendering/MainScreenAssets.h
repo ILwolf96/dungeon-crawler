@@ -30,6 +30,17 @@ namespace dungeon
         const Texture2D& statsTitle() const noexcept;
         const Texture2D& gearTitle() const noexcept;
 
+        // Window and panel backgrounds / titles
+        const Texture2D& playerStatsWindowBackground() const noexcept;
+        const Texture2D& gearWindowBackground() const noexcept;
+        const Texture2D& diceRollTitle() const noexcept;
+        const Texture2D& diceRollWindowBackground() const noexcept;
+        const Texture2D& combatInfoWindowBackground() const noexcept;
+        const Texture2D& lootTableWindowBackground() const noexcept;
+        const Texture2D& lootTitle() const noexcept;
+        const Texture2D& enemyStatsWindowBackground() const noexcept;
+        const Texture2D& enemyStatsTitle() const noexcept;
+
         // ---------------------------------------------------------------------
         // Stats
         // ---------------------------------------------------------------------
@@ -119,11 +130,21 @@ namespace dungeon
         const Texture2D& enemyAttack(std::string_view type) const noexcept;
         const Texture2D& enemyDeath(std::string_view type) const noexcept;
 
+        // Instructions
+        const Texture2D& gameInstructions() const noexcept;
+        const Texture2D& combatInstructions() const noexcept;
+        const Texture2D& inventoryInstructions() const noexcept;
+
+        // Dice presentation
+        const Texture2D& diceRolling() const noexcept;
+        const Texture2D& diceResult(int value) const noexcept;
+
     private:
         static constexpr int NumberAssetCount = 17;
         static constexpr int PotionStateCount = 4;
         static constexpr int GearTierCount = 6;
         static constexpr int EnemyPovTypeCount = 5;
+        static constexpr int DiceResultCount = 6;
 
         static Texture2D emptyTexture() noexcept;
         static Texture2D loadTextureIfPresent(
@@ -136,6 +157,16 @@ namespace dungeon
         Texture2D m_titleArt{};
         Texture2D m_statsTitle{};
         Texture2D m_gearTitle{};
+
+        Texture2D m_playerStatsWindowBackground{};
+        Texture2D m_gearWindowBackground{};
+        Texture2D m_diceRollTitle{};
+        Texture2D m_diceRollWindowBackground{};
+        Texture2D m_combatInfoWindowBackground{};
+        Texture2D m_lootTableWindowBackground{};
+        Texture2D m_lootTitle{};
+        Texture2D m_enemyStatsWindowBackground{};
+        Texture2D m_enemyStatsTitle{};
 
         Texture2D m_atkIcon{};
         Texture2D m_strIcon{};
@@ -193,6 +224,13 @@ namespace dungeon
         std::array<Texture2D, EnemyPovTypeCount> m_enemyHurt{};
         std::array<Texture2D, EnemyPovTypeCount> m_enemyAttack{};
         std::array<Texture2D, EnemyPovTypeCount> m_enemyDeath{};
+
+        Texture2D m_gameInstructions{};
+        Texture2D m_combatInstructions{};
+        Texture2D m_inventoryInstructions{};
+
+        Texture2D m_diceRolling{};
+        std::array<Texture2D, DiceResultCount> m_diceResults{};
 
         bool m_loaded{ false };
     };

@@ -40,6 +40,7 @@ namespace dungeon
         South,
         West
     };
+
     enum class CombatLootPreviewType
     {
         None,

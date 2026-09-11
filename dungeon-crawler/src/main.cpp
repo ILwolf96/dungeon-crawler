@@ -13,8 +13,18 @@
 
 namespace
 {
-    dungeon::Action pollAction()
+    dungeon::Action pollAction(const dungeon::Game& game)
     {
+        if (IsKeyPressed(KEY_Q) && !game.inCombat())
+        {
+            return dungeon::Action::TurnLeft;
+        }
+
+        if (IsKeyPressed(KEY_E) && !game.inCombat())
+        {
+            return dungeon::Action::TurnRight;
+        }
+
         if (IsKeyPressed(KEY_W) || IsKeyPressed(KEY_UP))
         {
             return dungeon::Action::MoveUp;
@@ -170,7 +180,6 @@ int main(int argc, char** argv)
 
     while (!WindowShouldClose())
     {
-
         // Game Instructions
         if (IsKeyPressed(KEY_TAB))
         {
@@ -192,10 +201,13 @@ int main(int argc, char** argv)
         // Escape / Close Inventory (E or 3)
         if (IsKeyPressed(KEY_E) || IsKeyPressed(KEY_THREE))
         {
-            game.handleAction(dungeon::Action::Escape);
+            if (game.inCombat())
+            {
+                game.handleAction(dungeon::Action::Escape);
+            }
         }
 
-        const dungeon::Action action = pollAction();
+        const dungeon::Action action = pollAction(game);
 
         if (action != dungeon::Action::None)
         {

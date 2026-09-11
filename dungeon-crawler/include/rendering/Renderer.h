@@ -191,7 +191,10 @@ namespace dungeon
         // Travarsal/ Combat Screen rendering
         // ---------------------------------------------------------------------
 
-        void drawMainScreenLayout() const;
+
+
+        void drawMainScreenLayout(const Game& game) const;
+
         void drawCombatScreenLayout(const Game& game) const;
 
         void drawMap(const Game& game) const;

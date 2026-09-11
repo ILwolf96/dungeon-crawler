@@ -37,6 +37,15 @@ namespace
     constexpr const char* ActionBarPath =
         "assets/ui/action_bar/";
 
+    constexpr const char* WindowsPath =
+        "assets/ui/windows/";
+
+    constexpr const char* InstructionsPath =
+        "assets/ui/instructions/";
+
+    constexpr const char* DicePath =
+        "assets/ui/dice/";
+
     constexpr const char* PovTraversalPath =
         "assets/ui/pov/traversal/";
 
@@ -147,6 +156,55 @@ namespace dungeon
 
         m_gearTitle = loadTextureIfPresent(
             std::string(TitlesPath) + "gear_title.png",
+            loaded);
+        allLoaded = allLoaded && loaded;
+
+        // ---------------------------------------------------------------------
+        // Window / Panel Art
+        // ---------------------------------------------------------------------
+
+        m_playerStatsWindowBackground = loadTextureIfPresent(
+            std::string(WindowsPath) + "player_stats_window_bg.png",
+            loaded);
+        allLoaded = allLoaded && loaded;
+
+        m_gearWindowBackground = loadTextureIfPresent(
+            std::string(WindowsPath) + "gear_window_bg.png",
+            loaded);
+        allLoaded = allLoaded && loaded;
+
+        m_diceRollTitle = loadTextureIfPresent(
+            std::string(WindowsPath) + "dice_roll_title.png",
+            loaded);
+        allLoaded = allLoaded && loaded;
+
+        m_diceRollWindowBackground = loadTextureIfPresent(
+            std::string(WindowsPath) + "dice_roll_window_bg.png",
+            loaded);
+        allLoaded = allLoaded && loaded;
+
+        m_combatInfoWindowBackground = loadTextureIfPresent(
+            std::string(WindowsPath) + "combat_info_window_bg.png",
+            loaded);
+        allLoaded = allLoaded && loaded;
+
+        m_lootTableWindowBackground = loadTextureIfPresent(
+            std::string(WindowsPath) + "loot_table_window_bg.png",
+            loaded);
+        allLoaded = allLoaded && loaded;
+
+        m_lootTitle = loadTextureIfPresent(
+            std::string(WindowsPath) + "loot_title.png",
+            loaded);
+        allLoaded = allLoaded && loaded;
+
+        m_enemyStatsWindowBackground = loadTextureIfPresent(
+            std::string(WindowsPath) + "enemy_stats_window_bg.png",
+            loaded);
+        allLoaded = allLoaded && loaded;
+
+        m_enemyStatsTitle = loadTextureIfPresent(
+            std::string(WindowsPath) + "enemy_stats_title.png",
             loaded);
         allLoaded = allLoaded && loaded;
 
@@ -488,6 +546,46 @@ namespace dungeon
         }
 
         // ---------------------------------------------------------------------
+        // Instructions
+        // ---------------------------------------------------------------------
+
+        m_gameInstructions = loadTextureIfPresent(
+            std::string(InstructionsPath) + "game_instructions.png",
+            loaded);
+        allLoaded = allLoaded && loaded;
+
+        m_combatInstructions = loadTextureIfPresent(
+            std::string(InstructionsPath) + "combat_instructions.png",
+            loaded);
+        allLoaded = allLoaded && loaded;
+
+        m_inventoryInstructions = loadTextureIfPresent(
+            std::string(InstructionsPath) + "inventory_instructions.png",
+            loaded);
+        allLoaded = allLoaded && loaded;
+
+        // ---------------------------------------------------------------------
+        // Dice Presentation
+        // ---------------------------------------------------------------------
+
+        m_diceRolling = loadTextureIfPresent(
+            std::string(DicePath) + "dice_rolling.png",
+            loaded);
+        allLoaded = allLoaded && loaded;
+
+        for (int value = 1; value <= DiceResultCount; ++value)
+        {
+            m_diceResults[static_cast<std::size_t>(value - 1)] =
+                loadTextureIfPresent(
+                    std::string(DicePath) +
+                    "dice_result_" +
+                    std::to_string(value) +
+                    ".png",
+                    loaded);
+            allLoaded = allLoaded && loaded;
+        }
+
+        // ---------------------------------------------------------------------
         // Action Bar
         // ---------------------------------------------------------------------
 
@@ -529,6 +627,16 @@ namespace dungeon
         unloadTexture(m_titleArt);
         unloadTexture(m_statsTitle);
         unloadTexture(m_gearTitle);
+
+        unloadTexture(m_playerStatsWindowBackground);
+        unloadTexture(m_gearWindowBackground);
+        unloadTexture(m_diceRollTitle);
+        unloadTexture(m_diceRollWindowBackground);
+        unloadTexture(m_combatInfoWindowBackground);
+        unloadTexture(m_lootTableWindowBackground);
+        unloadTexture(m_lootTitle);
+        unloadTexture(m_enemyStatsWindowBackground);
+        unloadTexture(m_enemyStatsTitle);
 
         unloadTexture(m_atkIcon);
         unloadTexture(m_strIcon);
@@ -627,6 +735,16 @@ namespace dungeon
             unloadTexture(texture);
         }
 
+        unloadTexture(m_gameInstructions);
+        unloadTexture(m_combatInstructions);
+        unloadTexture(m_inventoryInstructions);
+        unloadTexture(m_diceRolling);
+
+        for (Texture2D& texture : m_diceResults)
+        {
+            unloadTexture(texture);
+        }
+
         m_loaded = false;
     }
 
@@ -648,6 +766,51 @@ namespace dungeon
     const Texture2D& MainScreenAssets::gearTitle() const noexcept
     {
         return m_gearTitle;
+    }
+
+    const Texture2D& MainScreenAssets::playerStatsWindowBackground() const noexcept
+    {
+        return m_playerStatsWindowBackground;
+    }
+
+    const Texture2D& MainScreenAssets::gearWindowBackground() const noexcept
+    {
+        return m_gearWindowBackground;
+    }
+
+    const Texture2D& MainScreenAssets::diceRollTitle() const noexcept
+    {
+        return m_diceRollTitle;
+    }
+
+    const Texture2D& MainScreenAssets::diceRollWindowBackground() const noexcept
+    {
+        return m_diceRollWindowBackground;
+    }
+
+    const Texture2D& MainScreenAssets::combatInfoWindowBackground() const noexcept
+    {
+        return m_combatInfoWindowBackground;
+    }
+
+    const Texture2D& MainScreenAssets::lootTableWindowBackground() const noexcept
+    {
+        return m_lootTableWindowBackground;
+    }
+
+    const Texture2D& MainScreenAssets::lootTitle() const noexcept
+    {
+        return m_lootTitle;
+    }
+
+    const Texture2D& MainScreenAssets::enemyStatsWindowBackground() const noexcept
+    {
+        return m_enemyStatsWindowBackground;
+    }
+
+    const Texture2D& MainScreenAssets::enemyStatsTitle() const noexcept
+    {
+        return m_enemyStatsTitle;
     }
 
     const Texture2D& MainScreenAssets::atkIcon() const noexcept
@@ -967,5 +1130,36 @@ namespace dungeon
         }
 
         return m_enemyDeath[static_cast<std::size_t>(index)];
+    }
+
+    const Texture2D& MainScreenAssets::gameInstructions() const noexcept
+    {
+        return m_gameInstructions;
+    }
+
+    const Texture2D& MainScreenAssets::combatInstructions() const noexcept
+    {
+        return m_combatInstructions;
+    }
+
+    const Texture2D& MainScreenAssets::inventoryInstructions() const noexcept
+    {
+        return m_inventoryInstructions;
+    }
+
+    const Texture2D& MainScreenAssets::diceRolling() const noexcept
+    {
+        return m_diceRolling;
+    }
+
+    const Texture2D& MainScreenAssets::diceResult(int value) const noexcept
+    {
+        if (value < 1 || value > DiceResultCount)
+        {
+            static const Texture2D Empty{};
+            return Empty;
+        }
+
+        return m_diceResults[static_cast<std::size_t>(value - 1)];
     }
 }
