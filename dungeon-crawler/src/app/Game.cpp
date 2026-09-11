@@ -21,6 +21,7 @@
 #include <unordered_map>
 #include <utility>
 #include <algorithm>
+#include <cctype>
 
 
 namespace
@@ -90,6 +91,43 @@ namespace
         }
 
         return value;
+    }
+
+    dungeon::FacingDirection parseFacingDirection(
+        std::string_view value)
+    {
+        std::string normalized(value);
+        for (char& character : normalized)
+        {
+            character = static_cast<char>(
+                std::tolower(
+                    static_cast<unsigned char>(character)));
+        }
+
+        if (normalized == "north")
+        {
+            return dungeon::FacingDirection::North;
+        }
+
+        if (normalized == "east")
+        {
+            return dungeon::FacingDirection::East;
+        }
+
+        if (normalized == "south")
+        {
+            return dungeon::FacingDirection::South;
+        }
+
+        if (normalized == "west")
+        {
+            return dungeon::FacingDirection::West;
+        }
+
+        throw std::runtime_error(
+            "Invalid player facing_direction: " +
+            std::string(value) +
+            ". Expected North, East, South, or West.");
     }
 
     char getRequiredSymbol(
@@ -455,7 +493,7 @@ namespace
     }
 
     bool accessoryEquipped(
-        const dungeon::Player& player, 
+        const dungeon::Player& player,
         const ConfiguredGearEntry& entry)
     {
         const auto& accessories =
@@ -504,6 +542,13 @@ namespace dungeon
         m_isZoo =
             m_configData.hasValue("game", "mode") &&
             m_configData.getValue("game", "mode") == "zoo";
+
+        m_facingDirection =
+            parseFacingDirection(
+                getRequiredString(
+                    m_configData,
+                    "player",
+                    "facing_direction"));
 
         std::clog
             << "[CONFIG] Game mode = "
@@ -960,6 +1005,10 @@ namespace dungeon
                 performCombatEscape();
                 break;
 
+            case Action::TurnLeft:
+            case Action::TurnRight:
+                break;
+
             default:
                 std::clog << "[COMBAT] Movement/input ignored during combat." << std::endl;
                 break;
@@ -988,6 +1037,46 @@ namespace dungeon
         case Action::MoveRight:
             ++targetX;
             break;
+
+        case Action::TurnLeft:
+        case Action::TurnRight:
+            if (action == Action::TurnLeft)
+            {
+                switch (m_facingDirection)
+                {
+                case FacingDirection::North:
+                    m_facingDirection = FacingDirection::West;
+                    break;
+                case FacingDirection::West:
+                    m_facingDirection = FacingDirection::South;
+                    break;
+                case FacingDirection::South:
+                    m_facingDirection = FacingDirection::East;
+                    break;
+                case FacingDirection::East:
+                    m_facingDirection = FacingDirection::North;
+                    break;
+                }
+            }
+            else
+            {
+                switch (m_facingDirection)
+                {
+                case FacingDirection::North:
+                    m_facingDirection = FacingDirection::East;
+                    break;
+                case FacingDirection::East:
+                    m_facingDirection = FacingDirection::South;
+                    break;
+                case FacingDirection::South:
+                    m_facingDirection = FacingDirection::West;
+                    break;
+                case FacingDirection::West:
+                    m_facingDirection = FacingDirection::North;
+                    break;
+                }
+            }
+            return;
 
         case Action::None:
         case Action::Attack:
@@ -1317,6 +1406,11 @@ namespace dungeon
     bool Game::isZoo() const noexcept
     {
         return m_isZoo;
+    }
+
+    FacingDirection Game::facingDirection() const noexcept
+    {
+        return m_facingDirection;
     }
 
     bool Game::inCombat() const noexcept

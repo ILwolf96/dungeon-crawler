@@ -333,8 +333,18 @@ namespace dungeon
             loaded);
         allLoaded = allLoaded && loaded;
 
+        m_chestOpenedTile = loadTextureIfPresent(
+            std::string(MapPath) + "chest_opened_tile.png",
+            loaded);
+        allLoaded = allLoaded && loaded;
+
         m_goblinTile = loadTextureIfPresent(
             std::string(MapPath) + "goblin_tile.png",
+            loaded);
+        allLoaded = allLoaded && loaded;
+
+        m_goblinDefeatedTile = loadTextureIfPresent(
+            std::string(MapPath) + "goblin_defeated_tile.png",
             loaded);
         allLoaded = allLoaded && loaded;
 
@@ -343,8 +353,18 @@ namespace dungeon
             loaded);
         allLoaded = allLoaded && loaded;
 
+        m_skeletonDefeatedTile = loadTextureIfPresent(
+            std::string(MapPath) + "skeleton_defeated_tile.png",
+            loaded);
+        allLoaded = allLoaded && loaded;
+
         m_orcTile = loadTextureIfPresent(
             std::string(MapPath) + "orc_tile.png",
+            loaded);
+        allLoaded = allLoaded && loaded;
+
+        m_orcDefeatedTile = loadTextureIfPresent(
+            std::string(MapPath) + "orc_defeated_tile.png",
             loaded);
         allLoaded = allLoaded && loaded;
 
@@ -353,8 +373,18 @@ namespace dungeon
             loaded);
         allLoaded = allLoaded && loaded;
 
+        m_trollDefeatedTile = loadTextureIfPresent(
+            std::string(MapPath) + "troll_defeated_tile.png",
+            loaded);
+        allLoaded = allLoaded && loaded;
+
         m_dragonTile = loadTextureIfPresent(
             std::string(MapPath) + "dragon_tile.png",
+            loaded);
+        allLoaded = allLoaded && loaded;
+
+        m_dragonDefeatedTile = loadTextureIfPresent(
+            std::string(MapPath) + "dragon_defeated_tile.png",
             loaded);
         allLoaded = allLoaded && loaded;
 
@@ -400,6 +430,18 @@ namespace dungeon
         m_seesDefeatedChest = loadTextureIfPresent(
             std::string(PovTraversalPath) +
             "sees_defeated_chest.png",
+            loaded);
+        allLoaded = allLoaded && loaded;
+
+        m_seesWall = loadTextureIfPresent(
+            std::string(PovTraversalPath) +
+            "sees_wall.png",
+            loaded);
+        allLoaded = allLoaded && loaded;
+
+        m_seesNothing = loadTextureIfPresent(
+            std::string(PovTraversalPath) +
+            "sees_nothing.png",
             loaded);
         allLoaded = allLoaded && loaded;
 
@@ -533,11 +575,17 @@ namespace dungeon
         unloadTexture(m_floorTile);
         unloadTexture(m_playerTile);
         unloadTexture(m_chestTile);
+        unloadTexture(m_chestOpenedTile);
         unloadTexture(m_goblinTile);
+        unloadTexture(m_goblinDefeatedTile);
         unloadTexture(m_skeletonTile);
+        unloadTexture(m_skeletonDefeatedTile);
         unloadTexture(m_orcTile);
+        unloadTexture(m_orcDefeatedTile);
         unloadTexture(m_trollTile);
+        unloadTexture(m_trollDefeatedTile);
         unloadTexture(m_dragonTile);
+        unloadTexture(m_dragonDefeatedTile);
         unloadTexture(m_mapFrame);
 
         unloadTexture(m_traversalActionBar);
@@ -556,6 +604,8 @@ namespace dungeon
 
         unloadTexture(m_seesChest);
         unloadTexture(m_seesDefeatedChest);
+        unloadTexture(m_seesWall);
+        unloadTexture(m_seesNothing);
 
         for (Texture2D& texture : m_enemyIdle)
         {
@@ -746,9 +796,19 @@ namespace dungeon
         return m_chestTile;
     }
 
+    const Texture2D& MainScreenAssets::chestOpenedTile() const noexcept
+    {
+        return m_chestOpenedTile;
+    }
+
     const Texture2D& MainScreenAssets::goblinTile() const noexcept
     {
         return m_goblinTile;
+    }
+
+    const Texture2D& MainScreenAssets::goblinDefeatedTile() const noexcept
+    {
+        return m_goblinDefeatedTile;
     }
 
     const Texture2D& MainScreenAssets::skeletonTile() const noexcept
@@ -756,9 +816,19 @@ namespace dungeon
         return m_skeletonTile;
     }
 
+    const Texture2D& MainScreenAssets::skeletonDefeatedTile() const noexcept
+    {
+        return m_skeletonDefeatedTile;
+    }
+
     const Texture2D& MainScreenAssets::orcTile() const noexcept
     {
         return m_orcTile;
+    }
+
+    const Texture2D& MainScreenAssets::orcDefeatedTile() const noexcept
+    {
+        return m_orcDefeatedTile;
     }
 
     const Texture2D& MainScreenAssets::trollTile() const noexcept
@@ -766,9 +836,19 @@ namespace dungeon
         return m_trollTile;
     }
 
+    const Texture2D& MainScreenAssets::trollDefeatedTile() const noexcept
+    {
+        return m_trollDefeatedTile;
+    }
+
     const Texture2D& MainScreenAssets::dragonTile() const noexcept
     {
         return m_dragonTile;
+    }
+
+    const Texture2D& MainScreenAssets::dragonDefeatedTile() const noexcept
+    {
+        return m_dragonDefeatedTile;
     }
 
     const Texture2D& MainScreenAssets::mapFrame() const noexcept
@@ -825,6 +905,16 @@ namespace dungeon
     const Texture2D& MainScreenAssets::seesDefeatedChest() const noexcept
     {
         return m_seesDefeatedChest;
+    }
+
+    const Texture2D& MainScreenAssets::seesWall() const noexcept
+    {
+        return m_seesWall;
+    }
+
+    const Texture2D& MainScreenAssets::seesNothing() const noexcept
+    {
+        return m_seesNothing;
     }
 
     const Texture2D& MainScreenAssets::enemyIdle(

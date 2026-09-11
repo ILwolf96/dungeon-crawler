@@ -26,11 +26,20 @@ namespace dungeon
         MoveDown,
         MoveLeft,
         MoveRight,
+        TurnLeft,
+        TurnRight,
         Attack,
         Inventory,
         Escape
     };
 
+    enum class FacingDirection
+    {
+        North,
+        East,
+        South,
+        West
+    };
     enum class CombatLootPreviewType
     {
         None,
@@ -60,6 +69,8 @@ namespace dungeon
 
         bool isZoo() const noexcept;
 
+        [[nodiscard]]
+        FacingDirection facingDirection() const noexcept;
 
         bool inCombat() const noexcept;
 
@@ -173,6 +184,8 @@ namespace dungeon
         config::ConfigData m_configData;
 
         bool m_isZoo{ false };
+        FacingDirection m_facingDirection{ FacingDirection::North };
+
         int m_windowWidth{ 640 };
         int m_windowHeight{ 360 };
         std::string m_title{ "Dungeon Crawler" };

@@ -207,6 +207,47 @@ namespace dungeon
             WHITE);
     }
 
+    void Renderer::drawTextureRotated(
+        const Texture2D& texture,
+        int x,
+        int y,
+        int width,
+        int height,
+        float rotation) const
+    {
+        if (texture.id == 0)
+        {
+            return;
+        }
+
+        const Rectangle destination =
+            toRaylibRectangle(
+                x,
+                y,
+                width,
+                height);
+
+        const Rectangle source{
+            0.0f,
+            0.0f,
+            static_cast<float>(texture.width),
+            static_cast<float>(texture.height)
+        };
+
+        const Vector2 origin{
+            static_cast<float>(width) / 2.0f,
+            static_cast<float>(height) / 2.0f
+        };
+
+        DrawTexturePro(
+            texture,
+            source,
+            destination,
+            origin,
+            rotation,
+            WHITE);
+    }
+
     // =========================================================================
     // Fallback Text
     // =========================================================================
@@ -2214,6 +2255,22 @@ namespace dungeon
             16);
 
         drawFallbackText(
+            "Q  -  TURN LEFT",
+            ActionBarX + 275,
+            ActionBarY + 45,
+            250,
+            30,
+            15);
+
+        drawFallbackText(
+            "E  -  TURN RIGHT",
+            ActionBarX + 525,
+            ActionBarY + 45,
+            250,
+            30,
+            15);
+
+        drawFallbackText(
             "TAB  -  GAME INSTRUCTIONS",
             ActionBarX,
             ActionBarY + 25,
@@ -2341,39 +2398,45 @@ namespace dungeon
         const Player& player =
             game.player();
 
-        const Enemy* adjacentEnemy = nullptr;
+        int lookX =
+            player.x();
+        int lookY =
+            player.y();
+
+        switch (game.facingDirection())
+        {
+        case FacingDirection::North:
+            --lookY;
+            break;
+
+        case FacingDirection::East:
+            ++lookX;
+            break;
+
+        case FacingDirection::South:
+            ++lookY;
+            break;
+
+        case FacingDirection::West:
+            --lookX;
+            break;
+        }
 
         for (const auto& enemy : game.enemies())
         {
-            if (!enemy)
+            if (!enemy ||
+                enemy->x() != lookX ||
+                enemy->y() != lookY)
             {
                 continue;
             }
 
-            const int dx =
-                player.x() - enemy->x();
-            const int dy =
-                player.y() - enemy->y();
-
-            const int distance =
-                (dx < 0 ? -dx : dx) +
-                (dy < 0 ? -dy : dy);
-
-            if (distance == 1)
-            {
-                adjacentEnemy = enemy.get();
-                break;
-            }
-        }
-
-        if (adjacentEnemy != nullptr)
-        {
             const Texture2D& texture =
-                adjacentEnemy->isDefeated()
+                enemy->isDefeated()
                 ? m_mainScreenAssets.seesDefeatedEnemy(
-                    adjacentEnemy->targetType())
+                    enemy->targetType())
                 : m_mainScreenAssets.seesEnemy(
-                    adjacentEnemy->targetType());
+                    enemy->targetType());
 
             if (texture.id != 0)
             {
@@ -2387,10 +2450,10 @@ namespace dungeon
             else
             {
                 drawFallbackText(
-                    adjacentEnemy->isDefeated()
+                    enemy->isDefeated()
                     ? "Defeated " +
-                    std::string(adjacentEnemy->targetType())
-                    : std::string(adjacentEnemy->targetType()),
+                    std::string(enemy->targetType())
+                    : std::string(enemy->targetType()),
                     PovRenderX,
                     PovRenderY + 210,
                     PovRenderWidth,
@@ -2401,35 +2464,17 @@ namespace dungeon
             return;
         }
 
-        const Chest* adjacentChest = nullptr;
-
         for (const auto& chest : game.chests())
         {
-            if (!chest)
+            if (!chest ||
+                chest->x() != lookX ||
+                chest->y() != lookY)
             {
                 continue;
             }
 
-            const int dx =
-                player.x() - chest->x();
-            const int dy =
-                player.y() - chest->y();
-
-            const int distance =
-                (dx < 0 ? -dx : dx) +
-                (dy < 0 ? -dy : dy);
-
-            if (distance == 1)
-            {
-                adjacentChest = chest.get();
-                break;
-            }
-        }
-
-        if (adjacentChest != nullptr)
-        {
             const Texture2D& texture =
-                adjacentChest->isDefeated()
+                chest->isDefeated()
                 ? m_mainScreenAssets.seesDefeatedChest()
                 : m_mainScreenAssets.seesChest();
 
@@ -2445,8 +2490,8 @@ namespace dungeon
             else
             {
                 drawFallbackText(
-                    adjacentChest->isDefeated()
-                    ? "Defeated Chest"
+                    chest->isDefeated()
+                    ? "Opened Chest"
                     : "Chest",
                     PovRenderX,
                     PovRenderY + 210,
@@ -2458,13 +2503,50 @@ namespace dungeon
             return;
         }
 
-        drawFallbackText(
-            "No Immediate Threat",
-            PovRenderX,
-            PovRenderY + 210,
-            PovRenderWidth,
-            50,
-            24);
+        if (!game.map().isWalkable(lookX, lookY))
+        {
+            if (m_mainScreenAssets.seesWall().id != 0)
+            {
+                drawTexture(
+                    m_mainScreenAssets.seesWall(),
+                    PovRenderX,
+                    PovRenderY,
+                    PovRenderWidth,
+                    PovRenderHeight);
+            }
+            else
+            {
+                drawFallbackText(
+                    "Wall",
+                    PovRenderX,
+                    PovRenderY + 210,
+                    PovRenderWidth,
+                    50,
+                    28);
+            }
+
+            return;
+        }
+
+        if (m_mainScreenAssets.seesNothing().id != 0)
+        {
+            drawTexture(
+                m_mainScreenAssets.seesNothing(),
+                PovRenderX,
+                PovRenderY,
+                PovRenderWidth,
+                PovRenderHeight);
+        }
+        else
+        {
+            drawFallbackText(
+                "Nothing",
+                PovRenderX,
+                PovRenderY + 210,
+                PovRenderWidth,
+                50,
+                24);
+        }
     }
 
     // =========================================================================
@@ -3260,12 +3342,31 @@ namespace dungeon
 
             if (playerTexture.id != 0)
             {
-                drawTexture(
+                float rotation = 0.0f;
+
+                switch (game.facingDirection())
+                {
+                case FacingDirection::North:
+                    rotation = 0.0f;
+                    break;
+                case FacingDirection::East:
+                    rotation = 90.0f;
+                    break;
+                case FacingDirection::South:
+                    rotation = 180.0f;
+                    break;
+                case FacingDirection::West:
+                    rotation = 270.0f;
+                    break;
+                }
+
+                drawTextureRotated(
                     playerTexture,
                     playerX,
                     playerY,
                     TemporaryMapTileSize,
-                    TemporaryMapTileSize);
+                    TemporaryMapTileSize,
+                    rotation);
             }
             else
             {
@@ -3301,28 +3402,6 @@ namespace dungeon
             const int enemyY =
                 worldToViewY(enemy->y());
 
-            if (enemy->isDefeated())
-            {
-                DrawRectangle(
-                    enemyX,
-                    toRaylibY(
-                        enemyY,
-                        TemporaryMapTileSize),
-                    TemporaryMapTileSize,
-                    TemporaryMapTileSize,
-                    DARKGRAY);
-
-                drawFallbackText(
-                    "X",
-                    enemyX,
-                    enemyY,
-                    TemporaryMapTileSize,
-                    TemporaryMapTileSize,
-                    11);
-
-                continue;
-            }
-
             const std::string_view type =
                 enemy->type();
 
@@ -3335,30 +3414,45 @@ namespace dungeon
             if (type == "Skeleton")
             {
                 enemyTexture =
-                    &m_mainScreenAssets.skeletonTile();
+                    enemy->isDefeated()
+                    ? &m_mainScreenAssets.skeletonDefeatedTile()
+                    : &m_mainScreenAssets.skeletonTile();
 
                 identifier = "S";
             }
             else if (type == "Orc")
             {
                 enemyTexture =
-                    &m_mainScreenAssets.orcTile();
+                    enemy->isDefeated()
+                    ? &m_mainScreenAssets.orcDefeatedTile()
+                    : &m_mainScreenAssets.orcTile();
 
                 identifier = "O";
             }
             else if (type == "Troll")
             {
                 enemyTexture =
-                    &m_mainScreenAssets.trollTile();
+                    enemy->isDefeated()
+                    ? &m_mainScreenAssets.trollDefeatedTile()
+                    : &m_mainScreenAssets.trollTile();
 
                 identifier = "T";
             }
             else if (type == "Dragon")
             {
                 enemyTexture =
-                    &m_mainScreenAssets.dragonTile();
+                    enemy->isDefeated()
+                    ? &m_mainScreenAssets.dragonDefeatedTile()
+                    : &m_mainScreenAssets.dragonTile();
 
                 identifier = "D";
+            }
+            else if (type == "Goblin")
+            {
+                enemyTexture =
+                    enemy->isDefeated()
+                    ? &m_mainScreenAssets.goblinDefeatedTile()
+                    : &m_mainScreenAssets.goblinTile();
             }
 
             if (enemyTexture->id != 0)
@@ -3412,30 +3506,10 @@ namespace dungeon
             const int chestY =
                 worldToViewY(chest->y());
 
-            if (chest->isDefeated())
-            {
-                DrawRectangle(
-                    chestX,
-                    toRaylibY(
-                        chestY,
-                        TemporaryMapTileSize),
-                    TemporaryMapTileSize,
-                    TemporaryMapTileSize,
-                    DARKGRAY);
-
-                drawFallbackText(
-                    "O",
-                    chestX,
-                    chestY,
-                    TemporaryMapTileSize,
-                    TemporaryMapTileSize,
-                    11);
-
-                continue;
-            }
-
             const Texture2D& chestTexture =
-                m_mainScreenAssets.chestTile();
+                chest->isDefeated()
+                ? m_mainScreenAssets.chestOpenedTile()
+                : m_mainScreenAssets.chestTile();
 
             if (chestTexture.id != 0)
             {

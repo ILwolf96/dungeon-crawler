@@ -226,6 +226,14 @@ namespace dungeon
             int width,
             int height) const;
 
+        void drawTextureRotated(
+            const Texture2D& texture,
+            int x,
+            int y,
+            int width,
+            int height,
+            float rotation) const;
+
         void drawFallbackText(
             std::string_view text,
             int x,

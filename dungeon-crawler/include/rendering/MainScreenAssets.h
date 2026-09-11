@@ -78,11 +78,17 @@ namespace dungeon
         const Texture2D& floorTile() const noexcept;
         const Texture2D& playerTile() const noexcept;
         const Texture2D& chestTile() const noexcept;
+        const Texture2D& chestOpenedTile() const noexcept;
         const Texture2D& goblinTile() const noexcept;
+        const Texture2D& goblinDefeatedTile() const noexcept;
         const Texture2D& skeletonTile() const noexcept;
+        const Texture2D& skeletonDefeatedTile() const noexcept;
         const Texture2D& orcTile() const noexcept;
+        const Texture2D& orcDefeatedTile() const noexcept;
         const Texture2D& trollTile() const noexcept;
+        const Texture2D& trollDefeatedTile() const noexcept;
         const Texture2D& dragonTile() const noexcept;
+        const Texture2D& dragonDefeatedTile() const noexcept;
         const Texture2D& mapFrame() const noexcept;
 
         // ---------------------------------------------------------------------
@@ -101,6 +107,8 @@ namespace dungeon
         const Texture2D& seesDefeatedEnemy(std::string_view type) const noexcept;
         const Texture2D& seesChest() const noexcept;
         const Texture2D& seesDefeatedChest() const noexcept;
+        const Texture2D& seesWall() const noexcept;
+        const Texture2D& seesNothing() const noexcept;
 
         // ---------------------------------------------------------------------
         // POV - Combat
@@ -157,11 +165,17 @@ namespace dungeon
         Texture2D m_floorTile{};
         Texture2D m_playerTile{};
         Texture2D m_chestTile{};
+        Texture2D m_chestOpenedTile{};
         Texture2D m_goblinTile{};
+        Texture2D m_goblinDefeatedTile{};
         Texture2D m_skeletonTile{};
+        Texture2D m_skeletonDefeatedTile{};
         Texture2D m_orcTile{};
+        Texture2D m_orcDefeatedTile{};
         Texture2D m_trollTile{};
+        Texture2D m_trollDefeatedTile{};
         Texture2D m_dragonTile{};
+        Texture2D m_dragonDefeatedTile{};
         Texture2D m_mapFrame{};
 
         Texture2D m_traversalActionBar{};
@@ -172,6 +186,8 @@ namespace dungeon
         std::array<Texture2D, EnemyPovTypeCount> m_seesDefeatedEnemies{};
         Texture2D m_seesChest{};
         Texture2D m_seesDefeatedChest{};
+        Texture2D m_seesWall{};
+        Texture2D m_seesNothing{};
 
         std::array<Texture2D, EnemyPovTypeCount> m_enemyIdle{};
         std::array<Texture2D, EnemyPovTypeCount> m_enemyHurt{};

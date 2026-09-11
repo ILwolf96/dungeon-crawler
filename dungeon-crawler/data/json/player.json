@@ -1,5 +1,6 @@
 {
   "player": {
+    "facing_direction": "North",
     "max_hp": 6,
     "attacks": 2,
     "precision": 4,
