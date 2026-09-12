@@ -83,9 +83,12 @@ namespace dungeon
         std::string m_screenHeight{ "-" };
         std::string m_gameResolution{ "-" };
         std::string m_configFilePath;
-        std::string m_selectionInfoMessage{ "Launch settings loaded." };
+        std::string m_selectionInfoMessage{"Showing Main Launch Menu"};
+
         bool m_configurationReady{ false };
-        LaunchMenuResult m_pendingResult{ LaunchMenuResult::None };
+
+        LaunchMenuResult m_pendingResult{LaunchMenuResult::None};
+
         float m_messageTimeRemaining{ 0.0f };
 
         LaunchMenuResult handleMainAction(int action);

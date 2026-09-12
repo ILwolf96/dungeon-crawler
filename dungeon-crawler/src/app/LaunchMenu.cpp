@@ -14,7 +14,7 @@ namespace dungeon //Self Note, the Strings and text is here!!
     LaunchMenu::LaunchMenu()
     {
         loadPersistentSettings();
-        refreshSelectionInfo("Launch settings loaded.");
+        refreshSelectionInfo("Showing Main Launch Menu");
     }
 
     LaunchMenuResult LaunchMenu::handleAction(int action)
@@ -39,12 +39,20 @@ namespace dungeon //Self Note, the Strings and text is here!!
             return LaunchMenuResult::None;
         }
 
-        m_messageTimeRemaining =
-            std::max(0.0f, m_messageTimeRemaining - deltaSeconds);
+        m_messageTimeRemaining = std::max (0.0f, m_messageTimeRemaining - deltaSeconds);
 
         if (m_messageTimeRemaining > 0.0f)
         {
             return LaunchMenuResult::None;
+        }
+
+        if (m_screen == LaunchScreen::Main)
+        {
+            m_selectionInfoMessage = "Showing Main Launch Menu";
+        }
+        else
+        {
+            m_selectionInfoMessage = "Showing Launch Menu Settings";
         }
 
         const LaunchMenuResult result = m_pendingResult;
@@ -115,24 +123,30 @@ namespace dungeon //Self Note, the Strings and text is here!!
             if (!m_configurationReady)
             {
                 refreshSelectionInfo(
-                    "Selected configuration is unavailable. Change Load Method or Map to Load.");
+                    "Selected configuration is unavailable. "
+                    "Change Load Method or Map to Load.");
+
+                m_messageTimeRemaining = 1.0f;
+
                 return LaunchMenuResult::None;
             }
 
             savePersistentSettings();
-            refreshSelectionInfo("Launch Selected, Launching Game");
+
+            refreshSelectionInfo("Launch Selected,\nLaunching Game");
             m_pendingResult = LaunchMenuResult::Launch;
             m_messageTimeRemaining = 1.0f;
             return LaunchMenuResult::None;
 
         case 2:
-            m_screen = LaunchScreen::Settings;
-            refreshSelectionInfo("Settings Selected, Showing Settings");
+            m_screen =LaunchScreen::Settings;
+            refreshSelectionInfo("Settings Selected,\nShowing Settings");
+            m_messageTimeRemaining = 1.0f;
             return LaunchMenuResult::None;
 
         case 3:
             savePersistentSettings();
-            refreshSelectionInfo("Close Selected, Closing Application");
+            refreshSelectionInfo("Close Selected,\n Closing Application");
             m_pendingResult = LaunchMenuResult::Close;
             m_messageTimeRemaining = 1.0f;
             return LaunchMenuResult::None;
@@ -155,6 +169,7 @@ namespace dungeon //Self Note, the Strings and text is here!!
             refreshConfigurationDetails();
             savePersistentSettings();
             refreshSelectionInfo("Load Method Changed");
+            m_messageTimeRemaining = 1.0f;
             break;
 
         case 2:
@@ -166,6 +181,7 @@ namespace dungeon //Self Note, the Strings and text is here!!
             refreshConfigurationDetails();
             savePersistentSettings();
             refreshSelectionInfo("Loaded Map Has Changed");
+            m_messageTimeRemaining = 1.0f;
             break;
 
         case 3:
@@ -176,11 +192,13 @@ namespace dungeon //Self Note, the Strings and text is here!!
 
             savePersistentSettings();
             refreshSelectionInfo("Graphic Preview has Changed");
+            m_messageTimeRemaining = 1.0f;
             break;
 
         case 4:
             m_screen = LaunchScreen::Main;
-            refreshSelectionInfo("Closing Settings, returning to Launch Menu");
+            refreshSelectionInfo("Closing Settings,\nreturning to Launch Menu");
+            m_messageTimeRemaining = 1.0f;
             break;
 
         default:
@@ -216,12 +234,9 @@ namespace dungeon //Self Note, the Strings and text is here!!
                 return;
             }
 
-            m_screenWidth =
-                data.getValue("window", "width");
-            m_screenHeight =
-                data.getValue("window", "height");
-            m_gameResolution =
-                m_screenWidth + " x " + m_screenHeight;
+            m_screenWidth = data.getValue("window", "width");
+            m_screenHeight = data.getValue("window", "height");
+            m_gameResolution = m_screenWidth + " x " + m_screenHeight;
             m_configurationReady = true;
         }
         catch (const std::exception&)
@@ -232,8 +247,7 @@ namespace dungeon //Self Note, the Strings and text is here!!
 
     void LaunchMenu::loadPersistentSettings()
     {
-        std::ifstream input{
-            std::string(PersistencePath) };
+        std::ifstream input{std::string(PersistencePath)};
 
         if (!input)
         {
@@ -353,8 +367,7 @@ namespace dungeon //Self Note, the Strings and text is here!!
     {
         const std::string whitespace = " \t\r\n";
 
-        const std::size_t first =
-            value.find_first_not_of(whitespace);
+        const std::size_t first = value.find_first_not_of(whitespace);
 
         if (first == std::string::npos)
         {
@@ -362,11 +375,8 @@ namespace dungeon //Self Note, the Strings and text is here!!
             return;
         }
 
-        const std::size_t last =
-            value.find_last_not_of(whitespace);
+        const std::size_t last = value.find_last_not_of(whitespace);
 
-        value = value.substr(
-            first,
-            last - first + 1);
+        value = value.substr(first, last - first + 1);
     }
 }
