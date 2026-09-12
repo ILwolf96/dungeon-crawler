@@ -33,9 +33,16 @@ namespace dungeon
         m_assets.unload();
     }
 
-    void LaunchMenuRenderer::draw(const LaunchMenu& launchMenu) const
+    void LaunchMenuRenderer::draw(
+        const LaunchMenu& launchMenu) const
     {
         ClearBackground(RAYWHITE);
+
+        const bool usePngAssets = launchMenu.graphicPreview() == LaunchGraphicPreview::Png;
+
+        // ---------------------------------------------------------------------
+        // Launch Title
+        // ---------------------------------------------------------------------
 
         drawPanel(
             m_assets.launchTitle(),
@@ -43,7 +50,12 @@ namespace dungeon
             LaunchTitleY,
             LaunchTitleWidth,
             LaunchTitleHeight,
-            "LAUNCH MENU");
+            "LAUNCH MENU",
+            usePngAssets);
+
+        // ---------------------------------------------------------------------
+        // Current Settings Title
+        // ---------------------------------------------------------------------
 
         drawPanel(
             m_assets.currentSettingsTitle(),
@@ -51,7 +63,12 @@ namespace dungeon
             CurrentSettingsTitleY,
             CurrentSettingsTitleWidth,
             CurrentSettingsTitleHeight,
-            "CURRENT SETTINGS");
+            "CURRENT SETTINGS",
+            usePngAssets);
+
+        // ---------------------------------------------------------------------
+        // Preview Title
+        // ---------------------------------------------------------------------
 
         drawPanel(
             m_assets.previewTitle(),
@@ -59,7 +76,12 @@ namespace dungeon
             PreviewTitleY,
             PreviewTitleWidth,
             PreviewTitleHeight,
-            "PREVIEW");
+            "PREVIEW",
+            usePngAssets);
+
+        // ---------------------------------------------------------------------
+        // Current Settings Window
+        // ---------------------------------------------------------------------
 
         drawPanel(
             m_assets.currentSettingsWindowBackground(),
@@ -67,7 +89,12 @@ namespace dungeon
             CurrentSettingsWindowY,
             CurrentSettingsWindowWidth,
             CurrentSettingsWindowHeight,
-            "");
+            "",
+            usePngAssets);
+
+        // ---------------------------------------------------------------------
+        // Selection Info Window
+        // ---------------------------------------------------------------------
 
         drawPanel(
             m_assets.selectionInfoWindowBackground(),
@@ -75,7 +102,12 @@ namespace dungeon
             SelectionInfoWindowY,
             SelectionInfoWindowWidth,
             SelectionInfoWindowHeight,
-            "");
+            "",
+            usePngAssets);
+
+        // ---------------------------------------------------------------------
+        // Selection Info Title
+        // ---------------------------------------------------------------------
 
         drawPanel(
             m_assets.selectionInfoTitle(),
@@ -83,7 +115,12 @@ namespace dungeon
             SelectionInfoTitleY,
             SelectionInfoTitleWidth,
             SelectionInfoTitleHeight,
-            "SELECTION INFO");
+            "SELECTION INFO",
+            usePngAssets);
+
+        // ---------------------------------------------------------------------
+        // Launch Actions Title
+        // ---------------------------------------------------------------------
 
         drawPanel(
             m_assets.launchActionsTitle(),
@@ -91,7 +128,12 @@ namespace dungeon
             LaunchActionsTitleY,
             LaunchActionsTitleWidth,
             LaunchActionsTitleHeight,
-            "ACTIONS");
+            "ACTIONS",
+            usePngAssets);
+
+        // ---------------------------------------------------------------------
+        // Launch / Settings Actions
+        // ---------------------------------------------------------------------
 
         const Texture2D& actionsTexture =
             launchMenu.inSettings()
@@ -104,30 +146,42 @@ namespace dungeon
             ActionsWindowY,
             ActionsWindowWidth,
             ActionsWindowHeight,
-            "");
+            "",
+            usePngAssets);
 
-        if (actionsTexture.id == 0)
+        if (!usePngAssets || actionsTexture.id == 0)
         {
-            drawFallbackActions(launchMenu);
+            drawFallbackActions(
+                launchMenu);
         }
 
+        // ---------------------------------------------------------------------
+        // Current Settings Text
+        // ---------------------------------------------------------------------
+
         const std::string currentSettings =
-            "Screen Height: " + launchMenu.screenHeight() +
-            "\nScreen Width: " + launchMenu.screenWidth() +
-            "\nGame Resolution: " + launchMenu.gameResolution() +
+            "Screen Height: " +
+            launchMenu.screenHeight() +
+            "\nScreen Width: " +
+            launchMenu.screenWidth() +
+            "\nGame Resolution: " +
+            launchMenu.gameResolution() +
             "\n\nLoad Method: " +
             std::string(
-                launchMenu.loadMethod() == LaunchLoadMethod::Ini
+                launchMenu.loadMethod() ==
+                LaunchLoadMethod::Ini
                 ? "INI"
                 : "JSON") +
             "\nMap Loaded: " +
             std::string(
-                launchMenu.mapToLoad() == LaunchMap::Dungeon
+                launchMenu.mapToLoad() ==
+                LaunchMap::Dungeon
                 ? "Dungeon"
                 : "Zoo") +
             "\nGraphic Preview: " +
             std::string(
-                launchMenu.graphicPreview() == LaunchGraphicPreview::Png
+                launchMenu.graphicPreview() ==
+                LaunchGraphicPreview::Png
                 ? "PNG"
                 : "Raylib");
 
@@ -140,6 +194,10 @@ namespace dungeon
             14,
             22);
 
+        // ---------------------------------------------------------------------
+        // Selection Info Text
+        // ---------------------------------------------------------------------
+
         drawWrappedFallbackText(
             launchMenu.selectionInfoMessage(),
             SelectionInfoWindowX + 10,
@@ -149,15 +207,22 @@ namespace dungeon
             14,
             20);
 
-        const Texture2D& previewTexture =
-            launchMenu.graphicPreview() == LaunchGraphicPreview::Png
-            ? m_assets.pngPreview()
-            : m_assets.raylibPreview();
+        // ---------------------------------------------------------------------
+        // Preview
+        //
+        // PNG mode:
+        //     use png_preview.png when and if it exists.
+        //
+        // Raylib mode:
+        //     won't use a PNG preview asset.
+        //     and will Use the raylib fallback preview ONLY.
+        // ---------------------------------------------------------------------
 
-        if (previewTexture.id != 0)
+        if (usePngAssets &&
+            m_assets.pngPreview().id != 0)
         {
             drawTexture(
-                previewTexture,
+                m_assets.pngPreview(),
                 PreviewX,
                 PreviewY,
                 PreviewWidth,
@@ -165,7 +230,8 @@ namespace dungeon
         }
         else
         {
-            drawFallbackPreview(launchMenu);
+            drawFallbackPreview(
+                launchMenu);
         }
     }
 
@@ -175,11 +241,19 @@ namespace dungeon
         int y,
         int width,
         int height,
-        std::string_view fallbackTitle) const
+        std::string_view fallbackTitle,
+        bool usePngAsset) const
     {
-        if (texture.id != 0)
+        if (usePngAsset &&
+            texture.id != 0)
         {
-            drawTexture(texture, x, y, width, height);
+            drawTexture(
+                texture,
+                x,
+                y,
+                width,
+                height);
+
             return;
         }
 
@@ -225,19 +299,24 @@ namespace dungeon
             static_cast<float>(x),
             static_cast<float>(y),
             static_cast<float>(width),
-            static_cast<float>(height) };
+            static_cast<float>(height)
+        };
 
         const Rectangle source{
             0.0f,
             0.0f,
             static_cast<float>(texture.width),
-            static_cast<float>(texture.height) };
+            static_cast<float>(texture.height)
+        };
 
         DrawTexturePro(
             texture,
             source,
             destination,
-            Vector2{ 0.0f, 0.0f },
+            Vector2{
+                0.0f,
+                0.0f
+            },
             0.0f,
             WHITE);
     }
@@ -257,11 +336,17 @@ namespace dungeon
 
         const std::string value(text);
         const int textWidth =
-            MeasureText(value.c_str(), fontSize);
+            MeasureText(
+                value.c_str(),
+                fontSize);
+
         const int textX =
-            x + (width - textWidth) / 2;
+            x +
+            (width - textWidth) / 2;
+
         const int textY =
-            y + (height - fontSize) / 2;
+            y +
+            (height - fontSize) / 2;
 
         DrawText(
             value.c_str(),
@@ -289,7 +374,8 @@ namespace dungeon
 
         constexpr int HorizontalPadding = 4;
         const int maximumWidth =
-            width - (HorizontalPadding * 2);
+            width -
+            (HorizontalPadding * 2);
 
         std::vector<std::string> lines;
         std::string currentLine;
@@ -299,7 +385,9 @@ namespace dungeon
             {
                 if (!currentLine.empty())
                 {
-                    lines.push_back(currentLine);
+                    lines.push_back(
+                        currentLine);
+
                     currentLine.clear();
                 }
             };
@@ -308,23 +396,30 @@ namespace dungeon
         while (start <= value.size())
         {
             const std::size_t newline =
-                value.find('\n', start);
+                value.find(
+                    '\n',
+                    start);
 
             const std::size_t sectionEnd =
                 newline == std::string::npos
                 ? value.size()
                 : newline;
 
-            std::size_t wordStart = start;
+            std::size_t wordStart =
+                start;
+
             while (wordStart < sectionEnd)
             {
                 std::size_t wordEnd =
-                    value.find(' ', wordStart);
+                    value.find(
+                        ' ',
+                        wordStart);
 
                 if (wordEnd == std::string::npos ||
                     wordEnd > sectionEnd)
                 {
-                    wordEnd = sectionEnd;
+                    wordEnd =
+                        sectionEnd;
                 }
 
                 const std::string word =
@@ -343,12 +438,15 @@ namespace dungeon
                         candidate.c_str(),
                         fontSize) <= maximumWidth)
                     {
-                        currentLine = candidate;
+                        currentLine =
+                            candidate;
                     }
                     else
                     {
                         pushCurrentLine();
-                        currentLine = word;
+
+                        currentLine =
+                            word;
                     }
                 }
 
@@ -357,7 +455,8 @@ namespace dungeon
                     break;
                 }
 
-                wordStart = wordEnd + 1;
+                wordStart =
+                    wordEnd + 1;
             }
 
             pushCurrentLine();
@@ -367,7 +466,8 @@ namespace dungeon
                 break;
             }
 
-            start = newline + 1;
+            start =
+                newline + 1;
         }
 
         if (lines.empty())
@@ -377,17 +477,24 @@ namespace dungeon
 
         const int totalHeight =
             fontSize +
-            static_cast<int>(lines.size() - 1) * lineSpacing;
+            static_cast<int>(
+                lines.size() - 1) *
+            lineSpacing;
 
         int currentY =
-            y + (height - totalHeight) / 2;
+            y +
+            (height - totalHeight) / 2;
 
         for (const std::string& line : lines)
         {
             const int lineWidth =
-                MeasureText(line.c_str(), fontSize);
+                MeasureText(
+                    line.c_str(),
+                    fontSize);
+
             const int lineX =
-                x + (width - lineWidth) / 2;
+                x +
+                (width - lineWidth) / 2;
 
             DrawText(
                 line.c_str(),
@@ -396,10 +503,10 @@ namespace dungeon
                 fontSize,
                 BLACK);
 
-            currentY += lineSpacing;
+            currentY +=
+                lineSpacing;
         }
     }
-
 
     void LaunchMenuRenderer::drawFallbackActions(
         const LaunchMenu& launchMenu) const
@@ -485,7 +592,8 @@ namespace dungeon
             PreviewHeight,
             DARKGRAY);
 
-        if (launchMenu.graphicPreview() == LaunchGraphicPreview::Png)
+        if (launchMenu.graphicPreview() ==
+            LaunchGraphicPreview::Png)
         {
             drawFallbackText(
                 "PNG PREVIEW",
@@ -517,25 +625,42 @@ namespace dungeon
         constexpr int cellSize = 42;
         constexpr int gridWidth = 5;
         constexpr int gridHeight = 3;
+
         constexpr int gridX =
-            PreviewX + (PreviewWidth - gridWidth * cellSize) / 2;
+            PreviewX +
+            (PreviewWidth -
+                gridWidth * cellSize) / 2;
+
         constexpr int gridY =
             PreviewY + 42;
 
-        for (int row = 0; row < gridHeight; ++row)
+        for (int row = 0;
+            row < gridHeight;
+            ++row)
         {
-            for (int column = 0; column < gridWidth; ++column)
+            for (int column = 0;
+                column < gridWidth;
+                ++column)
             {
-                const int x = gridX + column * cellSize;
-                const int y = gridY + row * cellSize;
+                const int x =
+                    gridX +
+                    column * cellSize;
+
+                const int y =
+                    gridY +
+                    row * cellSize;
 
                 const Color cellColor =
                     (row == 1 && column == 2)
                     ? MAROON
-                    : ((row == 0 || row == gridHeight - 1 ||
-                        column == 0 || column == gridWidth - 1)
+                    : (
+                        row == 0 ||
+                        row == gridHeight - 1 ||
+                        column == 0 ||
+                        column == gridWidth - 1
                         ? DARKGRAY
-                        : LIGHTGRAY);
+                        : LIGHTGRAY
+                        );
 
                 DrawRectangle(
                     x + 1,

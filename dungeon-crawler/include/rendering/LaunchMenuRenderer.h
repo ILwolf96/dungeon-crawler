@@ -77,7 +77,7 @@ namespace dungeon
             int y,
             int width,
             int height,
-            std::string_view fallbackTitle) const;
+            std::string_view fallbackTitle, bool usePngAsset) const;
 
         void drawTexture(
             const Texture2D& texture,
