@@ -1,7 +1,9 @@
 #include "app/Game.h"
+#include "app/LaunchMenu.h"
+#include "rendering/LaunchMenuRenderer.h"
 #include "rendering/Renderer.h"
 
-//Testing! don't forget to remove when done!
+// Testing! Don't forget to remove when done!
 #include "combat/Combat.h"
 #include "combat/SequenceDice.h"
 //
@@ -137,13 +139,66 @@ namespace
 
 int main(int argc, char** argv)
 {
-    if (argc < 2)
-    {
-        std::cerr
-            << "Error: No configuration file was provided.\n"
-            << "Usage: dungeon-crawler <config-file>\n";
+    (void)argc;
+    (void)argv;
 
-        return 1;
+    dungeon::LaunchMenu launchMenu;
+    dungeon::LaunchMenuRenderer launchMenuRenderer;
+
+    InitWindow(
+        dungeon::LaunchMenu::windowWidth(),
+        dungeon::LaunchMenu::windowHeight(),
+        "Dungeon Crawler - Launch Menu");
+
+    if (!launchMenuRenderer.loadAssets())
+    {
+        TraceLog(
+            LOG_WARNING,
+            "Some Launch Menu assets are not available. "
+            "Raylib fallback rendering will remain active for missing assets.");
+    }
+
+    SetTargetFPS(60);
+
+    dungeon::LaunchMenuResult launchResult =
+        dungeon::LaunchMenuResult::None;
+
+    while (!WindowShouldClose() &&
+        launchResult == dungeon::LaunchMenuResult::None)
+    {
+        if (IsKeyPressed(KEY_ONE))
+        {
+            launchMenu.handleAction(1);
+        }
+        else if (IsKeyPressed(KEY_TWO))
+        {
+            launchMenu.handleAction(2);
+        }
+        else if (IsKeyPressed(KEY_THREE))
+        {
+            launchMenu.handleAction(3);
+        }
+        else if (IsKeyPressed(KEY_FOUR))
+        {
+            launchMenu.handleAction(4);
+        }
+
+        launchResult =
+            launchMenu.update(GetFrameTime());
+
+        BeginDrawing();
+
+        launchMenuRenderer.draw(launchMenu);
+
+        EndDrawing();
+    }
+
+    launchMenuRenderer.unloadAssets();
+    CloseWindow();
+
+    if (launchResult != dungeon::LaunchMenuResult::Launch)
+    {
+        return 0;
     }
 
     dungeon::Game game;
@@ -151,7 +206,7 @@ int main(int argc, char** argv)
 
     try
     {
-        game.load(argv[1]);
+        game.load(launchMenu.configFilePath());
     }
     catch (const std::exception& error)
     {
@@ -168,12 +223,22 @@ int main(int argc, char** argv)
         game.windowHeight(),
         game.title().c_str());
 
-    if (!renderer.loadMainScreenAssets())
+    if (launchMenu.graphicPreview() == dungeon::LaunchGraphicPreview::Png)
+    {
+        if (!renderer.loadMainScreenAssets())
+        {
+            TraceLog(
+                LOG_WARNING,
+                "Some Main Screen assets are not available yet. "
+                "Raylib fallback rendering will remain active for missing assets.");
+        }
+    }
+    else
     {
         TraceLog(
-            LOG_WARNING,
-            "Some Main Screen assets are not available yet. "
-            "Temporary rendering will remain active.");
+            LOG_INFO,
+            "Raylib graphics selected."
+            "Main Screen PNG assets will not be loaded.");
     }
 
     SetTargetFPS(60);
