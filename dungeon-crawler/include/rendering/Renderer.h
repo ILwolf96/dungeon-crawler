@@ -17,6 +17,9 @@ namespace dungeon
 
         void toggleGameInstructions() noexcept;
 
+        void resetMapCamera() noexcept;
+
+
     private: //--------------------------------------------------------------------------------Private Starts HERE!
         // ---------------------------------------------------------------------
         // Main Screen design resolution
@@ -219,6 +222,9 @@ namespace dungeon
         void drawCombatInfo(const Game& game) const;
         void drawFallbackDie(int value, int x, int y, int size) const;
 
+
+        void drawPortalActionBar() const;
+        void drawDefeatedActionBar() const;
 
         bool m_gameInstructionsOpen{ false };
 

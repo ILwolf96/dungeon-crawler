@@ -529,6 +529,33 @@ namespace dungeon
     void Game::load(std::string_view filePath)
     {
 
+        m_combat.reset();
+        m_combatPresentation = CombatPresentation{};
+        m_combatLootPreview.clear();
+
+        m_inventoryOpen = false;
+        m_pendingEnemyTurn = false;
+        m_pendingCombatFinish = false;
+        m_pendingPotionEnemyTurn = false;
+
+        m_combatInfoMessage.clear();
+        m_combatInfoMessageTime = 0.0f;
+
+        m_combatPresentationActor = CombatPresentationActor::None;
+
+        m_lastPresentedDamageAttackIndex =
+            static_cast<std::size_t>(-1);
+
+        m_lastPresentedDamageRollType = CombatPresentation::RollType::None;
+
+        m_portalPromptActive = false;
+        m_portalPreviousPlayerX = 0;
+        m_portalPreviousPlayerY = 0;
+
+        m_defeatPromptActive = false;
+        m_defeatedEnemyType.clear();
+
+
         //The Old parser, keeping it for now.
         /*
         auto parser = config::makeParser(filePath);
@@ -616,7 +643,8 @@ namespace dungeon
             if (symbol == '#' ||
                 symbol == '.' ||
                 symbol == 'P' ||
-                symbol == 'C')
+                symbol == 'C' ||
+                symbol == '@')
             {
                 throw std::runtime_error(
                     "Enemy symbol conflicts with a reserved map symbol: " +
@@ -809,6 +837,8 @@ namespace dungeon
         m_windowWidth = windowWidth;
         m_windowHeight = windowHeight;
         m_title = title;
+
+        m_configFilePath = std::string(filePath);
     }
 
     void Game::update(float deltaSeconds)
@@ -953,6 +983,11 @@ namespace dungeon
 
     void Game::handleAction(Action action)
     {
+        if (m_portalPromptActive || m_defeatPromptActive)
+        {
+            return;
+        }
+
         if (m_combat)
         {
             if (m_combatPresentation.active())
@@ -1090,21 +1125,108 @@ namespace dungeon
             return;
         }
 
+        const int previousPlayerX = m_player.x();
+        const int previousPlayerY = m_player.y();
+
         m_player.setPosition(targetX, targetY);
-        CombatTarget* target = combatTargetAt(targetX, targetY);
+
+        CombatTarget* target =
+            combatTargetAt(
+                targetX,
+                targetY);
+
         if (target != nullptr)
         {
             startCombat(*target);
             return;
         }
 
+        const char landedTile =
+            m_map.tileAt(
+                targetX,
+                targetY);
+
+        if (landedTile == '@')
+        {
+            m_portalPreviousPlayerX = previousPlayerX;
+            m_portalPreviousPlayerY = previousPlayerY;
+
+            m_portalPromptActive = true;
+
+            std::clog
+                << "[WIN] Player found the Portal at ("
+                << targetX
+                << ", "
+                << targetY
+                << ")."
+                << std::endl;
+
+            return;
+        }
+
         if (m_isZoo)
         {
-            handleZooInteraction(
-                m_map.tileAt(
-                    targetX,
-                    targetY));
+            handleZooInteraction(landedTile);
         }
+    }
+
+    GameFlowResult Game::handleOutcomeAction(Action action)
+    {
+        if (m_portalPromptActive)
+        {
+            switch (action)
+            {
+            case Action::ConfirmYes:
+                std::clog
+                    << "[WIN] Player chose to exit the Dungeon."
+                    << std::endl;
+
+                return GameFlowResult::ExitApplication;
+
+            case Action::ConfirmNo:
+                m_player.setPosition(
+                    m_portalPreviousPlayerX,
+                    m_portalPreviousPlayerY);
+
+                m_portalPromptActive = false;
+
+                std::clog
+                    << "[WIN] Player stayed in the Dungeon."
+                    << std::endl;
+
+                return GameFlowResult::None;
+
+            default:
+                return GameFlowResult::None;
+            }
+        }
+
+        if (m_defeatPromptActive)
+        {
+            switch (action)
+            {
+            case Action::ConfirmYes:
+                std::clog
+                    << "[LOSS] Player chose to restart the Dungeon."
+                    << std::endl;
+
+                m_defeatPromptActive = false;
+
+                return GameFlowResult::RestartGame;
+
+            case Action::ConfirmNo:
+                std::clog
+                    << "[LOSS] Player chose to close the application."
+                    << std::endl;
+
+                return GameFlowResult::ExitApplication;
+
+            default:
+                return GameFlowResult::None;
+            }
+        }
+
+        return GameFlowResult::None;
     }
 
     void Game::handleZooInteraction(char tile)
@@ -1879,8 +2001,7 @@ namespace dungeon
 
     void Game::finishCombatIfNeeded()
     {
-        if (!m_combat ||
-            m_combat->isActive())
+        if (!m_combat || m_combat->isActive())
         {
             return;
         }
@@ -1889,10 +2010,51 @@ namespace dungeon
         m_combatLootPreview.clear();
         CombatTarget* target = &m_combat->target();
 
-        const bool targetDefeated =
-            target->isDefeated();
+        const bool targetDefeated = target->isDefeated();
+
+        const bool playerDefeated = m_combat->playerLost() || m_player.isDefeated();
+
+        std::string defeatedEnemyType;
+
+        if (playerDefeated)
+        {
+            if (const auto* enemy = dynamic_cast<const Enemy*>(target))
+            {
+                defeatedEnemyType = std::string(enemy->type());
+            }
+            else
+            {
+                defeatedEnemyType = target->targetType();
+            }
+        }
 
         m_combat.reset();
+
+        if (playerDefeated)
+        {
+            m_inventoryOpen = false;
+            m_combatLootPreview.clear();
+
+            m_pendingEnemyTurn = false;
+            m_pendingCombatFinish = false;
+            m_pendingPotionEnemyTurn = false;
+
+            m_combatPresentationActor = CombatPresentationActor::None;
+
+            m_defeatedEnemyType =
+                std::move(defeatedEnemyType);
+
+            m_defeatPromptActive = true;
+
+            std::clog
+                << "[LOSS] Player was defeated by "
+                << m_defeatedEnemyType
+                << "."
+                << std::endl;
+
+            return;
+        }
+
 
         if (!targetDefeated)
         {
@@ -1971,6 +2133,18 @@ namespace dungeon
 
             return;
         }
+    }
+
+    void Game::restart()
+    {
+        if (m_configFilePath.empty())
+        {
+            throw std::runtime_error("Cannot restart the game because no configuration file is loaded, meaning something horrible has happen :c.");
+        }
+
+        const std::string configurationPath = m_configFilePath;
+
+        load(configurationPath);
     }
 
     // ----------------------------------------------- Thy Getters Here (tired of forgetting)
@@ -2061,5 +2235,20 @@ namespace dungeon
         Game::combatLootPreview() const noexcept
     {
         return m_combatLootPreview;
+    }
+
+    bool Game::portalPromptActive() const noexcept
+    {
+        return m_portalPromptActive;
+    }
+
+    bool Game::defeatPromptActive() const noexcept
+    {
+        return m_defeatPromptActive;
+    }
+
+    std::string_view Game::defeatedEnemyType() const noexcept
+    {
+        return m_defeatedEnemyType;
     }
 }

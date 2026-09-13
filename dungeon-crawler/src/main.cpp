@@ -245,38 +245,98 @@ int main(int argc, char** argv)
 
     while (!WindowShouldClose())
     {
-        // Game Instructions
-        if (IsKeyPressed(KEY_TAB))
-        {
-            renderer.toggleGameInstructions();
-        }
+        dungeon::GameFlowResult flowResult =
+            dungeon::GameFlowResult::None;
 
-        // Attack (F1 or 1)
-        if (IsKeyPressed(KEY_F1) || IsKeyPressed(KEY_ONE))
-        {
-            game.handleAction(dungeon::Action::Attack);
-        }
+        // -------------------------------------------------------------
+        // Portal / Defeat result screen
+        // -------------------------------------------------------------
 
-        // Inventory (I or 2)
-        if (IsKeyPressed(KEY_I) || IsKeyPressed(KEY_TWO))
+        if (game.portalPromptActive() || game.defeatPromptActive())
         {
-            game.handleAction(dungeon::Action::Inventory);
-        }
-
-        // Escape / Close Inventory (E or 3)
-        if (IsKeyPressed(KEY_E) || IsKeyPressed(KEY_THREE))
-        {
-            if (game.inCombat())
+            if (IsKeyPressed(KEY_Y))
             {
-                game.handleAction(dungeon::Action::Escape);
+                flowResult = game.handleOutcomeAction(dungeon::Action::ConfirmYes);
+            }
+            else if (IsKeyPressed(KEY_N))
+            {
+                flowResult = game.handleOutcomeAction(dungeon::Action::ConfirmNo);
+            }
+        }
+        else
+        {
+            // ---------------------------------------------------------
+            // Game Instructions
+            // ---------------------------------------------------------
+
+            if (IsKeyPressed(KEY_TAB))
+            {
+                renderer.toggleGameInstructions();
+            }
+
+            // ---------------------------------------------------------
+            // Attack
+            // ---------------------------------------------------------
+
+            if (IsKeyPressed(KEY_F1) || IsKeyPressed(KEY_ONE))
+            {
+                game.handleAction(dungeon::Action::Attack);
+            }
+
+            // ---------------------------------------------------------
+            // Inventory
+            // ---------------------------------------------------------
+
+            if (IsKeyPressed(KEY_I) || IsKeyPressed(KEY_TWO))
+            {
+                game.handleAction(dungeon::Action::Inventory);
+            }
+
+            // ---------------------------------------------------------
+            // Escape / Close Inventory
+            // ---------------------------------------------------------
+
+            if (IsKeyPressed(KEY_E) || IsKeyPressed(KEY_THREE))
+            {
+                if (game.inCombat())
+                {
+                    game.handleAction(dungeon::Action::Escape);
+                }
+            }
+
+            const dungeon::Action action = pollAction(game);
+
+            if (action != dungeon::Action::None)
+            {
+                game.handleAction(action);
             }
         }
 
-        const dungeon::Action action = pollAction(game);
+        // -------------------------------------------------------------
+        // application/game flow
+        // -------------------------------------------------------------
 
-        if (action != dungeon::Action::None)
+        if (flowResult == dungeon::GameFlowResult::ExitApplication)
         {
-            game.handleAction(action);
+            break;
+        }
+
+        if (flowResult == dungeon::GameFlowResult::RestartGame)
+        {
+            try
+            {
+                game.restart();
+                renderer.resetMapCamera();
+            }
+            catch (const std::exception& error)
+            {
+                std::cerr
+                    << "Error: Failed to restart the game.\n"
+                    << error.what() //da fk :/
+                    << '\n';
+
+                break;
+            }
         }
 
         //Updates Game here!!!

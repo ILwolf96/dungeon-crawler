@@ -37,6 +37,11 @@ namespace dungeon
                 return &assets.wallTile();
             }
 
+            if (tile == '@')
+            {
+                return &assets.portalTile();
+            }
+
             return &assets.floorTile();
         }
 
@@ -510,7 +515,7 @@ namespace dungeon
     {
         ClearBackground(RAYWHITE);
 
-        if (game.inCombat())
+        if (game.inCombat() || game.defeatPromptActive())
         {
             drawCombatScreenLayout(game);
         }
@@ -534,13 +539,23 @@ namespace dungeon
         // Screen-specific content
         // ---------------------------------------------------------------------
 
-        if (game.inCombat())
+        if (game.defeatPromptActive())
         {
             drawEnemyStatSlots(game);
             drawLootTable(game);
             drawDiceRoll(game);
             drawCombatInfo(game);
             drawCombatPov(game);
+            drawDefeatedActionBar();
+        }
+        else if (game.inCombat())
+        {
+            drawEnemyStatSlots(game);
+            drawLootTable(game);
+            drawDiceRoll(game);
+            drawCombatInfo(game);
+            drawCombatPov(game);
+
             if (game.inventoryOpen())
             {
                 drawInventoryActionBar();
@@ -553,7 +568,16 @@ namespace dungeon
         else
         {
             drawMap(game);
-            drawActionBar();
+
+            if (game.portalPromptActive())
+            {
+                drawPortalActionBar();
+            }
+            else
+            {
+                drawActionBar();
+            }
+
             drawTraversalPov(game);
         }
     }
@@ -815,6 +839,22 @@ namespace dungeon
         }
         else
         {
+            const Rectangle title =
+                toRaylibRectangle(
+                    0,
+                    620,
+                    230,
+                    50);
+
+            DrawRectangleRec(
+                title,
+                LIGHTGRAY);
+
+            DrawRectangleLinesEx(
+                title,
+                1.0f,
+                DARKGRAY);
+
             drawFallbackText(
                 "Enemy Stats",
                 0,
@@ -860,6 +900,22 @@ namespace dungeon
         }
         else
         {
+            const Rectangle title =
+                toRaylibRectangle(
+                    230,
+                    620,
+                    240,
+                    50);
+
+            DrawRectangleRec(
+                title,
+                LIGHTGRAY);
+
+            DrawRectangleLinesEx(
+                title,
+                1.0f,
+                DARKGRAY);
+
             drawFallbackText(
                 "Dice Roll",
                 230,
@@ -930,7 +986,29 @@ namespace dungeon
         }
         else
         {
-            drawFallbackText("Loot", 0, 200, 104, 60, 18);
+            const Rectangle title =
+                toRaylibRectangle(
+                    0,
+                    200,
+                    104,
+                    60);
+
+            DrawRectangleRec(
+                title,
+                LIGHTGRAY);
+
+            DrawRectangleLinesEx(
+                title,
+                1.0f,
+                DARKGRAY);
+
+            drawFallbackText(
+                "Loot",
+                0,
+                200,
+                104,
+                60,
+                18);
         }
 
         if (m_mainScreenAssets.lootTableWindowBackground().id != 0)
@@ -939,7 +1017,7 @@ namespace dungeon
                 m_mainScreenAssets.lootTableWindowBackground(),
                 104,
                 200,
-                336,
+                366,
                 60);
         }
         else
@@ -948,9 +1026,17 @@ namespace dungeon
                 toRaylibRectangle(
                     104,
                     200,
-                    336,
+                    366,
                     60);
-            DrawRectangleRec(lootTableWindow, RAYWHITE);
+
+            DrawRectangleRec(
+                lootTableWindow,
+                RAYWHITE);
+
+            DrawRectangleLinesEx(
+                lootTableWindow,
+                1.0f,
+                DARKGRAY);
         }
 
         // ---------------------------------------------------------------------
@@ -1027,10 +1113,33 @@ namespace dungeon
 
         for (std::size_t index = 0; index < 5; ++index)
         {
-            const CombatLootPreviewSlot& slot =
-                preview[index];
+            const CombatLootPreviewSlot* slot = nullptr;
 
-            if (slot.type == CombatLootPreviewType::None)
+            if (index < preview.size())
+            {
+                slot = &preview[index];
+            }
+
+            const CombatLootPreviewSlot emptySlot{};
+
+            const CombatLootPreviewSlot& currentSlot =
+                slot != nullptr
+                ? *slot
+                : emptySlot;
+
+            const Rectangle lootSlot =
+                toRaylibRectangle(
+                    LootIconXs[index],
+                    LootIconY,
+                    LootIconSize,
+                    LootIconSize);
+
+            DrawRectangleLinesEx(
+                lootSlot,
+                1.0f,
+                GRAY);
+
+            if (currentSlot.type == CombatLootPreviewType::None)
             {
                 drawFallbackText(
                     "None",
@@ -1046,7 +1155,7 @@ namespace dungeon
             const Texture2D* texture =
                 lootTextureForPreview(
                     m_mainScreenAssets,
-                    slot);
+                    currentSlot);
 
             if (texture != nullptr &&
                 texture->id != 0)
@@ -1062,7 +1171,7 @@ namespace dungeon
             }
 
             drawFallbackText(
-                lootFallbackLabel(slot),
+                lootFallbackLabel(currentSlot),
                 LootIconXs[index],
                 LootIconY,
                 LootIconSize,
@@ -1078,6 +1187,10 @@ namespace dungeon
 
     void Renderer::drawTitleAssets() const
     {
+        // -------------------------------------------------------------------------
+        // Title Art
+        // -------------------------------------------------------------------------
+
         if (m_mainScreenAssets.titleArt().id != 0)
         {
             drawTexture(
@@ -1087,6 +1200,36 @@ namespace dungeon
                 TitleArtWidth,
                 TitleArtHeight);
         }
+        else
+        {
+            const Rectangle titleArt =
+                toRaylibRectangle(
+                    TitleArtX,
+                    TitleArtY,
+                    TitleArtWidth,
+                    TitleArtHeight);
+
+            DrawRectangleRec(
+                titleArt,
+                LIGHTGRAY);
+
+            DrawRectangleLinesEx(
+                titleArt,
+                1.0f,
+                DARKGRAY);
+
+            drawFallbackText(
+                R"(Final C++ Project - Made by Ilan "Ilwolf" Boguslavsky/Mintzker)",
+                TitleArtX,
+                TitleArtY,
+                TitleArtWidth,
+                TitleArtHeight,
+                22);
+        }
+
+        // -------------------------------------------------------------------------
+        // Stats Title
+        // -------------------------------------------------------------------------
 
         if (m_mainScreenAssets.statsTitle().id != 0)
         {
@@ -1097,6 +1240,36 @@ namespace dungeon
                 StatsTitleWidth,
                 StatsTitleHeight);
         }
+        else
+        {
+            const Rectangle statsTitle =
+                toRaylibRectangle(
+                    StatsTitleX,
+                    StatsTitleY,
+                    StatsTitleWidth,
+                    StatsTitleHeight);
+
+            DrawRectangleRec(
+                statsTitle,
+                LIGHTGRAY);
+
+            DrawRectangleLinesEx(
+                statsTitle,
+                1.0f,
+                DARKGRAY);
+
+            drawFallbackText(
+                "Player Stats",
+                StatsTitleX,
+                StatsTitleY,
+                StatsTitleWidth,
+                StatsTitleHeight,
+                22);
+        }
+
+        // -------------------------------------------------------------------------
+        // Gear Title
+        // -------------------------------------------------------------------------
 
         if (m_mainScreenAssets.gearTitle().id != 0)
         {
@@ -1106,6 +1279,32 @@ namespace dungeon
                 GearTitleY,
                 GearTitleWidth,
                 GearTitleHeight);
+        }
+        else
+        {
+            const Rectangle gearTitle =
+                toRaylibRectangle(
+                    GearTitleX,
+                    GearTitleY,
+                    GearTitleWidth,
+                    GearTitleHeight);
+
+            DrawRectangleRec(
+                gearTitle,
+                LIGHTGRAY);
+
+            DrawRectangleLinesEx(
+                gearTitle,
+                1.0f,
+                DARKGRAY);
+
+            drawFallbackText(
+                "Player Gear",
+                GearTitleX,
+                GearTitleY,
+                GearTitleWidth,
+                GearTitleHeight,
+                22);
         }
     }
 
@@ -2143,6 +2342,74 @@ namespace dungeon
     }
 
     // =========================================================================
+    // Traversal Portal Action Bar
+    // =========================================================================
+    void Renderer::drawPortalActionBar() const
+    {
+        if (m_mainScreenAssets.portalActionBar().id != 0)
+        {
+            drawTexture(
+                m_mainScreenAssets.portalActionBar(),
+                ActionBarX,
+                ActionBarY,
+                ActionBarWidth,
+                ActionBarHeight);
+
+            return;
+        }
+
+        const Rectangle actionBar =
+            toRaylibRectangle(
+                ActionBarX,
+                ActionBarY,
+                ActionBarWidth,
+                ActionBarHeight);
+
+        DrawRectangleRec(
+            actionBar,
+            LIGHTGRAY);
+
+        DrawRectangleLinesEx(
+            actionBar,
+            1.0f,
+            DARKGRAY);
+
+        drawWrappedFallbackText(
+            "You Have Found the Portal Out of the Dungeon",
+            ActionBarX + 25,
+            ActionBarY + 112,
+            600,
+            45,
+            18,
+            22);
+
+        drawWrappedFallbackText(
+            "Go through and Exit the Dungeon?",
+            ActionBarX + 25,
+            ActionBarY + 62,
+            600,
+            40,
+            18,
+            22);
+
+        drawFallbackText(
+            "Y - EXIT",
+            ActionBarX + 680,
+            ActionBarY + 72,
+            150,
+            40,
+            18);
+
+        drawFallbackText(
+            "N - STAY",
+            ActionBarX + 850,
+            ActionBarY + 72,
+            150,
+            40,
+            18);
+    }
+
+    // =========================================================================
     // Combat Action Bar
     // =========================================================================
 
@@ -2217,6 +2484,80 @@ namespace dungeon
             17);
     }
 
+// =========================================================================
+// Defeat in Combat Action Bar
+// =========================================================================
+
+    void Renderer::drawDefeatedActionBar() const
+    {
+        if (m_mainScreenAssets.defeatedActionBar().id != 0)
+        {
+            drawTexture(
+                m_mainScreenAssets.defeatedActionBar(),
+                ActionBarX,
+                ActionBarY,
+                ActionBarWidth,
+                ActionBarHeight);
+
+            return;
+        }
+
+        const Rectangle actionBar =
+            toRaylibRectangle(
+                ActionBarX,
+                ActionBarY,
+                ActionBarWidth,
+                ActionBarHeight);
+
+        DrawRectangleRec(
+            actionBar,
+            LIGHTGRAY);
+
+        DrawRectangleLinesEx(
+            actionBar,
+            1.0f,
+            DARKGRAY);
+
+        drawWrappedFallbackText(
+            "You Have Defeated and lost forever in the Dungeon",
+            ActionBarX + 25,
+            ActionBarY + 112,
+            700,
+            45,
+            18,
+            22);
+
+        drawWrappedFallbackText(
+            "Rise back up and find the exit of the Dungeon?",
+            ActionBarX + 25,
+            ActionBarY + 62,
+            700,
+            40,
+            18,
+            22);
+
+        drawFallbackText(
+            "Y - RESTART",
+            ActionBarX + 755,
+            ActionBarY + 72,
+            135,
+            40,
+            18);
+
+        drawFallbackText(
+            "N - CLOSE",
+            ActionBarX + 900,
+            ActionBarY + 72,
+            125,
+            40,
+            18);
+    }
+
+
+// =========================================================================
+// Inventory Action Bar
+// =========================================================================
+
     void Renderer::drawInventoryActionBar() const
     {
         if (m_mainScreenAssets.inventoryActionBar().id != 0)
@@ -2255,6 +2596,36 @@ namespace dungeon
     {
         if (m_gameInstructionsOpen)
         {
+            return;
+        }
+
+        if (game.portalPromptActive())
+        {
+            const Texture2D& portalTexture =
+                m_mainScreenAssets.portal().id != 0
+                ? m_mainScreenAssets.portal()
+                : m_mainScreenAssets.seesPortal();
+
+            if (portalTexture.id != 0)
+            {
+                drawTexture(
+                    portalTexture,
+                    PovRenderX,
+                    PovRenderY,
+                    PovRenderWidth,
+                    PovRenderHeight);
+            }
+            else
+            {
+                drawFallbackText(
+                    "Portal",
+                    PovRenderX,
+                    PovRenderY + 210,
+                    PovRenderWidth,
+                    50,
+                    28);
+            }
+
             return;
         }
 
@@ -2366,6 +2737,44 @@ namespace dungeon
             return;
         }
 
+        if (game.map().isInside(lookX, lookY) &&
+            game.map().tileAt(lookX, lookY) == '@')
+        {
+            const Texture2D& portalTexture =
+                m_mainScreenAssets.seesPortal();
+
+            if (portalTexture.id != 0)
+            {
+                drawTexture(
+                    portalTexture,
+                    PovRenderX,
+                    PovRenderY,
+                    PovRenderWidth,
+                    PovRenderHeight);
+            }
+            else if (m_mainScreenAssets.portal().id != 0)
+            {
+                drawTexture(
+                    m_mainScreenAssets.portal(),
+                    PovRenderX,
+                    PovRenderY,
+                    PovRenderWidth,
+                    PovRenderHeight);
+            }
+            else
+            {
+                drawFallbackText(
+                    "Portal",
+                    PovRenderX,
+                    PovRenderY + 210,
+                    PovRenderWidth,
+                    50,
+                    28);
+            }
+
+            return;
+        }
+
         if (!game.map().isWalkable(lookX, lookY))
         {
             if (m_mainScreenAssets.seesWall().id != 0)
@@ -2415,24 +2824,50 @@ namespace dungeon
     // =========================================================================
     // Combat POV
     // =========================================================================
-    void Renderer::drawCombatPov(
-        const Game& game) const
+    void Renderer::drawCombatPov(const Game& game) const
     {
         if (m_gameInstructionsOpen)
         {
             return;
         }
 
-        const Combat* combat =
-            game.combat();
+        if (game.defeatPromptActive())
+        {
+            const Texture2D& texture =
+                m_mainScreenAssets.enemyVictory(
+                    game.defeatedEnemyType());
 
+            if (texture.id != 0)
+            {
+                drawTexture(
+                    texture,
+                    PovRenderX,
+                    PovRenderY,
+                    PovRenderWidth,
+                    PovRenderHeight);
+            }
+            else
+            {
+                drawFallbackText(
+                    std::string(game.defeatedEnemyType()) +
+                    " Victory",
+                    PovRenderX,
+                    PovRenderY + 210,
+                    PovRenderWidth,
+                    50,
+                    28);
+            }
+
+            return;
+        }
+
+        const Combat* combat = game.combat();
         if (combat == nullptr)
         {
             return;
         }
 
-        const CombatTarget& target =
-            combat->target();
+        const CombatTarget& target = combat->target();
 
         if (target.targetType() == "Chest")
         {
@@ -2466,11 +2901,9 @@ namespace dungeon
             return;
         }
 
-        const CombatPresentation& presentation =
-            game.combatPresentation();
+        const CombatPresentation& presentation = game.combatPresentation();
 
-        const Texture2D* texture =
-            nullptr;
+        const Texture2D* texture = nullptr;
 
         if (target.isDefeated())
         {
@@ -2482,11 +2915,9 @@ namespace dungeon
             texture = &m_mainScreenAssets.enemyIdle(
                 target.targetType());
 
-            if (presentation.phase() ==
-                CombatPresentation::Phase::Result)
+            if (presentation.phase() == CombatPresentation::Phase::Result)
             {
-                const AttackResult* result =
-                    presentation.currentAttack();
+                const AttackResult* result = presentation.currentAttack();
 
                 if (result != nullptr &&
                     result->damage > 0)
@@ -2544,11 +2975,9 @@ namespace dungeon
     // =========================================================================
     // Dice Roll
     // =========================================================================
-    void Renderer::drawDiceRoll(
-        const Game& game) const
+    void Renderer::drawDiceRoll(const Game& game) const
     {
-        const CombatPresentation& presentation =
-            game.combatPresentation();
+        const CombatPresentation& presentation = game.combatPresentation();
 
         constexpr int DiceWindowX = 230;
         constexpr int DiceWindowY = 260;
@@ -2793,11 +3222,14 @@ namespace dungeon
     // Combat Info
     // =========================================================================
 
-    void Renderer::drawCombatInfo(
-        const Game& game) const
+    void Renderer::drawCombatInfo(const Game& game) const
     {
-        const CombatPresentation& presentation =
-            game.combatPresentation();
+        if (game.defeatPromptActive())
+        {
+            return;
+        }
+
+        const CombatPresentation& presentation = game.combatPresentation();
 
         constexpr int CombatInfoX = 230;
         constexpr int CombatInfoY = 260;
@@ -2842,6 +3274,15 @@ namespace dungeon
     // =========================================================================
     // Map
     // =========================================================================
+
+    void Renderer::resetMapCamera() noexcept
+    {
+        m_mapCameraX = 0;
+        m_mapCameraY = 0;
+        m_mapCameraInitialized = false;
+        m_lastCameraMapWidth = 0;
+        m_lastCameraMapHeight = 0;
+    }
 
     void Renderer::updateMapCamera(const Game& game) const
     {
@@ -3115,6 +3556,25 @@ namespace dungeon
                     DrawRectangleRec(
                         tileRectangle,
                         DARKGRAY);
+                }
+                else if (tile == '@')
+                {
+                    DrawRectangleRec(
+                        tileRectangle,
+                        PURPLE);
+
+                    DrawRectangleLinesEx(
+                        tileRectangle,
+                        2.0f,
+                        BLACK);
+
+                    drawFallbackText(
+                        "@",
+                        tileX,
+                        tileY,
+                        TemporaryMapTileSize,
+                        TemporaryMapTileSize,
+                        18);
                 }
                 else
                 {

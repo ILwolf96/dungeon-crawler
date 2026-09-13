@@ -101,6 +101,8 @@ namespace dungeon
         const Texture2D& dragonTile() const noexcept;
         const Texture2D& dragonDefeatedTile() const noexcept;
         const Texture2D& mapFrame() const noexcept;
+        const Texture2D& portalTile() const noexcept;
+        const Texture2D& portal() const noexcept;
 
         // ---------------------------------------------------------------------
         // Main Screen Action Bar
@@ -109,6 +111,8 @@ namespace dungeon
         const Texture2D& traversalActionBar() const noexcept;
         const Texture2D& inventoryActionBar() const noexcept;
         const Texture2D& combatActionBar() const noexcept;
+        const Texture2D& portalActionBar() const noexcept;
+        const Texture2D& defeatedActionBar() const noexcept;
 
         // ---------------------------------------------------------------------
         // POV - Traversal
@@ -120,6 +124,7 @@ namespace dungeon
         const Texture2D& seesDefeatedChest() const noexcept;
         const Texture2D& seesWall() const noexcept;
         const Texture2D& seesNothing() const noexcept;
+        const Texture2D& seesPortal() const noexcept;
 
         // ---------------------------------------------------------------------
         // POV - Combat
@@ -129,6 +134,7 @@ namespace dungeon
         const Texture2D& enemyHurt(std::string_view type) const noexcept;
         const Texture2D& enemyAttack(std::string_view type) const noexcept;
         const Texture2D& enemyDeath(std::string_view type) const noexcept;
+        const Texture2D& enemyVictory(std::string_view type) const noexcept;
 
         // Instructions
         const Texture2D& gameInstructions() const noexcept;
@@ -147,9 +153,7 @@ namespace dungeon
         static constexpr int DiceResultCount = 6;
 
         static Texture2D emptyTexture() noexcept;
-        static Texture2D loadTextureIfPresent(
-            const std::string& path,
-            bool& loadedSuccessfully);
+        static Texture2D loadTextureIfPresent(const std::string& path, bool& loadedSuccessfully);
 
         static bool isValidTexture(const Texture2D& texture) noexcept;
         static int enemyPovIndex(std::string_view type) noexcept;
@@ -208,10 +212,14 @@ namespace dungeon
         Texture2D m_dragonTile{};
         Texture2D m_dragonDefeatedTile{};
         Texture2D m_mapFrame{};
+        Texture2D m_portalTile{};
+
 
         Texture2D m_traversalActionBar{};
         Texture2D m_inventoryActionBar{};
         Texture2D m_combatActionBar{};
+        Texture2D m_portalActionBar{};
+        Texture2D m_defeatedActionBar{};
 
         std::array<Texture2D, EnemyPovTypeCount> m_seesEnemies{};
         std::array<Texture2D, EnemyPovTypeCount> m_seesDefeatedEnemies{};
@@ -219,11 +227,14 @@ namespace dungeon
         Texture2D m_seesDefeatedChest{};
         Texture2D m_seesWall{};
         Texture2D m_seesNothing{};
+        Texture2D m_portal{};
+        Texture2D m_seesPortal{};
 
         std::array<Texture2D, EnemyPovTypeCount> m_enemyIdle{};
         std::array<Texture2D, EnemyPovTypeCount> m_enemyHurt{};
         std::array<Texture2D, EnemyPovTypeCount> m_enemyAttack{};
         std::array<Texture2D, EnemyPovTypeCount> m_enemyDeath{};
+        std::array<Texture2D, EnemyPovTypeCount> m_enemyVictory{};
 
         Texture2D m_gameInstructions{};
         Texture2D m_combatInstructions{};

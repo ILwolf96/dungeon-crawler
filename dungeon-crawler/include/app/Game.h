@@ -30,7 +30,9 @@ namespace dungeon
         TurnRight,
         Attack,
         Inventory,
-        Escape
+        Escape,
+        ConfirmYes,
+        ConfirmNo
     };
 
     enum class FacingDirection
@@ -51,6 +53,12 @@ namespace dungeon
         RagePotion
     };
 
+    enum class GameFlowResult
+    {
+        None,
+        ExitApplication,
+        RestartGame
+    };
 
     struct CombatLootPreviewSlot
     {
@@ -65,7 +73,11 @@ namespace dungeon
         Game();
 
         void load(std::string_view filePath);
+        void restart();
+
         void handleAction(Action action);
+        GameFlowResult handleOutcomeAction(Action action);
+
         void update(float deltaSeconds);
 
         bool isZoo() const noexcept;
@@ -121,6 +133,19 @@ namespace dungeon
 
         bool inventoryOpen() const noexcept;
         const std::string& combatInfoMessage() const noexcept;
+
+        // -----------------------------------------------------------------
+        // Win / Loss State
+        // -----------------------------------------------------------------
+
+        [[nodiscard]]
+        bool portalPromptActive() const noexcept;
+
+        [[nodiscard]]
+        bool defeatPromptActive() const noexcept;
+
+        [[nodiscard]]
+        std::string_view defeatedEnemyType() const noexcept;
 
     private:
         Map m_map;
@@ -190,5 +215,19 @@ namespace dungeon
         int m_windowWidth{ 640 };
         int m_windowHeight{ 360 };
         std::string m_title{ "Dungeon Crawler" };
+
+        // -----------------------------------------------------------------
+        // Win / Loss state
+        // -----------------------------------------------------------------
+
+        bool m_portalPromptActive{ false };
+
+        int m_portalPreviousPlayerX{ 0 };
+        int m_portalPreviousPlayerY{ 0 };
+
+        bool m_defeatPromptActive{ false };
+        std::string m_defeatedEnemyType;
+
+        std::string m_configFilePath;
     };
 }

@@ -60,6 +60,20 @@ namespace
         "troll",
         "dragon"
     };
+
+    /*
+    constexpr const char* MapPath =
+        "assets/ui/map/";
+
+    constexpr const char* ActionBarPath =
+        "assets/ui/action_bar/";
+
+    constexpr const char* PovTraversalPath =
+        "assets/ui/pov/traversal/";
+
+    constexpr const char* PovCombatPath =
+        "assets/ui/pov/combat/";
+    */
 }
 
 namespace dungeon
@@ -451,6 +465,11 @@ namespace dungeon
             loaded);
         allLoaded = allLoaded && loaded;
 
+        m_portalTile = loadTextureIfPresent(
+            std::string(MapPath) + "portal_tile.png",
+            loaded);
+        allLoaded = allLoaded && loaded;
+
         // ---------------------------------------------------------------------
         // POV - Traversal
         // ---------------------------------------------------------------------
@@ -503,6 +522,16 @@ namespace dungeon
             loaded);
         allLoaded = allLoaded && loaded;
 
+        m_portal = loadTextureIfPresent(
+            std::string(PovTraversalPath) + "portal.png",
+            loaded);
+        allLoaded = allLoaded && loaded;
+
+        m_seesPortal = loadTextureIfPresent(
+            std::string(PovTraversalPath) + "sees_portal.png",
+            loaded);
+        allLoaded = allLoaded && loaded;
+
         // ---------------------------------------------------------------------
         // POV - Combat
         // ---------------------------------------------------------------------
@@ -543,6 +572,16 @@ namespace dungeon
                     "_death.png",
                     loaded);
             allLoaded = allLoaded && loaded;
+
+            m_enemyVictory[
+                static_cast<std::size_t>(index)] =
+                loadTextureIfPresent(
+                    std::string(PovCombatPath) +
+                    enemyName +
+                    "_victory.png",
+                    loaded);
+
+                allLoaded = allLoaded && loaded;
         }
 
         // ---------------------------------------------------------------------
@@ -609,6 +648,20 @@ namespace dungeon
 
         m_loaded = allLoaded;
 
+        m_portalActionBar = loadTextureIfPresent(
+            std::string(ActionBarPath) +
+            "portal_action_bar.png",
+            loaded);
+        allLoaded = allLoaded && loaded;
+
+        m_defeatedActionBar = loadTextureIfPresent(
+            std::string(ActionBarPath) +
+            "defeated_action_bar.png",
+            loaded);
+        allLoaded = allLoaded && loaded;
+
+        m_loaded = allLoaded;
+
         return m_loaded;
     }
 
@@ -645,6 +698,7 @@ namespace dungeon
         unloadTexture(m_defIcon);
         unloadTexture(m_toughIcon);
         unloadTexture(m_hpIcon);
+
 
         for (Texture2D& texture : m_numbers)
         {
@@ -695,10 +749,19 @@ namespace dungeon
         unloadTexture(m_dragonTile);
         unloadTexture(m_dragonDefeatedTile);
         unloadTexture(m_mapFrame);
+        unloadTexture(m_portalTile);
 
         unloadTexture(m_traversalActionBar);
         unloadTexture(m_inventoryActionBar);
         unloadTexture(m_combatActionBar);
+        unloadTexture(m_portalActionBar);
+        unloadTexture(m_defeatedActionBar);
+
+
+        for (Texture2D& texture : m_enemyVictory)
+        {
+            unloadTexture(texture);
+        }
 
         for (Texture2D& texture : m_seesEnemies)
         {
@@ -714,6 +777,8 @@ namespace dungeon
         unloadTexture(m_seesDefeatedChest);
         unloadTexture(m_seesWall);
         unloadTexture(m_seesNothing);
+        unloadTexture(m_portal);
+        unloadTexture(m_seesPortal);
 
         for (Texture2D& texture : m_enemyIdle)
         {
@@ -1161,5 +1226,44 @@ namespace dungeon
         }
 
         return m_diceResults[static_cast<std::size_t>(value - 1)];
+    }
+
+
+    const Texture2D& MainScreenAssets::portalTile() const noexcept
+    {
+        return m_portalTile;
+    }
+
+    const Texture2D& MainScreenAssets::portal() const noexcept
+    {
+        return m_portal;
+    }
+
+    const Texture2D& MainScreenAssets::seesPortal() const noexcept
+    {
+        return m_seesPortal;
+    }
+
+    const Texture2D& MainScreenAssets::enemyVictory(std::string_view type) const noexcept
+    {
+        const int index = enemyPovIndex(type);
+
+        if (index < 0)
+        {
+            static const Texture2D Empty{};
+            return Empty;
+        }
+
+        return m_enemyVictory[static_cast<std::size_t>(index)];
+    }
+
+    const Texture2D& MainScreenAssets::portalActionBar() const noexcept
+    {
+        return m_portalActionBar;
+    }
+
+    const Texture2D& MainScreenAssets::defeatedActionBar() const noexcept
+    {
+        return m_defeatedActionBar;
     }
 }
