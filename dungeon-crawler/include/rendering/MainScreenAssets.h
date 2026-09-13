@@ -130,6 +130,10 @@ namespace dungeon
         // POV - Combat
         // ---------------------------------------------------------------------
 
+
+        const Texture2D& chestIdle() const noexcept;
+        const Texture2D& chestDeath() const noexcept;
+
         const Texture2D& enemyIdle(std::string_view type) const noexcept;
         const Texture2D& enemyHurt(std::string_view type) const noexcept;
         const Texture2D& enemyAttack(std::string_view type) const noexcept;
@@ -232,6 +236,10 @@ namespace dungeon
         Texture2D m_seesNothing{};
         Texture2D m_portal{};
         Texture2D m_seesPortal{};
+
+
+        Texture2D m_chestIdle;
+        Texture2D m_chestDeath;
 
         std::array<Texture2D, EnemyPovTypeCount> m_enemyIdle{};
         std::array<Texture2D, EnemyPovTypeCount> m_enemyHurt{};

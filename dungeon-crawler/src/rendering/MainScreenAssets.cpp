@@ -536,6 +536,20 @@ namespace dungeon
         // POV - Combat
         // ---------------------------------------------------------------------
 
+        m_chestIdle =
+            loadTextureIfPresent(
+                std::string(PovCombatPath) +
+                "chest_idle.png",
+                loaded);
+        allLoaded = allLoaded && loaded;
+
+        m_chestDeath =
+            loadTextureIfPresent(
+                std::string(PovCombatPath) +
+                "chest_death.png",
+                loaded);
+        allLoaded = allLoaded && loaded;
+
         for (int index = 0; index < EnemyPovTypeCount; ++index)
         {
             const std::string enemyName =
@@ -714,7 +728,6 @@ namespace dungeon
         unloadTexture(m_toughIcon);
         unloadTexture(m_hpIcon);
 
-
         for (Texture2D& texture : m_numbers)
         {
             unloadTexture(texture);
@@ -772,7 +785,6 @@ namespace dungeon
         unloadTexture(m_portalActionBar);
         unloadTexture(m_defeatedActionBar);
 
-
         for (Texture2D& texture : m_enemyVictory)
         {
             unloadTexture(texture);
@@ -794,6 +806,9 @@ namespace dungeon
         unloadTexture(m_seesNothing);
         unloadTexture(m_portal);
         unloadTexture(m_seesPortal);
+
+        unloadTexture(m_chestIdle);
+        unloadTexture(m_chestDeath);
 
         for (Texture2D& texture : m_enemyIdle)
         {
@@ -1163,6 +1178,16 @@ namespace dungeon
         return m_seesNothing;
     }
 
+    const Texture2D& MainScreenAssets::chestIdle() const noexcept
+    {
+        return m_chestIdle;
+    }
+
+    const Texture2D& MainScreenAssets::chestDeath() const noexcept
+    {
+        return m_chestDeath;
+    }
+
     const Texture2D& MainScreenAssets::enemyIdle(
         std::string_view type) const noexcept
     {
@@ -1261,7 +1286,6 @@ namespace dungeon
         return m_diceResults[static_cast<std::size_t>(value - 1)];
     }
 
-
     const Texture2D& MainScreenAssets::portalTile() const noexcept
     {
         return m_portalTile;
@@ -1277,7 +1301,8 @@ namespace dungeon
         return m_seesPortal;
     }
 
-    const Texture2D& MainScreenAssets::enemyVictory(std::string_view type) const noexcept
+    const Texture2D& MainScreenAssets::enemyVictory(
+        std::string_view type) const noexcept
     {
         const int index = enemyPovIndex(type);
 

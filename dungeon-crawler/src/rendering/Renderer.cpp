@@ -3309,8 +3309,8 @@ namespace dungeon
         {
             const Texture2D& texture =
                 target.isDefeated()
-                ? m_mainScreenAssets.seesDefeatedChest()
-                : m_mainScreenAssets.seesChest();
+                ? m_mainScreenAssets.chestDeath()
+                : m_mainScreenAssets.chestIdle();
 
             if (texture.id != 0)
             {
@@ -3325,7 +3325,7 @@ namespace dungeon
             {
                 drawFallbackText(
                     target.isDefeated()
-                    ? "Defeated Chest"
+                    ? "Opened Chest"
                     : "Chest",
                     PovRenderX,
                     PovRenderY + 210,
