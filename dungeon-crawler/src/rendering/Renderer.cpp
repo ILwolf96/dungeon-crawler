@@ -3056,6 +3056,40 @@ namespace dungeon
             return;
         }
 
+        // ---------------------------------------------------------------------
+        // Portal Prompt
+        //
+        // When the player is standing on the Portal tile, the normal
+        // look-ahead POV must no longer be used. The Portal POV takes
+        // priority so the player can still see what they have found while
+        // deciding whether to exit the dungeon.
+        // ---------------------------------------------------------------------
+
+        if (game.portalPromptActive())
+        {
+            if (m_mainScreenAssets.portal().id != 0)
+            {
+                drawTexture(
+                    m_mainScreenAssets.portal(),
+                    PovRenderX,
+                    PovRenderY,
+                    PovRenderWidth,
+                    PovRenderHeight);
+            }
+            else
+            {
+                drawFallbackText(
+                    "You See the Portal Out of the Dungeon",
+                    PovRenderX,
+                    PovRenderY + 210,
+                    PovRenderWidth,
+                    50,
+                    28);
+            }
+
+            return;
+        }
+
         const Player& player =
             game.player();
 
@@ -3082,6 +3116,10 @@ namespace dungeon
             --lookX;
             break;
         }
+
+        // ---------------------------------------------------------------------
+        // Enemy
+        // ---------------------------------------------------------------------
 
         for (const auto& enemy : game.enemies())
         {
@@ -3130,6 +3168,10 @@ namespace dungeon
             return;
         }
 
+        // ---------------------------------------------------------------------
+        // Chest
+        // ---------------------------------------------------------------------
+
         for (const auto& chest : game.chests())
         {
             if (!chest ||
@@ -3169,6 +3211,42 @@ namespace dungeon
             return;
         }
 
+        // ---------------------------------------------------------------------
+        // Portal Ahead
+        //
+        // This check happen BEFORE the Nothing state.
+        // Otherwise the Nothing image/text gets drawn first and the Portal is drawn on top it.
+        // ---------------------------------------------------------------------
+
+        if (game.map().tileAt(lookX, lookY) == '@')
+        {
+            if (m_mainScreenAssets.seesPortal().id != 0)
+            {
+                drawTexture(
+                    m_mainScreenAssets.seesPortal(),
+                    PovRenderX,
+                    PovRenderY,
+                    PovRenderWidth,
+                    PovRenderHeight);
+            }
+            else
+            {
+                drawFallbackText(
+                    "You Stand before the Portal, the escape from Dungeon",
+                    PovRenderX,
+                    PovRenderY + 210,
+                    PovRenderWidth,
+                    50,
+                    28);
+            }
+
+            return;
+        }
+
+        // ---------------------------------------------------------------------
+        // Wall
+        // ---------------------------------------------------------------------
+
         if (!game.map().isWalkable(lookX, lookY))
         {
             if (m_mainScreenAssets.seesWall().id != 0)
@@ -3193,6 +3271,10 @@ namespace dungeon
 
             return;
         }
+
+        // ---------------------------------------------------------------------
+        // Nothing Ahead
+        // ---------------------------------------------------------------------
 
         if (m_mainScreenAssets.seesNothing().id != 0)
         {
