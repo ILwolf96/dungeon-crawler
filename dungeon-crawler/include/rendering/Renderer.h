@@ -243,6 +243,14 @@ namespace dungeon
             int height,
             float rotation) const;
 
+        void drawInstructionPage(
+            const Texture2D& background,
+            const Texture2D& complete,
+            std::string_view title,
+            std::string_view body,
+            int fontSize,
+            int lineSpacing) const;
+
         void drawFallbackText(
             std::string_view text,
             int x,

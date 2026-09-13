@@ -507,6 +507,87 @@ namespace dungeon
     }
 
     // =========================================================================
+    // Instruction Page
+    //
+    // Layered composition:
+    //   1. Background layer  - background texture, or fallback panel
+    //   2. Foreground layer  - complete instructions image if present,
+    //                          otherwise raylib title/body fallback text
+    //
+    // The complete image and the fallback text are mutually exclusive;
+    // the background (or its fallback panel) is always drawn underneath
+    // whichever foreground is used.
+    // =========================================================================
+
+    void Renderer::drawInstructionPage(
+        const Texture2D& background,
+        const Texture2D& complete,
+        std::string_view title,
+        std::string_view body,
+        int fontSize,
+        int lineSpacing) const
+    {
+        const Rectangle pov =
+            toRaylibRectangle(
+                PovRenderX,
+                PovRenderY,
+                PovRenderWidth,
+                PovRenderHeight);
+
+        // ---------------------------------------------------------------------
+        // Step 1: Background layer
+        // ---------------------------------------------------------------------
+
+        if (background.id != 0)
+        {
+            drawTexture(
+                background,
+                PovRenderX,
+                PovRenderY,
+                PovRenderWidth,
+                PovRenderHeight);
+        }
+        else
+        {
+            DrawRectangleRec(pov, LIGHTGRAY);
+            DrawRectangleLinesEx(pov, 1.0f, DARKGRAY);
+        }
+
+        // ---------------------------------------------------------------------
+        // Step 2: Foreground layer
+        // ---------------------------------------------------------------------
+
+        if (complete.id != 0)
+        {
+            drawTexture(
+                complete,
+                PovRenderX,
+                PovRenderY,
+                PovRenderWidth,
+                PovRenderHeight);
+
+            return;
+        }
+
+        drawFallbackText(
+            title,
+            PovRenderX + 20,
+            PovRenderY + PovRenderHeight - 58,
+            PovRenderWidth - 40,
+            38,
+            24);
+
+        drawWrappedFallbackText(
+            body,
+            PovRenderX + 28,
+            PovRenderY + 28,
+            PovRenderWidth - 56,
+            PovRenderHeight - 96,
+            fontSize,
+            lineSpacing);
+    }
+
+    // =========================================================================
     // Main Renderer
     // =========================================================================
 
@@ -740,32 +821,60 @@ namespace dungeon
                 PovRenderWidth,
                 PovRenderHeight);
 
-        if (m_gameInstructionsOpen &&
-            m_mainScreenAssets.gameInstructions().id != 0)
+        if (m_gameInstructionsOpen) //----------------------------------------------- Travarsal INSTRUCTIONS HERE
         {
-            drawTexture(
+            drawInstructionPage(
+                m_mainScreenAssets.gameInstructionsBackground(),
                 m_mainScreenAssets.gameInstructions(),
-                PovRenderX,
-                PovRenderY,
-                PovRenderWidth,
-                PovRenderHeight);
-        }
-        else if (!m_gameInstructionsOpen)
-        {
-            DrawRectangleRec(povRender, RAYWHITE);
-            DrawRectangleLinesEx(povRender, 1.0f, DARKGRAY);
+                "GAME INSTRUCTIONS",
+                "\n"
+                "----------------------------------------------\n"
+                "\n"
+                "MOVEMENT\n"
+                "W / UP       Move Up\n"
+                "S / DOWN     Move Down\n"
+                "A / LEFT     Move Left\n"
+                "D / RIGHT    Move Right\n"
+                "\n"
+                "----------------------------------------------\n"
+                "\n"
+                "TURNING\n"
+                "Q            Turn Left\n"
+                "E            Turn Right\n"
+                "\n"
+                "----------------------------------------------\n"
+                "\n"
+                "ENCOUNTERS\n"
+                "Enemy        May Grant you Gear\n"
+                "Chest        May Grant you Potions\n"
+                "Portal       Your escape From The Dungeon\n"
+                "\n"
+                "----------------------------------------------\n"
+                "\n"
+                "OBJECTIVE\n"
+                "Explore the dungeon,\n"
+                "defeat enemies,\n"
+                "collect Loot, \n"
+                "and find the Portal.\n"
+                "\n"
+                "\n"
+                "----------------------------------------------\n"
+                "\n"
+                "\n"
+                "TAB          Close Instructions",
+                16,
+                18);
         }
         else
         {
-            DrawRectangleRec(povRender, LIGHTGRAY);
-            DrawRectangleLinesEx(povRender, 1.0f, DARKGRAY);
-            drawFallbackText(
-                "GAME INSTRUCTIONS",
-                PovRenderX,
-                PovRenderY + PovRenderHeight - 50,
-                PovRenderWidth,
-                40,
-                26);
+            DrawRectangleRec(
+                povRender,
+                RAYWHITE);
+
+            DrawRectangleLinesEx(
+                povRender,
+                1.0f,
+                DARKGRAY);
         }
     }
 
@@ -1050,46 +1159,139 @@ namespace dungeon
                 PovRenderWidth,
                 PovRenderHeight);
 
-        const Texture2D* instructions = nullptr;
         if (m_gameInstructionsOpen)
         {
-            if (game.inventoryOpen())
+            if (game.inventoryOpen())  //------------------------------------------------------------------- Inventory INSTRUCTIONS HERE!
             {
-                instructions = &m_mainScreenAssets.inventoryInstructions();
+                drawInstructionPage(
+                    m_mainScreenAssets.inventoryInstructionsBackground(),
+                    m_mainScreenAssets.inventoryInstructions(),
+                    "INVENTORY INSTRUCTIONS",
+                    "\n"
+                    "----------------------------------------------\n"
+                    "\n"
+                    "HEALTH POTION\n"
+                    "Restores up to 3 HP.\n"
+                    "Cannot be used at full HP.\n"
+                    "\n"
+                    "----------------------------------------------\n"
+                    "\n"
+                    "RAGE POTION\n"
+                    "Adds +1 Damage.\n"
+                    "Lasts for the current combat.\n"
+                    "Rage bonuses stack.\n"
+                    "\n"
+                    "----------------------------------------------\n"
+                    "\n"
+                    "GEAR\n"
+                    "\n"
+                    "WEAPONS\n"
+                    "Higher Tier Weapons provide\n"
+                    "greater Strength.\n"
+                    "\n"
+                    "----------------------------------------------\n"
+                    "\n"
+                    "ARMOR\n"
+                    "Higher Tier Armor provides\n"
+                    "different Defense values.\n"
+                    "\n"
+                    "----------------------------------------------\n"
+                    "\n"
+                    "ACCESSORIES\n"
+                    "Can provide bonuses to\n"
+                    "Attacks, Precision, or Maximum HP.\n"
+                    "\n"
+                    "----------------------------------------------\n"
+                    "\n"
+                    "ACTIONS\n"
+                    "1            Health Potion\n"
+                    "2            Rage Potion\n"
+                    "3            Close Inventory\n"
+                    "\n"
+                    "----------------------------------------------\n"
+                    "\n"
+                    "BEWARE!\n"
+                    "Using a potion ends your turn.\n"
+                    "The enemy attacks next.\n"
+                    "\n"
+                    "\n"
+                    "----------------------------------------------\n"
+                    "\n"
+                    "\n"
+                    "TAB          Close Instructions",
+                    14,
+                    16);
             }
             else
             {
-                instructions = &m_mainScreenAssets.combatInstructions();
+                drawInstructionPage(
+                    m_mainScreenAssets.combatInstructionsBackground(),
+                    m_mainScreenAssets.combatInstructions(), //--------------------------------------------------------- Combat INSTRUCTIONS HERE!
+                    "COMBAT INSTRUCTIONS",
+                    "ACTIONS\n"
+                    "F1 / 1       Attack\n"
+                    "I / 2        Open Inventory\n"
+                    "E / 3        Escape\n"
+                    "\n"
+                    "----------------------------------------------\n"
+                    "\n"
+                    "ATTACK\n"
+                    "Each attack uses a D6.\n"
+                    "\n"
+                    "----------------------------------------------\n"
+                    "\n"
+                    "PRECISION\n"
+                    "D6 >= Precision\n"
+                    "Fail = Miss\n"
+                    "\n"
+                    "----------------------------------------------\n"
+                    "\n"
+                    "WOUND\n"
+                    "Compare Strength to Toughness.\n"
+                    "\n"
+                    "TGH <= 0         Target 2\n"
+                    "STR >= TGH x 2   Target 2\n"
+                    "STR > TGH        Target 3\n"
+                    "STR = TGH        Target 4\n"
+                    "STR x 2 <= TGH   Target 6\n"
+                    "Otherwise        Target 5\n"
+                    "\n"
+                    "----------------------------------------------\n"
+                    "\n"
+                    "DEFENSE\n"
+                    "D6 >= Defense\n"
+                    "Pass = 0 Damage\n"
+                    "Fail = Damage Applied\n"
+                    "\n"
+                    "----------------------------------------------\n"
+                    "\n"
+                    "DAMAGE\n"
+                    "Weapon Damage + Rage Bonus\n"
+                    "\n"
+                    "----------------------------------------------\n"
+                    "\n"
+                    "ATK = Number of Attacks\n"
+                    "0 HP = Defeated\n"
+                    "\n"
+                    "\n"
+                    "----------------------------------------------\n"
+                    "\n"
+                    "\n"
+                    "TAB          Close Instructions",
+                    13,
+                    15);
             }
-        }
-
-        if (instructions != nullptr && instructions->id != 0)
-        {
-            drawTexture(
-                *instructions,
-                PovRenderX,
-                PovRenderY,
-                PovRenderWidth,
-                PovRenderHeight);
-        }
-        else if (!m_gameInstructionsOpen)
-        {
-            DrawRectangleRec(povRender, RAYWHITE);
-            DrawRectangleLinesEx(povRender, 1.0f, DARKGRAY);
         }
         else
         {
-            DrawRectangleRec(povRender, LIGHTGRAY);
-            DrawRectangleLinesEx(povRender, 1.0f, DARKGRAY);
-            drawFallbackText(
-                game.inventoryOpen()
-                ? "GAME INVENTORY INSTRUCTIONS"
-                : "GAME COMBAT INSTRUCTIONS",
-                PovRenderX,
-                PovRenderY + 330,
-                PovRenderWidth,
-                50,
-                24);
+            DrawRectangleRec(
+                povRender,
+                RAYWHITE);
+
+            DrawRectangleLinesEx(
+                povRender,
+                1.0f,
+                DARKGRAY);
         }
     }
 
@@ -2484,9 +2686,9 @@ namespace dungeon
             17);
     }
 
-// =========================================================================
-// Defeat in Combat Action Bar
-// =========================================================================
+    // =========================================================================
+    // Defeat in Combat Action Bar
+    // =========================================================================
 
     void Renderer::drawDefeatedActionBar() const
     {
@@ -2554,9 +2756,9 @@ namespace dungeon
     }
 
 
-// =========================================================================
-// Inventory Action Bar
-// =========================================================================
+    // =========================================================================
+    // Inventory Action Bar
+    // =========================================================================
 
     void Renderer::drawInventoryActionBar() const
     {

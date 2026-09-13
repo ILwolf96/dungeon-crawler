@@ -140,6 +140,9 @@ namespace dungeon
         const Texture2D& gameInstructions() const noexcept;
         const Texture2D& combatInstructions() const noexcept;
         const Texture2D& inventoryInstructions() const noexcept;
+        const Texture2D& gameInstructionsBackground() const noexcept;
+        const Texture2D& combatInstructionsBackground() const noexcept;
+        const Texture2D& inventoryInstructionsBackground() const noexcept;
 
         // Dice presentation
         const Texture2D& diceRolling() const noexcept;
@@ -239,6 +242,9 @@ namespace dungeon
         Texture2D m_gameInstructions{};
         Texture2D m_combatInstructions{};
         Texture2D m_inventoryInstructions{};
+        Texture2D m_gameInstructionsBackground{};
+        Texture2D m_combatInstructionsBackground{};
+        Texture2D m_inventoryInstructionsBackground{};
 
         Texture2D m_diceRolling{};
         std::array<Texture2D, DiceResultCount> m_diceResults{};

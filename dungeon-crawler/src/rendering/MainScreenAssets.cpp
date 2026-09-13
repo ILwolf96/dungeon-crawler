@@ -603,6 +603,21 @@ namespace dungeon
             loaded);
         allLoaded = allLoaded && loaded;
 
+        m_gameInstructionsBackground = loadTextureIfPresent(
+            std::string(InstructionsPath) + "game_instructions_bg.png",
+            loaded);
+        allLoaded = allLoaded && loaded;
+
+        m_combatInstructionsBackground = loadTextureIfPresent(
+            std::string(InstructionsPath) + "combat_instructions_bg.png",
+            loaded);
+        allLoaded = allLoaded && loaded;
+
+        m_inventoryInstructionsBackground = loadTextureIfPresent(
+            std::string(InstructionsPath) + "inventory_instructions_bg.png",
+            loaded);
+        allLoaded = allLoaded && loaded;
+
         // ---------------------------------------------------------------------
         // Dice Presentation
         // ---------------------------------------------------------------------
@@ -803,6 +818,9 @@ namespace dungeon
         unloadTexture(m_gameInstructions);
         unloadTexture(m_combatInstructions);
         unloadTexture(m_inventoryInstructions);
+        unloadTexture(m_gameInstructionsBackground);
+        unloadTexture(m_combatInstructionsBackground);
+        unloadTexture(m_inventoryInstructionsBackground);
         unloadTexture(m_diceRolling);
 
         for (Texture2D& texture : m_diceResults)
@@ -1210,6 +1228,21 @@ namespace dungeon
     const Texture2D& MainScreenAssets::inventoryInstructions() const noexcept
     {
         return m_inventoryInstructions;
+    }
+
+    const Texture2D& MainScreenAssets::gameInstructionsBackground() const noexcept
+    {
+        return m_gameInstructionsBackground;
+    }
+
+    const Texture2D& MainScreenAssets::combatInstructionsBackground() const noexcept
+    {
+        return m_combatInstructionsBackground;
+    }
+
+    const Texture2D& MainScreenAssets::inventoryInstructionsBackground() const noexcept
+    {
+        return m_inventoryInstructionsBackground;
     }
 
     const Texture2D& MainScreenAssets::diceRolling() const noexcept
