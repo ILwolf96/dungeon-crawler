@@ -124,6 +124,130 @@ namespace dungeon
 
             return "None";
         }
+
+        enum class CombatPovFallbackState
+        {
+            Idle,
+            Hurt,
+            Attack,
+            Death
+        };
+
+        std::string combatEnemyFallbackText(
+            std::string_view enemyType,
+            CombatPovFallbackState state)
+        {
+            if (enemyType == "Goblin")
+            {
+                switch (state)
+                {
+                case CombatPovFallbackState::Idle:
+                    return "The Goblin watches you from the darkness.";
+
+                case CombatPovFallbackState::Hurt:
+                    return "The Goblin recoils from your attack.";
+
+                case CombatPovFallbackState::Attack:
+                    return "The Goblin lunges at you.";
+
+                case CombatPovFallbackState::Death:
+                    return "The Goblin falls defeated.";
+                }
+            }
+
+            if (enemyType == "Skeleton")
+            {
+                switch (state)
+                {
+                case CombatPovFallbackState::Idle:
+                    return "The Skeleton stands silently before you.";
+
+                case CombatPovFallbackState::Hurt:
+                    return "The Skeleton staggers from your attack.";
+
+                case CombatPovFallbackState::Attack:
+                    return "The Skeleton strikes at you with its weapon.";
+
+                case CombatPovFallbackState::Death:
+                    return "The Skeleton collapses into a heap of bones.";
+                }
+            }
+
+            if (enemyType == "Orc")
+            {
+                switch (state)
+                {
+                case CombatPovFallbackState::Idle:
+                    return "The Orc grips its Axe and glares at you.";
+
+                case CombatPovFallbackState::Hurt:
+                    return "The Orc reels from your attack.";
+
+                case CombatPovFallbackState::Attack:
+                    return "The Orc charges forward and attacks.";
+
+                case CombatPovFallbackState::Death:
+                    return "The Orc crashes to the ground, defeated.";
+                }
+            }
+
+            if (enemyType == "Troll")
+            {
+                switch (state)
+                {
+                case CombatPovFallbackState::Idle:
+                    return "The Troll towers over you.";
+
+                case CombatPovFallbackState::Hurt:
+                    return "The Troll roars as your attack wounds it.";
+
+                case CombatPovFallbackState::Attack:
+                    return "The Troll swings with terrible force.";
+
+                case CombatPovFallbackState::Death:
+                    return "The Troll finally falls before you.";
+                }
+            }
+
+            if (enemyType == "Dragon")
+            {
+                switch (state)
+                {
+                case CombatPovFallbackState::Idle:
+                    return "The Dragon watches you through the darkness.";
+
+                case CombatPovFallbackState::Hurt:
+                    return "The Dragon recoils suprised from your attack.";
+
+                case CombatPovFallbackState::Attack:
+                    return "The Dragon lunges toward you.";
+
+                case CombatPovFallbackState::Death:
+                    return "The Dragon collapses, defeated.";
+                }
+            }
+
+            switch (state)
+            {
+            case CombatPovFallbackState::Idle:
+                return std::string(enemyType) +
+                    " stands before you.";
+
+            case CombatPovFallbackState::Hurt:
+                return std::string(enemyType) +
+                    " recoils from your attack.";
+
+            case CombatPovFallbackState::Attack:
+                return std::string(enemyType) +
+                    " attacks you.";
+
+            case CombatPovFallbackState::Death:
+                return std::string(enemyType) +
+                    " falls defeated.";
+            }
+
+            return std::string(enemyType);
+        }
     }
 
     // =========================================================================
@@ -825,7 +949,7 @@ namespace dungeon
         {
             drawInstructionPage(
                 m_mainScreenAssets.gameInstructionsBackground(),
-                m_mainScreenAssets.gameInstructions(),
+                m_mainScreenAssets.gameInstructions(),//------------------- THis looks Good
                 "GAME INSTRUCTIONS",
                 "\n"
                 "----------------------------------------------\n"
@@ -847,7 +971,7 @@ namespace dungeon
                 "ENCOUNTERS\n"
                 "Enemy        May Grant you Gear\n"
                 "Chest        May Grant you Potions\n"
-                "Portal       Your escape From The Dungeon\n"
+                "Portal       is Your escape From The Dungeon\n"
                 "\n"
                 "----------------------------------------------\n"
                 "\n"
@@ -1165,21 +1289,29 @@ namespace dungeon
             {
                 drawInstructionPage(
                     m_mainScreenAssets.inventoryInstructionsBackground(),
-                    m_mainScreenAssets.inventoryInstructions(),
-                    "INVENTORY INSTRUCTIONS",
+                    m_mainScreenAssets.inventoryInstructions(),//---------------------------- This Looks acceptable
+                    
+                    //"INVENTORY INSTRUCTIONS",
+                    //"----------------------------------------------",
+                    "                                                 ",
                     "\n"
                     "----------------------------------------------\n"
                     "\n"
                     "HEALTH POTION\n"
                     "Restores up to 3 HP.\n"
-                    "Cannot be used at full HP.\n"
+                    "It Cannot be used at full HP.\n"
                     "\n"
                     "----------------------------------------------\n"
                     "\n"
                     "RAGE POTION\n"
-                    "Adds +1 Damage.\n"
+                    "Adds +1 Damage, Rage bonuses stack.\n"
                     "Lasts for the current combat.\n"
-                    "Rage bonuses stack.\n"
+                    "\n"
+                    "----------------------------------------------\n"
+                    "\n"
+                    "BEWARE!\n"
+                    "Using a potion ends your turn.\n"
+                    "And The enemy attacks next.\n"
                     "\n"
                     "----------------------------------------------\n"
                     "\n"
@@ -1187,13 +1319,68 @@ namespace dungeon
                     "\n"
                     "WEAPONS\n"
                     "Higher Tier Weapons provide\n"
-                    "greater Strength.\n"
+                    "greater Strength Stat Value.\n"
                     "\n"
                     "----------------------------------------------\n"
                     "\n"
                     "ARMOR\n"
                     "Higher Tier Armor provides\n"
-                    "different Defense values.\n"
+                    "Higher Defense Stat value.\n"
+                    "\n"
+                    "----------------------------------------------\n"
+                    "\n"
+                    "ACCESSORIES\n"
+                    "Can provide bonuses to\n"
+                    "Attacks, Precision, or Maximum HP.\n"
+                    "\n"
+                    /*
+                    "\n"
+                    "ACTIONS\n"
+                    "1            Health Potion\n"
+                    "2            Rage Potion\n"
+                    "3            Close Inventory\n"
+                    "\n"
+                    "----------------------------------------------\n"
+                    */
+                    "\n"
+                    "----------------------------------------------\n"
+                    "\n"
+                    "\n"
+                    "TAB          Close Instructions",
+                    14,
+                    16);
+
+
+                /*
+                //"INVENTORY INSTRUCTIONS",
+                //"----------------------------------------------",
+                "                                                 ",
+                    "\n"
+                    "----------------------------------------------\n"
+                    "\n"
+                    "HEALTH POTION\n"
+                    "Restores up to 3 HP.\n"
+                    "It Cannot be used at full HP.\n"
+                    "\n"
+                    "----------------------------------------------\n"
+                    "\n"
+                    "RAGE POTION\n"
+                    "Adds +1 Damage, Rage bonuses stack.\n"
+                    "Lasts for the current combat.\n"
+                    "\n"
+                    "----------------------------------------------\n"
+                    "\n"
+                    "GEAR\n"
+                    "\n"
+                    "WEAPONS\n"
+                    "Higher Tier Weapons provide\n"
+                    "greater Strength Stat Value.\n"
+                    "\n"
+                    "----------------------------------------------\n"
+                    "\n"
+                    "ARMOR\n"
+                    "Higher Tier Armor provides\n"
+                    "Higher Defense Stat value.\n"
                     "\n"
                     "----------------------------------------------\n"
                     "\n"
@@ -1202,17 +1389,19 @@ namespace dungeon
                     "Attacks, Precision, or Maximum HP.\n"
                     "\n"
                     "----------------------------------------------\n"
-                    "\n"
-                    "ACTIONS\n"
-                    "1            Health Potion\n"
-                    "2            Rage Potion\n"
-                    "3            Close Inventory\n"
-                    "\n"
-                    "----------------------------------------------\n"
+                    
+                    //"\n"
+                    //"ACTIONS\n"
+                    //"1            Health Potion\n"
+                    //"2            Rage Potion\n"
+                    //"3            Close Inventory\n"
+                    //"\n"
+                    //"----------------------------------------------\n"
+                    
                     "\n"
                     "BEWARE!\n"
                     "Using a potion ends your turn.\n"
-                    "The enemy attacks next.\n"
+                    "And The enemy attacks next.\n"
                     "\n"
                     "\n"
                     "----------------------------------------------\n"
@@ -1221,13 +1410,78 @@ namespace dungeon
                     "TAB          Close Instructions",
                     14,
                     16);
+                */
+
             }
             else
             {
                 drawInstructionPage(
                     m_mainScreenAssets.combatInstructionsBackground(),
                     m_mainScreenAssets.combatInstructions(), //--------------------------------------------------------- Combat INSTRUCTIONS HERE!
-                    "COMBAT INSTRUCTIONS",
+                    //----------------------------------------- This Looks accaptable
+                    //"COMBAT INSTRUCTIONS",
+                    //"----------------------------------------------",
+                    "      ",
+                    /*
+                    "ACTIONS\n"
+                    "F1 / 1       Attack\n"
+                    "I / 2        Open Inventory\n"
+                    "E / 3        Escape\n"
+                    "\n"
+                    "----------------------------------------------\n"
+                    */
+                    "\n"
+                    "ATTACK\n"
+                    "ATK = Number of Attacks\n"
+                    "Each attack uses a D6.\n"
+                    "\n"
+                    "----------------------------------------------\n"
+                    "\n"
+                    "PRECISION\n"
+                    "D6 >= Precision\n"
+                    "Fail = Miss\n"
+                    "\n"
+                    "----------------------------------------------\n"
+                    "\n"
+                    "WOUND\n"
+                    "Compare Strength to Toughness.\n"
+                    "\n"
+                    "TGH <= 0         Target 2\n"
+                    "STR >= TGH x 2   Target 2\n"
+                    "STR > TGH        Target 3\n"
+                    "STR = TGH        Target 4\n"
+                    "STR x 2 <= TGH   Target 6\n"
+                    "Otherwise        Target 5\n"
+                    "\n"
+                    "----------------------------------------------\n"
+                    "\n"
+                    "DEFENSE\n"
+                    "D6 >= Defense\n"
+                    "Pass = 0 Damage\n"
+                    "Fail = Damage Applied\n"
+                    "\n"
+                    "----------------------------------------------\n"
+                    "\n"
+                    "DAMAGE\n"
+                    "Damage is based on the Damage Stat\n"
+                    "for the Player it's Weapon Damage + Rage Bonus\n"
+                    "When 0 HP, the entity is Defeated\n"
+                    "\n"
+                    "\n"
+                    //"----------------------------------------------\n"
+                    "\n"
+                    "\n"
+                    "----------------------------------------------\n"
+                    "\n"
+                    "\n"
+                    "TAB          Close Instructions",
+                    13,
+                    15);
+
+
+                /*
+                                    //"COMBAT INSTRUCTIONS",
+                    "----------------------------------------------",
                     "ACTIONS\n"
                     "F1 / 1       Attack\n"
                     "I / 2        Open Inventory\n"
@@ -1280,6 +1534,7 @@ namespace dungeon
                     "TAB          Close Instructions",
                     13,
                     15);
+                */
             }
         }
         else
@@ -2801,36 +3056,6 @@ namespace dungeon
             return;
         }
 
-        if (game.portalPromptActive())
-        {
-            const Texture2D& portalTexture =
-                m_mainScreenAssets.portal().id != 0
-                ? m_mainScreenAssets.portal()
-                : m_mainScreenAssets.seesPortal();
-
-            if (portalTexture.id != 0)
-            {
-                drawTexture(
-                    portalTexture,
-                    PovRenderX,
-                    PovRenderY,
-                    PovRenderWidth,
-                    PovRenderHeight);
-            }
-            else
-            {
-                drawFallbackText(
-                    "Portal",
-                    PovRenderX,
-                    PovRenderY + 210,
-                    PovRenderWidth,
-                    50,
-                    28);
-            }
-
-            return;
-        }
-
         const Player& player =
             game.player();
 
@@ -2867,12 +3092,15 @@ namespace dungeon
                 continue;
             }
 
+            const std::string_view enemyType =
+                enemy->type();
+
             const Texture2D& texture =
                 enemy->isDefeated()
                 ? m_mainScreenAssets.seesDefeatedEnemy(
-                    enemy->targetType())
+                    enemyType)
                 : m_mainScreenAssets.seesEnemy(
-                    enemy->targetType());
+                    enemyType);
 
             if (texture.id != 0)
             {
@@ -2887,9 +3115,11 @@ namespace dungeon
             {
                 drawFallbackText(
                     enemy->isDefeated()
-                    ? "Defeated " +
-                    std::string(enemy->targetType())
-                    : std::string(enemy->targetType()),
+                    ? "A Defeated " +
+                    std::string(enemyType) +
+                    " Lays down before you"
+                    : std::string(enemyType) +
+                    " Stands in the Darkness",
                     PovRenderX,
                     PovRenderY + 210,
                     PovRenderWidth,
@@ -2927,46 +3157,8 @@ namespace dungeon
             {
                 drawFallbackText(
                     chest->isDefeated()
-                    ? "Opened Chest"
-                    : "Chest",
-                    PovRenderX,
-                    PovRenderY + 210,
-                    PovRenderWidth,
-                    50,
-                    28);
-            }
-
-            return;
-        }
-
-        if (game.map().isInside(lookX, lookY) &&
-            game.map().tileAt(lookX, lookY) == '@')
-        {
-            const Texture2D& portalTexture =
-                m_mainScreenAssets.seesPortal();
-
-            if (portalTexture.id != 0)
-            {
-                drawTexture(
-                    portalTexture,
-                    PovRenderX,
-                    PovRenderY,
-                    PovRenderWidth,
-                    PovRenderHeight);
-            }
-            else if (m_mainScreenAssets.portal().id != 0)
-            {
-                drawTexture(
-                    m_mainScreenAssets.portal(),
-                    PovRenderX,
-                    PovRenderY,
-                    PovRenderWidth,
-                    PovRenderHeight);
-            }
-            else
-            {
-                drawFallbackText(
-                    "Portal",
+                    ? "You See an Opened Chest in the Darkness"
+                    : "You See an closed Chest in the Darkness",
                     PovRenderX,
                     PovRenderY + 210,
                     PovRenderWidth,
@@ -2991,7 +3183,7 @@ namespace dungeon
             else
             {
                 drawFallbackText(
-                    "Wall",
+                    "You facing Wall of the Dungeon",
                     PovRenderX,
                     PovRenderY + 210,
                     PovRenderWidth,
@@ -3014,7 +3206,7 @@ namespace dungeon
         else
         {
             drawFallbackText(
-                "Nothing",
+                "You See Nothing in the Darkness Ahead",
                 PovRenderX,
                 PovRenderY + 210,
                 PovRenderWidth,
@@ -3026,7 +3218,8 @@ namespace dungeon
     // =========================================================================
     // Combat POV
     // =========================================================================
-    void Renderer::drawCombatPov(const Game& game) const
+    void Renderer::drawCombatPov(
+        const Game& game) const
     {
         if (m_gameInstructionsOpen)
         {
@@ -3050,26 +3243,67 @@ namespace dungeon
             }
             else
             {
-                drawFallbackText(
-                    std::string(game.defeatedEnemyType()) +
-                    " Victory",
-                    PovRenderX,
-                    PovRenderY + 210,
-                    PovRenderWidth,
-                    50,
-                    28);
+                std::string victoryText;
+
+                if (game.defeatedEnemyType() == "Goblin")
+                {
+                    victoryText =
+                        "The Goblin stands victorious over you.";
+                }
+                else if (game.defeatedEnemyType() == "Skeleton")
+                {
+                    victoryText =
+                        "The Skeleton remains standing as you fall.";
+                }
+                else if (game.defeatedEnemyType() == "Orc")
+                {
+                    victoryText =
+                        "The Orc roars in victory over your defeat.";
+                }
+                else if (game.defeatedEnemyType() == "Troll")
+                {
+                    victoryText =
+                        "The Troll towers over you in triumph.";
+                }
+                else if (game.defeatedEnemyType() == "Dragon")
+                {
+                    victoryText =
+                        "The Dragon claims victory as you fall.";
+                }
+                else
+                {
+                    victoryText =
+                        std::string(game.defeatedEnemyType()) +
+                        " stands victorious over you.";
+                }
+
+                drawWrappedFallbackText(
+                    victoryText,
+                    PovRenderX + 20,
+                    PovRenderY + 155,
+                    PovRenderWidth - 40,
+                    140,
+                    24,
+                    32);
             }
 
             return;
         }
 
-        const Combat* combat = game.combat();
+        const Combat* combat =
+            game.combat();
+
         if (combat == nullptr)
         {
             return;
         }
 
-        const CombatTarget& target = combat->target();
+        const CombatTarget& target =
+            combat->target();
+
+        // ---------------------------------------------------------------------
+        // Chest
+        // ---------------------------------------------------------------------
 
         if (target.targetType() == "Chest")
         {
@@ -3103,23 +3337,67 @@ namespace dungeon
             return;
         }
 
-        const CombatPresentation& presentation = game.combatPresentation();
 
-        const Texture2D* texture = nullptr;
+        std::string_view enemyType =
+            target.targetType();
+
+        for (const auto& enemy : game.enemies())
+        {
+            if (!enemy)
+            {
+                continue;
+            }
+
+            if (enemy.get() == &target)
+            {
+                enemyType =
+                    enemy->type();
+                break;
+            }
+        }
+
+        const CombatPresentation& presentation =
+            game.combatPresentation();
+
+        CombatPovFallbackState fallbackState =
+            CombatPovFallbackState::Idle;
+
+        const Texture2D* texture =
+            nullptr;
+
+        // ---------------------------------------------------------------------
+        // Death
+        // ---------------------------------------------------------------------
 
         if (target.isDefeated())
         {
-            texture = &m_mainScreenAssets.enemyDeath(
-                target.targetType());
+            fallbackState =
+                CombatPovFallbackState::Death;
+
+            texture =
+                &m_mainScreenAssets.enemyDeath(
+                    enemyType);
         }
         else
         {
-            texture = &m_mainScreenAssets.enemyIdle(
-                target.targetType());
 
-            if (presentation.phase() == CombatPresentation::Phase::Result)
+            // -----------------------------------------------------------------
+            // Idle state
+            // -----------------------------------------------------------------
+
+            texture =
+                &m_mainScreenAssets.enemyIdle(
+                    enemyType);
+
+            // -------------------------------------------------------------
+            // Hit / Attack state
+            // -------------------------------------------------------------
+
+            if (presentation.phase() ==
+                CombatPresentation::Phase::Result)
             {
-                const AttackResult* result = presentation.currentAttack();
+                const AttackResult* result =
+                    presentation.currentAttack();
 
                 if (result != nullptr &&
                     result->damage > 0)
@@ -3139,13 +3417,21 @@ namespace dungeon
                     {
                         if (game.combatPresentationPlayerIsAttacking())
                         {
-                            texture = &m_mainScreenAssets.enemyHurt(
-                                target.targetType());
+                            fallbackState =
+                                CombatPovFallbackState::Hurt;
+
+                            texture =
+                                &m_mainScreenAssets.enemyHurt(
+                                    enemyType);
                         }
                         else
                         {
-                            texture = &m_mainScreenAssets.enemyAttack(
-                                target.targetType());
+                            fallbackState =
+                                CombatPovFallbackState::Attack;
+
+                            texture =
+                                &m_mainScreenAssets.enemyAttack(
+                                    enemyType);
                         }
                     }
                 }
@@ -3161,17 +3447,24 @@ namespace dungeon
                 PovRenderY,
                 PovRenderWidth,
                 PovRenderHeight);
+
+            return;
         }
-        else
-        {
-            drawFallbackText(
-                target.targetType(),
-                PovRenderX,
-                PovRenderY + 210,
-                PovRenderWidth,
-                50,
-                28);
-        }
+
+
+        const std::string fallbackText =
+            combatEnemyFallbackText(
+                enemyType,
+                fallbackState);
+
+        drawWrappedFallbackText(
+            fallbackText,
+            PovRenderX + 20,
+            PovRenderY + 155,
+            PovRenderWidth - 40,
+            140,
+            24,
+            32);
     }
 
     // =========================================================================

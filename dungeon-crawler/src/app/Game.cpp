@@ -917,9 +917,11 @@ namespace dungeon
             advanceCombatPresentation();
         }
     }
+
     void Game::beginEnemyTurnPresentation()
     {
-        if (!m_combat || !m_combat->isActive())
+        if (!m_combat ||
+            !m_combat->isActive())
         {
             if (m_combat != nullptr)
             {
@@ -927,14 +929,30 @@ namespace dungeon
             }
             return;
         }
-        std::clog << "[COMBAT] Enemy turn begins." << std::endl;
-        const CombatResult enemyResult = m_combat->enemyTurn();
-        std::clog << "[COMBAT] " << enemyResult.message << std::endl;
-        m_pendingCombatFinish = !m_combat->isActive();
-        const auto& attackResults = m_combat->lastEnemyAttacks();
+
+        std::clog
+            << "[COMBAT] Enemy turn begins."
+            << std::endl;
+
+        const CombatResult enemyResult =
+            m_combat->enemyTurn();
+
+        std::clog
+            << "[COMBAT] "
+            << enemyResult.message
+            << std::endl;
+
+        m_pendingCombatFinish =
+            !m_combat->isActive();
+
+        const auto& attackResults =
+            m_combat->lastEnemyAttacks();
+
         if (attackResults.empty())
         {
-            m_combatPresentationActor = CombatPresentationActor::None;
+            m_combatPresentationActor =
+                CombatPresentationActor::None;
+
             if (m_pendingCombatFinish)
             {
                 m_pendingCombatFinish = false;
@@ -943,11 +961,29 @@ namespace dungeon
 
             return;
         }
+
         m_combatPresentationActor = CombatPresentationActor::Enemy;
         m_lastPresentedDamageAttackIndex = static_cast<std::size_t>(-1);
         m_lastPresentedDamageRollType = CombatPresentation::RollType::None;
-        const std::string enemyName =
-            std::string(m_combat->target().targetType());
+
+        const CombatTarget& target = m_combat->target();
+
+        std::string enemyName = target.targetType();
+
+        for (const auto& enemy : m_enemies)
+        {
+            if (!enemy)
+            {
+                continue;
+            }
+
+            if (enemy.get() == &target)
+            {
+                enemyName = std::string(enemy->type());
+                break;
+            }
+        }
+
         m_combatPresentation.start(
             enemyName,
             "Player",
@@ -956,6 +992,7 @@ namespace dungeon
                 attackResults.begin(),
                 attackResults.end()));
     }
+
     void Game::advanceCombatPresentation()
     {
         if (!m_combat)
@@ -1855,10 +1892,30 @@ namespace dungeon
         m_lastPresentedDamageRollType =
             CombatPresentation::RollType::None;
 
+        const CombatTarget& target =
+            m_combat->target();
+
+        std::string enemyName =
+            target.targetType();
+
+        for (const auto& enemy : m_enemies)
+        {
+            if (!enemy)
+            {
+                continue;
+            }
+
+            if (enemy.get() == &target)
+            {
+                enemyName =
+                    std::string(enemy->type());
+                break;
+            }
+        }
+
         m_combatPresentation.start(
             "Player",
-            std::string(
-                m_combat->target().targetType()),
+            enemyName,
             "Player\nSelected Attack",
             std::vector<AttackResult>(
                 attackResults.begin(),
