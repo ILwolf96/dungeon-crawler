@@ -3383,14 +3383,25 @@ namespace dungeon
         const CombatTarget& target =
             combat->target();
 
+        const CombatPresentation& presentation =
+            game.combatPresentation();
+
         // ---------------------------------------------------------------------
         // Chest
+        //
+        // While the combat presentation is active, keep the chest in its
+        // normal state. The actual defeated state is only exposed after the
+        // presentation has finished.
         // ---------------------------------------------------------------------
 
         if (target.targetType() == "Chest")
         {
+            const bool showOpenedChest =
+                !presentation.active() &&
+                target.isDefeated();
+
             const Texture2D& texture =
-                target.isDefeated()
+                showOpenedChest
                 ? m_mainScreenAssets.chestDeath()
                 : m_mainScreenAssets.chestIdle();
 
@@ -3406,7 +3417,7 @@ namespace dungeon
             else
             {
                 drawFallbackText(
-                    target.isDefeated()
+                    showOpenedChest
                     ? "Opened Chest"
                     : "Chest",
                     PovRenderX,
@@ -3418,7 +3429,6 @@ namespace dungeon
 
             return;
         }
-
 
         std::string_view enemyType =
             target.targetType();
@@ -3438,9 +3448,6 @@ namespace dungeon
             }
         }
 
-        const CombatPresentation& presentation =
-            game.combatPresentation();
-
         CombatPovFallbackState fallbackState =
             CombatPovFallbackState::Idle;
 
@@ -3448,24 +3455,21 @@ namespace dungeon
             nullptr;
 
         // ---------------------------------------------------------------------
-        // Death
+        // Active Combat Presentation
+        //
+        // this been bothering me for long long time,
+        // The real target HP may already be 0 here, but the player may still
+        // be watching the dice sequence for that attack.
+        //
+        // Therefore the presentation state has priority over target.isDefeated().
+        // which now I should finally fixed it, and I shouldn't see those odd messages during combat
         // ---------------------------------------------------------------------
 
-        if (target.isDefeated())
+        if (presentation.active())
         {
-            fallbackState =
-                CombatPovFallbackState::Death;
-
-            texture =
-                &m_mainScreenAssets.enemyDeath(
-                    enemyType);
-        }
-        else
-        {
-
-            // -----------------------------------------------------------------
-            // Idle state
-            // -----------------------------------------------------------------
+            // -------------------------------------------------------------
+            // Default presentation state
+            // -------------------------------------------------------------
 
             texture =
                 &m_mainScreenAssets.enemyIdle(
@@ -3519,6 +3523,37 @@ namespace dungeon
                 }
             }
         }
+        else
+        {
+            // -----------------------------------------------------------------
+            // Presentation has finished.
+            //
+            // Only now may the actual defeated state become visible.
+            // -----------------------------------------------------------------
+
+            if (target.isDefeated())
+            {
+                fallbackState =
+                    CombatPovFallbackState::Death;
+
+                texture =
+                    &m_mainScreenAssets.enemyDeath(
+                        enemyType);
+            }
+            else
+            {
+                fallbackState =
+                    CombatPovFallbackState::Idle;
+
+                texture =
+                    &m_mainScreenAssets.enemyIdle(
+                        enemyType);
+            }
+        }
+
+        // ---------------------------------------------------------------------
+        // PNG
+        // ---------------------------------------------------------------------
 
         if (texture != nullptr &&
             texture->id != 0)
@@ -3533,6 +3568,9 @@ namespace dungeon
             return;
         }
 
+        // ---------------------------------------------------------------------
+        // Fallback
+        // ---------------------------------------------------------------------
 
         const std::string fallbackText =
             combatEnemyFallbackText(
