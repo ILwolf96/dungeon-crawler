@@ -50,7 +50,7 @@ namespace dungeon
             LaunchTitleY,
             LaunchTitleWidth,
             LaunchTitleHeight,
-            "LAUNCH MENU",
+            "CPP DUNGEON CRAWLER LAUNCH MENU",
             usePngAssets);
 
         // ---------------------------------------------------------------------
@@ -76,7 +76,7 @@ namespace dungeon
             PreviewTitleY,
             PreviewTitleWidth,
             PreviewTitleHeight,
-            "PREVIEW",
+            "SCREEN PREVIEW",
             usePngAssets);
 
         // ---------------------------------------------------------------------
@@ -218,20 +218,37 @@ namespace dungeon
         //     and will Use the raylib fallback preview ONLY.
         // ---------------------------------------------------------------------
 
-        if (usePngAssets &&
-            m_assets.pngPreview().id != 0)
+        if (usePngAssets)
         {
-            drawTexture(
-                m_assets.pngPreview(),
-                PreviewX,
-                PreviewY,
-                PreviewWidth,
-                PreviewHeight);
+            if (m_assets.pngPreview().id != 0)
+            {
+                drawTexture(
+                    m_assets.pngPreview(),
+                    PreviewX,
+                    PreviewY,
+                    PreviewWidth,
+                    PreviewHeight);
+            }
+            else
+            {
+                drawFallbackPreview(launchMenu);
+            }
         }
         else
         {
-            drawFallbackPreview(
-                launchMenu);
+            if (m_assets.raylibPreview().id != 0)
+            {
+                drawTexture(
+                    m_assets.raylibPreview(),
+                    PreviewX,
+                    PreviewY,
+                    PreviewWidth,
+                    PreviewHeight);
+            }
+            else
+            {
+                drawFallbackPreview(launchMenu);
+            }
         }
     }
 
