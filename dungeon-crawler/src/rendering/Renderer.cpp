@@ -765,6 +765,10 @@ namespace dungeon
             {
                 drawInventoryActionBar();
             }
+            else if (game.lootPromptActive())
+            {
+                drawLootActionBar(game);
+            }
             else
             {
                 drawCombatActionBar();
@@ -2939,6 +2943,47 @@ namespace dungeon
             ActionBarWidth,
             35,
             17);
+    }
+
+// =========================================================================
+// Loot Reward Action Bar
+// =========================================================================
+
+    void Renderer::drawLootActionBar(
+        const Game& game) const
+    {
+        const Rectangle actionBar =
+            toRaylibRectangle(
+                ActionBarX,
+                ActionBarY,
+                ActionBarWidth,
+                ActionBarHeight);
+
+        DrawRectangleRec(
+            actionBar,
+            LIGHTGRAY);
+
+        DrawRectangleLinesEx(
+            actionBar,
+            1.0f,
+            DARKGRAY);
+
+        drawFallbackText(
+            "LOOT ACQUIRED",
+            ActionBarX,
+            ActionBarY + 145,
+            ActionBarWidth,
+            35,
+            22);
+
+        drawWrappedFallbackText(
+            game.lootMessage(),
+            ActionBarX + 40,
+            ActionBarY + 35,
+            ActionBarWidth - 80,
+            100,
+            20,
+            28);
     }
 
     // =========================================================================

@@ -167,6 +167,32 @@ namespace dungeon
             std::min(maxHp(), m_currentHp + amount);
     }
 
+    bool Player::addAccessory(
+        std::unique_ptr<Accessory> accessory)
+    {
+        const int maxHpBefore =
+            maxHp();
+
+        if (!m_equipment.addAccessory(
+            std::move(accessory)))
+        {
+            return false;
+        }
+
+        const int maxHpAfter =
+            maxHp();
+
+        const int maximumHpIncrease =
+            maxHpAfter - maxHpBefore;
+
+        if (maximumHpIncrease > 0)
+        {
+            heal(maximumHpIncrease);
+        }
+
+        return true;
+    }
+
     bool Player::canDefend() const noexcept
     {
         return true;

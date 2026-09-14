@@ -32,7 +32,8 @@ namespace dungeon
         Inventory,
         Escape,
         ConfirmYes,
-        ConfirmNo
+        ConfirmNo,
+        LootContinue
     };
 
     enum class FacingDirection
@@ -77,6 +78,12 @@ namespace dungeon
 
         void handleAction(Action action);
         GameFlowResult handleOutcomeAction(Action action);
+
+        [[nodiscard]]
+        bool lootPromptActive() const noexcept;
+
+        [[nodiscard]]
+        const std::string& lootMessage() const noexcept;
 
         void update(float deltaSeconds);
 
@@ -159,6 +166,7 @@ namespace dungeon
         void closeCombatInventory();
         void advanceCombatPresentation();
         void beginEnemyTurnPresentation();
+        void closeLootPrompt();
         void handleZooInteraction(char tile);
 
         std::vector<CombatLootPreviewSlot> buildCombatLootPreview(
@@ -227,6 +235,9 @@ namespace dungeon
 
         bool m_defeatPromptActive{ false };
         std::string m_defeatedEnemyType;
+
+        bool m_lootPromptActive{ false };
+        std::string m_lootMessage;
 
         std::string m_configFilePath;
     };

@@ -248,6 +248,10 @@ namespace
         return nullptr;
     }
 
+    // -----------------------------------------------------------------------
+    // Zoo debug helpers.
+    // -----------------------------------------------------------------------
+
     template <typename PlayerLike, typename WeaponPtr>
     bool replaceWeaponForZoo(
         PlayerLike& player,
@@ -258,7 +262,17 @@ namespace
             return false;
         }
 
-        if constexpr (requires { player.setWeapon(std::move(weapon)); })
+        if constexpr (requires { player.equipment().debugEquipWeapon(std::move(weapon)); })
+        {
+            player.equipment().debugEquipWeapon(std::move(weapon));
+            return true;
+        }
+        else if constexpr (requires { player.debugEquipWeapon(std::move(weapon)); })
+        {
+            player.debugEquipWeapon(std::move(weapon));
+            return true;
+        }
+        else if constexpr (requires { player.setWeapon(std::move(weapon)); })
         {
             player.setWeapon(std::move(weapon));
             return true;
@@ -314,7 +328,17 @@ namespace
             return false;
         }
 
-        if constexpr (requires { player.setArmor(std::move(armor)); })
+        if constexpr (requires { player.equipment().debugEquipArmor(std::move(armor)); })
+        {
+            player.equipment().debugEquipArmor(std::move(armor));
+            return true;
+        }
+        else if constexpr (requires { player.debugEquipArmor(std::move(armor)); })
+        {
+            player.debugEquipArmor(std::move(armor));
+            return true;
+        }
+        else if constexpr (requires { player.setArmor(std::move(armor)); })
         {
             player.setArmor(std::move(armor));
             return true;
@@ -431,7 +455,17 @@ namespace
             return false;
         }
 
-        if constexpr (requires { player.removeLastAccessory(); })
+        if constexpr (requires { player.equipment().debugRemoveAccessory(accessories.back()->name()); })
+        {
+            return player.equipment().debugRemoveAccessory(
+                accessories.back()->name());
+        }
+        else if constexpr (requires { player.debugRemoveAccessory(accessories.back()->name()); })
+        {
+            return player.debugRemoveAccessory(
+                accessories.back()->name());
+        }
+        else if constexpr (requires { player.removeLastAccessory(); })
         {
             player.removeLastAccessory();
             return true;
@@ -532,6 +566,8 @@ namespace dungeon
         m_combat.reset();
         m_combatPresentation = CombatPresentation{};
         m_combatLootPreview.clear();
+        m_lootPromptActive = false;
+        m_lootMessage.clear();
 
         m_inventoryOpen = false;
         m_pendingEnemyTurn = false;
@@ -1020,6 +1056,16 @@ namespace dungeon
 
     void Game::handleAction(Action action)
     {
+        if (m_lootPromptActive)
+        {
+            if (action == Action::LootContinue)
+            {
+                closeLootPrompt();
+            }
+
+            return;
+        }
+
         if (m_portalPromptActive || m_defeatPromptActive)
         {
             return;
@@ -2056,6 +2102,7 @@ namespace dungeon
         return true;
     }
 
+    /*
     void Game::finishCombatIfNeeded()
     {
         if (!m_combat || m_combat->isActive())
@@ -2191,6 +2238,223 @@ namespace dungeon
             return;
         }
     }
+    */
+
+    void Game::finishCombatIfNeeded()
+    {
+        if (!m_combat ||
+            m_combat->isActive())
+        {
+            return;
+        }
+
+        m_inventoryOpen = false;
+
+        CombatTarget* target =
+            &m_combat->target();
+
+        const bool targetDefeated =
+            target->isDefeated();
+
+        const bool playerDefeated =
+            m_combat->playerLost() ||
+            m_player.isDefeated();
+
+        std::string defeatedEnemyType;
+
+        if (playerDefeated)
+        {
+            if (const auto* enemy =
+                dynamic_cast<const Enemy*>(target))
+            {
+                defeatedEnemyType =
+                    std::string(enemy->type());
+            }
+            else
+            {
+                defeatedEnemyType =
+                    target->targetType();
+            }
+        }
+
+        // ---------------------------------------------------------------------
+        // Player loss remains an immediate outcome.
+        // ---------------------------------------------------------------------
+
+        if (playerDefeated)
+        {
+            m_combat.reset();
+
+            m_inventoryOpen = false;
+            m_combatLootPreview.clear();
+
+            m_pendingEnemyTurn = false;
+            m_pendingCombatFinish = false;
+            m_pendingPotionEnemyTurn = false;
+
+            m_combatPresentationActor =
+                CombatPresentationActor::None;
+
+            m_defeatedEnemyType =
+                std::move(defeatedEnemyType);
+
+            m_defeatPromptActive = true;
+
+            std::clog
+                << "[LOSS] Player was defeated by "
+                << m_defeatedEnemyType
+                << "."
+                << std::endl;
+
+            return;
+        }
+
+        // ---------------------------------------------------------------------
+        // If the target was not defeated, there is no loot result to present.
+        // ---------------------------------------------------------------------
+
+        if (!targetDefeated)
+        {
+            m_combat.reset();
+
+            m_combatLootPreview.clear();
+
+            m_pendingEnemyTurn = false;
+            m_pendingCombatFinish = false;
+
+            m_combatPresentationActor =
+                CombatPresentationActor::None;
+
+            std::clog
+                << "[COMBAT] Encounter ended without target defeat."
+                << std::endl;
+
+            return;
+        }
+
+        // ---------------------------------------------------------------------
+        // Target defeated.
+        // ---------------------------------------------------------------------
+
+        std::string lootMessage;
+
+        for (auto it = m_enemies.begin();
+            it != m_enemies.end();
+            ++it)
+        {
+            if (it->get() != target)
+            {
+                continue;
+            }
+
+            const int tier =
+                (*it)->tier();
+
+            std::clog
+                << "[LOOT] Defeated "
+                << (*it)->targetType()
+                << " Tier "
+                << tier
+                << ". Generating reward..."
+                << std::endl;
+
+            static_cast<void>(
+                LootGenerator::award(
+                    m_player,
+                    tier,
+                    m_combatDice,
+                    m_configData,
+                    lootMessage));
+
+            std::clog
+                << "[LOOT] "
+                << lootMessage
+                << std::endl;
+
+            break;
+        }
+
+        // ---------------------------------------------------------------------
+        // Chest reward.
+        // ---------------------------------------------------------------------
+
+        if (lootMessage.empty())
+        {
+            for (auto it = m_chests.begin();
+                it != m_chests.end();
+                ++it)
+            {
+                if (it->get() != target)
+                {
+                    continue;
+                }
+
+                const int tier = 1;
+
+                std::clog
+                    << "[LOOT] Chest opened. Generating reward..."
+                    << std::endl;
+
+                static_cast<void>(
+                    LootGenerator::award(
+                        m_player,
+                        tier,
+                        m_combatDice,
+                        m_configData,
+                        lootMessage));
+
+                std::clog
+                    << "[LOOT] "
+                    << lootMessage
+                    << std::endl;
+
+                break;
+            }
+        }
+
+        m_lootMessage =
+            std::move(lootMessage);
+
+        m_lootPromptActive = true;
+
+        m_pendingEnemyTurn = false;
+        m_pendingCombatFinish = false;
+        m_pendingPotionEnemyTurn = false;
+
+        m_combatPresentationActor =
+            CombatPresentationActor::None;
+
+        std::clog
+            << "[COMBAT] Loot result waiting for player acknowledgement."
+            << std::endl;
+    }
+
+    void Game::closeLootPrompt()
+    {
+        if (!m_lootPromptActive)
+        {
+            return;
+        }
+
+        std::clog
+            << "[COMBAT] Player closed Loot result."
+            << std::endl;
+
+        m_lootPromptActive = false;
+        m_lootMessage.clear();
+
+        m_inventoryOpen = false;
+        m_combatLootPreview.clear();
+
+        m_pendingEnemyTurn = false;
+        m_pendingCombatFinish = false;
+        m_pendingPotionEnemyTurn = false;
+
+        m_combatPresentationActor =
+            CombatPresentationActor::None;
+
+        m_combat.reset();
+    }
 
     void Game::restart()
     {
@@ -2308,4 +2572,15 @@ namespace dungeon
     {
         return m_defeatedEnemyType;
     }
+
+    bool Game::lootPromptActive() const noexcept
+    {
+        return m_lootPromptActive;
+    }
+
+    const std::string& Game::lootMessage() const noexcept
+    {
+        return m_lootMessage;
+    }
+
 }

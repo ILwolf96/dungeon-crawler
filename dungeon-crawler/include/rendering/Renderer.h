@@ -213,6 +213,7 @@ namespace dungeon
         void drawActionBar() const;
         void drawCombatActionBar() const;
         void drawInventoryActionBar() const;
+        void drawLootActionBar(const Game& game) const;
 
         void drawTraversalPov(const Game& game) const;
         void drawCombatPov(const Game& game) const;

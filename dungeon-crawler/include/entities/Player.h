@@ -41,6 +41,8 @@ namespace dungeon
 
         void heal(int amount);
 
+        bool addAccessory(std::unique_ptr<Accessory> accessory);
+
         [[nodiscard]]
         bool isDefeated() const noexcept override;
 
@@ -52,7 +54,7 @@ namespace dungeon
 
         [[nodiscard]]
         CombatStats combatStats() const noexcept override;
-       
+
         [[nodiscard]]
         CombatStats effectiveStats() const noexcept;
 

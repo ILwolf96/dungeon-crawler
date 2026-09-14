@@ -263,6 +263,18 @@ int main(int argc, char** argv)
                 flowResult = game.handleOutcomeAction(dungeon::Action::ConfirmNo);
             }
         }
+        else if (game.lootPromptActive())
+        {
+            // ---------------------------------------------------------
+            // Loot reward prompt
+            // ---------------------------------------------------------
+
+            if (IsKeyPressed(KEY_SPACE))
+            {
+                game.handleAction(
+                    dungeon::Action::LootContinue);
+            }
+        }
         else
         {
             // ---------------------------------------------------------

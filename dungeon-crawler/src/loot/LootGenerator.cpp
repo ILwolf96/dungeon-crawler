@@ -157,9 +157,96 @@ namespace
             (roll - 1) % countAsInt);
     }
 
+    int requiredInt(
+        const config::ConfigData& data,
+        std::string_view section,
+        std::string_view key)
+    {
+        const std::string sectionName(section);
+        const std::string keyName(key);
+
+        if (!data.hasValue(sectionName, keyName))
+        {
+            throw std::runtime_error(
+                "Missing configuration value: " +
+                sectionName + "." +
+                keyName);
+        }
+
+        try
+        {
+            return std::stoi(
+                data.getValue(
+                    sectionName,
+                    keyName));
+        }
+        catch (const std::exception&)
+        {
+            throw std::runtime_error(
+                "Invalid integer value for: " +
+                sectionName + "." +
+                keyName);
+        }
+    }
+
+    std::string buildLootMessage(
+        std::string_view name,
+        std::string_view grant)
+    {
+        return
+            "You acquired: " +
+            std::string(name) +
+            "\n"
+            "Grants: " +
+            std::string(grant) +
+            "\n"
+            "Press SPACE to continue";
+    }
+
+    std::string accessoryGrantText(
+        const dungeon::Accessory& accessory)
+    {
+        const int maximumHpBonus =
+            accessory.maxHpBonus();
+
+        if (maximumHpBonus != 0)
+        {
+            return
+                "+" +
+                std::to_string(maximumHpBonus) +
+                " Maximum HP";
+        }
+
+        const int precisionBonus =
+            accessory.precisionBonus();
+
+        if (precisionBonus != 0)
+        {
+            return
+                "+" +
+                std::to_string(precisionBonus) +
+                " Precision";
+        }
+
+        const int attacksBonus =
+            accessory.attacksBonus();
+
+        if (attacksBonus != 0)
+        {
+            return
+                "+" +
+                std::to_string(attacksBonus) +
+                " Attack" +
+                (attacksBonus == 1 ? "" : "s");
+        }
+
+        return "No additional stat bonus";
+    }
+
     bool awardFallbackConsumable(
         dungeon::Player& player,
         dungeon::IDice& dice,
+        const config::ConfigData& data,
         std::string& message)
     {
         dungeon::Inventory& inventory =
@@ -198,8 +285,21 @@ namespace
                     std::make_unique<
                     dungeon::HealthPotion>());
 
+                const int restoreAmount =
+                    requiredInt(
+                        data,
+                        "gear.consumable.health_potion",
+                        "restore_amount");
+
                 message =
-                    "Loot: Health Potion.";
+                    buildLootMessage(
+                        requiredString(
+                            data,
+                            "gear.consumable.health_potion",
+                            "name"),
+                        "+" +
+                        std::to_string(restoreAmount) +
+                        " HP On Use");
 
                 return true;
             }
@@ -230,8 +330,21 @@ namespace
             std::make_unique<
             dungeon::RagePotion>());
 
+        const int damageBonus =
+            requiredInt(
+                data,
+                "gear.consumable.rage_potion",
+                "damage_bonus");
+
         message =
-            "Loot: Rage Potion.";
+            buildLootMessage(
+                requiredString(
+                    data,
+                    "gear.consumable.rage_potion",
+                    "name"),
+                "+" +
+                std::to_string(damageBonus) +
+                " Damage On Use");
 
         return true;
     }
@@ -260,11 +373,17 @@ namespace
             const std::string name =
                 weapon->name();
 
+            const int strength =
+                weapon->strength();
+
             player.equipment().equipWeapon(
                 std::move(weapon));
 
             message =
-                "Loot: " + name + ".";
+                buildLootMessage(
+                    name,
+                    "Strength Improved to " +
+                    std::to_string(strength));
 
             return true;
         }
@@ -285,11 +404,18 @@ namespace
             const std::string name =
                 armor->name();
 
+            const int defense =
+                armor->defense();
+
             player.equipment().equipArmor(
                 std::move(armor));
 
             message =
-                "Loot: " + name + ".";
+                buildLootMessage(
+                    name,
+                    "Defense Improved to " +
+                    std::to_string(defense) +
+                    "+");
 
             return true;
         }
@@ -304,14 +430,54 @@ namespace
             const std::string name =
                 accessory->name();
 
-            if (!player.equipment().addAccessory(
+            const int maxHpBefore =
+                player.maxHp();
+
+            if (!player.addAccessory(
                 std::move(accessory)))
             {
                 return false;
             }
 
+            const int maxHpAfter =
+                player.maxHp();
+
+            const int maximumHpIncrease =
+                maxHpAfter -
+                maxHpBefore;
+
+            std::string grant;
+
+            if (maximumHpIncrease > 0)
+            {
+                grant =
+                    "+" +
+                    std::to_string(maximumHpIncrease) +
+                    " Maximum HP";
+            }
+            else
+            {
+                for (const auto& equippedAccessory :
+                    player.equipment().accessories())
+                {
+                    if (!equippedAccessory ||
+                        equippedAccessory->name() != name)
+                    {
+                        continue;
+                    }
+
+                    grant =
+                        accessoryGrantText(
+                            *equippedAccessory);
+
+                    break;
+                }
+            }
+
             message =
-                "Loot: " + name + ".";
+                buildLootMessage(
+                    name,
+                    grant);
 
             return true;
         }
@@ -356,6 +522,7 @@ namespace dungeon
             return awardFallbackConsumable(
                 player,
                 dice,
+                data,
                 message);
         }
 
@@ -386,6 +553,7 @@ namespace dungeon
         return awardFallbackConsumable(
             player,
             dice,
+            data,
             message);
     }
 }
