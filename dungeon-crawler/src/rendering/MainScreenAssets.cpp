@@ -188,7 +188,7 @@ namespace dungeon
         allLoaded = allLoaded && loaded;
 
         m_diceRollTitle = loadTextureIfPresent(
-            std::string(WindowsPath) + "dice_roll_title.png",
+            std::string(TitlesPath) + "dice_roll_title.png",
             loaded);
         allLoaded = allLoaded && loaded;
 
@@ -208,7 +208,7 @@ namespace dungeon
         allLoaded = allLoaded && loaded;
 
         m_lootTitle = loadTextureIfPresent(
-            std::string(WindowsPath) + "loot_title.png",
+            std::string(TitlesPath) + "loot_title.png",
             loaded);
         allLoaded = allLoaded && loaded;
 
@@ -218,7 +218,7 @@ namespace dungeon
         allLoaded = allLoaded && loaded;
 
         m_enemyStatsTitle = loadTextureIfPresent(
-            std::string(WindowsPath) + "enemy_stats_title.png",
+            std::string(TitlesPath) + "enemy_stats_title.png",
             loaded);
         allLoaded = allLoaded && loaded;
 

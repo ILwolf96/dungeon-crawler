@@ -238,8 +238,8 @@ namespace dungeon
         Texture2D m_seesPortal{};
 
 
-        Texture2D m_chestIdle;
-        Texture2D m_chestDeath;
+        Texture2D m_chestIdle{};
+        Texture2D m_chestDeath{};
 
         std::array<Texture2D, EnemyPovTypeCount> m_enemyIdle{};
         std::array<Texture2D, EnemyPovTypeCount> m_enemyHurt{};

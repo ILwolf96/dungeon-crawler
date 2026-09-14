@@ -1595,6 +1595,20 @@ namespace dungeon
                 }
             }
 
+            for (const auto& chest : m_chests)
+            {
+                if (!chest)
+                {
+                    continue;
+                }
+
+                if (chest->isDefeated())
+                {
+                    chest->respawn();
+                    ++respawned;
+                }
+            }
+
             std::clog
                 << "[ZOO] Respawn station restored "
                 << respawned

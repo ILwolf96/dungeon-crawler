@@ -419,7 +419,7 @@ namespace dungeon
             textX,
             textY,
             fontSize,
-            BLACK);
+            WHITE);
     }
 
     // =========================================================================
@@ -673,8 +673,8 @@ namespace dungeon
         }
         else
         {
-            DrawRectangleRec(pov, LIGHTGRAY);
-            DrawRectangleLinesEx(pov, 1.0f, DARKGRAY);
+            DrawRectangleRec(pov, DARKGRAY);
+            DrawRectangleLinesEx(pov, 1.0f, LIGHTGRAY);
         }
 
         // ---------------------------------------------------------------------
@@ -810,8 +810,8 @@ namespace dungeon
                     TitleArtWidth,
                     TitleArtHeight);
 
-            DrawRectangleRec(titleArt, LIGHTGRAY);
-            DrawRectangleLinesEx(titleArt, 1.0f, DARKGRAY);
+            DrawRectangleRec(titleArt, DARKGRAY);
+            DrawRectangleLinesEx(titleArt, 1.0f, LIGHTGRAY);
             drawFallbackText(
                 R"(Final C++ Project - Made by Ilan "Ilwolf" Boguslavsky/Mintzker)",
                 TitleArtX,
@@ -834,8 +834,8 @@ namespace dungeon
                     StatsTitleWidth,
                     StatsTitleHeight);
 
-            DrawRectangleRec(statsTitle, LIGHTGRAY);
-            DrawRectangleLinesEx(statsTitle, 1.0f, DARKGRAY);
+            DrawRectangleRec(statsTitle, DARKGRAY);
+            DrawRectangleLinesEx(statsTitle, 1.0f, LIGHTGRAY);
             drawFallbackText(
                 "Player Stats",
                 StatsTitleX,
@@ -867,8 +867,8 @@ namespace dungeon
                     StatsWindowWidth,
                     StatsWindowHeight);
 
-            DrawRectangleRec(statsWindow, RAYWHITE);
-            DrawRectangleLinesEx(statsWindow, 1.0f, DARKGRAY);
+            DrawRectangleRec(statsWindow, BLACK);
+            DrawRectangleLinesEx(statsWindow, 1.0f, LIGHTGRAY);
         }
 
         // ---------------------------------------------------------------------
@@ -884,8 +884,8 @@ namespace dungeon
                     GearTitleWidth,
                     GearTitleHeight);
 
-            DrawRectangleRec(gearTitle, LIGHTGRAY);
-            DrawRectangleLinesEx(gearTitle, 1.0f, DARKGRAY);
+            DrawRectangleRec(gearTitle, DARKGRAY);
+            DrawRectangleLinesEx(gearTitle, 1.0f, LIGHTGRAY);
             drawFallbackText(
                 "Player Gear",
                 GearTitleX,
@@ -917,8 +917,8 @@ namespace dungeon
                     GearWindowWidth,
                     GearWindowHeight);
 
-            DrawRectangleRec(gearWindow, RAYWHITE);
-            DrawRectangleLinesEx(gearWindow, 1.0f, DARKGRAY);
+            DrawRectangleRec(gearWindow, BLACK);
+            DrawRectangleLinesEx(gearWindow, 1.0f, LIGHTGRAY);
         }
 
         // ---------------------------------------------------------------------
@@ -934,8 +934,8 @@ namespace dungeon
                     ActionBarWidth,
                     ActionBarHeight);
 
-            DrawRectangleRec(actionBar, LIGHTGRAY);
-            DrawRectangleLinesEx(actionBar, 1.0f, DARKGRAY);
+            DrawRectangleRec(actionBar, DARKBROWN);
+            DrawRectangleLinesEx(actionBar, 1.0f, LIGHTGRAY);
         }
 
         // ---------------------------------------------------------------------
@@ -997,12 +997,12 @@ namespace dungeon
         {
             DrawRectangleRec(
                 povRender,
-                RAYWHITE);
+                BLACK);
 
             DrawRectangleLinesEx(
                 povRender,
                 1.0f,
-                DARKGRAY);
+                LIGHTGRAY);
         }
     }
 
@@ -1032,8 +1032,8 @@ namespace dungeon
                     StatsWindowY,
                     StatsWindowWidth,
                     StatsWindowHeight);
-            DrawRectangleRec(statsWindow, RAYWHITE);
-            DrawRectangleLinesEx(statsWindow, 1.0f, DARKGRAY);
+            DrawRectangleRec(statsWindow, BLACK);
+            DrawRectangleLinesEx(statsWindow, 1.0f, LIGHTGRAY);
         }
 
         // ---------------------------------------------------------------------
@@ -1057,8 +1057,8 @@ namespace dungeon
                     GearWindowY,
                     GearWindowWidth,
                     GearWindowHeight);
-            DrawRectangleRec(gearWindow, RAYWHITE);
-            DrawRectangleLinesEx(gearWindow, 1.0f, DARKGRAY);
+            DrawRectangleRec(gearWindow, BLACK);
+            DrawRectangleLinesEx(gearWindow, 1.0f, LIGHTGRAY);
         }
 
         // ---------------------------------------------------------------------
@@ -1085,12 +1085,12 @@ namespace dungeon
 
             DrawRectangleRec(
                 title,
-                LIGHTGRAY);
+                DARKGRAY);
 
             DrawRectangleLinesEx(
                 title,
                 1.0f,
-                DARKGRAY);
+                LIGHTGRAY);
 
             drawFallbackText(
                 "Enemy Stats",
@@ -1118,8 +1118,8 @@ namespace dungeon
                     260,
                     230,
                     360);
-            DrawRectangleRec(enemyStatsWindow, RAYWHITE);
-            DrawRectangleLinesEx(enemyStatsWindow, 1.0f, DARKGRAY);
+            DrawRectangleRec(enemyStatsWindow, BLACK);
+            DrawRectangleLinesEx(enemyStatsWindow, 1.0f, LIGHTGRAY);
         }
 
         // ---------------------------------------------------------------------
@@ -1146,12 +1146,12 @@ namespace dungeon
 
             DrawRectangleRec(
                 title,
-                LIGHTGRAY);
+                DARKGRAY);
 
             DrawRectangleLinesEx(
                 title,
                 1.0f,
-                DARKGRAY);
+                LIGHTGRAY);
 
             drawFallbackText(
                 "Dice Roll",
@@ -1180,7 +1180,7 @@ namespace dungeon
                     240,
                     360);
             DrawRectangleRec(diceRollWindow, GRAY);
-            DrawRectangleLinesEx(diceRollWindow, 1.0f, DARKGRAY);
+            DrawRectangleLinesEx(diceRollWindow, 1.0f, LIGHTGRAY);
         }
 
         // ---------------------------------------------------------------------
@@ -1204,8 +1204,8 @@ namespace dungeon
                     260,
                     240,
                     100);
-            DrawRectangleRec(combatInfoWindow, RAYWHITE);
-            DrawRectangleLinesEx(combatInfoWindow, 1.0f, DARKGRAY);
+            DrawRectangleRec(combatInfoWindow, BLACK);
+            DrawRectangleLinesEx(combatInfoWindow, 1.0f, LIGHTGRAY);
         }
 
         // ---------------------------------------------------------------------
@@ -1232,12 +1232,12 @@ namespace dungeon
 
             DrawRectangleRec(
                 title,
-                LIGHTGRAY);
+                DARKGRAY);
 
             DrawRectangleLinesEx(
                 title,
                 1.0f,
-                DARKGRAY);
+                LIGHTGRAY);
 
             drawFallbackText(
                 "Loot",
@@ -1268,12 +1268,12 @@ namespace dungeon
 
             DrawRectangleRec(
                 lootTableWindow,
-                RAYWHITE);
+                BLACK);
 
             DrawRectangleLinesEx(
                 lootTableWindow,
                 1.0f,
-                DARKGRAY);
+                LIGHTGRAY);
         }
 
         // ---------------------------------------------------------------------
@@ -1294,7 +1294,7 @@ namespace dungeon
                 drawInstructionPage(
                     m_mainScreenAssets.inventoryInstructionsBackground(),
                     m_mainScreenAssets.inventoryInstructions(),//---------------------------- This Looks acceptable
-                    
+
                     //"INVENTORY INSTRUCTIONS",
                     //"----------------------------------------------",
                     "                                                 ",
@@ -1393,7 +1393,7 @@ namespace dungeon
                     "Attacks, Precision, or Maximum HP.\n"
                     "\n"
                     "----------------------------------------------\n"
-                    
+
                     //"\n"
                     //"ACTIONS\n"
                     //"1            Health Potion\n"
@@ -1401,7 +1401,7 @@ namespace dungeon
                     //"3            Close Inventory\n"
                     //"\n"
                     //"----------------------------------------------\n"
-                    
+
                     "\n"
                     "BEWARE!\n"
                     "Using a potion ends your turn.\n"
@@ -1545,12 +1545,12 @@ namespace dungeon
         {
             DrawRectangleRec(
                 povRender,
-                RAYWHITE);
+                BLACK);
 
             DrawRectangleLinesEx(
                 povRender,
                 1.0f,
-                DARKGRAY);
+                LIGHTGRAY);
         }
     }
 
@@ -1598,7 +1598,7 @@ namespace dungeon
             DrawRectangleLinesEx(
                 lootSlot,
                 1.0f,
-                GRAY);
+                LIGHTGRAY);
 
             if (currentSlot.type == CombatLootPreviewType::None)
             {
@@ -1672,7 +1672,7 @@ namespace dungeon
 
             DrawRectangleRec(
                 titleArt,
-                LIGHTGRAY);
+                BLACK);
 
             DrawRectangleLinesEx(
                 titleArt,
@@ -1712,7 +1712,7 @@ namespace dungeon
 
             DrawRectangleRec(
                 statsTitle,
-                LIGHTGRAY);
+                DARKGRAY);
 
             DrawRectangleLinesEx(
                 statsTitle,
@@ -1752,7 +1752,7 @@ namespace dungeon
 
             DrawRectangleRec(
                 gearTitle,
-                LIGHTGRAY);
+                DARKGRAY);
 
             DrawRectangleLinesEx(
                 gearTitle,
@@ -1824,22 +1824,69 @@ namespace dungeon
     void Renderer::drawEnemyStatSlots(
         const Game& game) const
     {
-        if (m_mainScreenAssets.enemyStatsWindowBackground().id != 0)
-        {
-            return;
-        }
         const int iconX =
             EnemyStatIconX;
 
         const int numberX =
             EnemyStatNumberX;
 
+
+        const bool drawOutlines =
+            m_mainScreenAssets.enemyStatsWindowBackground().id == 0;
+
         struct EnemyStatSlot
         {
             const char* label;
             int y;
             int value;
+            const Texture2D* icon;
         };
+
+        const auto drawSlot =
+            [&](const EnemyStatSlot& slot)
+            {
+                if (drawOutlines)
+                {
+                    DrawRectangleLinesEx(
+                        toRaylibRectangle(
+                            iconX,
+                            slot.y,
+                            StatIconSize,
+                            StatIconSize),
+                        1.0f,
+                        GRAY);
+
+                    DrawRectangleLinesEx(
+                        toRaylibRectangle(
+                            numberX,
+                            slot.y,
+                            StatNumberSize,
+                            StatNumberSize),
+                        1.0f,
+                        GRAY);
+                }
+
+                if (slot.icon != nullptr &&
+                    slot.icon->id != 0)
+                {
+                    drawTexture(
+                        *slot.icon,
+                        iconX,
+                        slot.y,
+                        StatIconSize,
+                        StatIconSize);
+                }
+                else
+                {
+                    drawFallbackText(
+                        slot.label,
+                        iconX,
+                        slot.y,
+                        StatIconSize,
+                        StatIconSize,
+                        10);
+                }
+            };
 
         // -------------------------------------------------------------------------
         // No active combat target.
@@ -1850,44 +1897,20 @@ namespace dungeon
 
         if (combat == nullptr)
         {
-            constexpr EnemyStatSlot emptySlots[] =
+            const EnemyStatSlot emptySlots[] =
             {
-                { "ATK", EnemyStatAtkY, 0 },
-                { "STR", EnemyStatStrY, 0 },
-                { "PRE", EnemyStatPrecY, 0 },
-                { "DMG", EnemyStatDmgY, 0 },
-                { "DEF", EnemyStatDefY, 0 },
-                { "TGH", EnemyStatToughY, 0 },
-                { "HP",  EnemyStatHpY, 0 }
+                { "ATK", EnemyStatAtkY, 0, &m_mainScreenAssets.atkIcon() },
+                { "STR", EnemyStatStrY, 0, &m_mainScreenAssets.strIcon() },
+                { "PRE", EnemyStatPrecY, 0, &m_mainScreenAssets.precIcon() },
+                { "DMG", EnemyStatDmgY, 0, &m_mainScreenAssets.dmgIcon() },
+                { "DEF", EnemyStatDefY, 0, &m_mainScreenAssets.defIcon() },
+                { "TGH", EnemyStatToughY, 0, &m_mainScreenAssets.toughIcon() },
+                { "HP",  EnemyStatHpY, 0, &m_mainScreenAssets.hpIcon() }
             };
 
             for (const EnemyStatSlot& slot : emptySlots)
             {
-                DrawRectangleLinesEx(
-                    toRaylibRectangle(
-                        iconX,
-                        slot.y,
-                        StatIconSize,
-                        StatIconSize),
-                    1.0f,
-                    GRAY);
-
-                DrawRectangleLinesEx(
-                    toRaylibRectangle(
-                        numberX,
-                        slot.y,
-                        StatNumberSize,
-                        StatNumberSize),
-                    1.0f,
-                    GRAY);
-
-                drawFallbackText(
-                    slot.label,
-                    iconX,
-                    slot.y,
-                    StatIconSize,
-                    StatIconSize,
-                    10);
+                drawSlot(slot);
 
                 drawFallbackText(
                     "--",
@@ -1928,42 +1951,18 @@ namespace dungeon
 
         const EnemyStatSlot slots[] =
         {
-            { "ATK", EnemyStatAtkY,   stats.attacks },
-            { "STR", EnemyStatStrY,   stats.strength },
-            { "PRE", EnemyStatPrecY,  stats.precision },
-            { "DMG", EnemyStatDmgY,   damage },
-            { "DEF", EnemyStatDefY,   stats.defense },
-            { "TGH", EnemyStatToughY, stats.toughness },
-            { "HP",  EnemyStatHpY,    hp }
+            { "ATK", EnemyStatAtkY,   stats.attacks,   &m_mainScreenAssets.atkIcon() },
+            { "STR", EnemyStatStrY,   stats.strength,  &m_mainScreenAssets.strIcon() },
+            { "PRE", EnemyStatPrecY,  stats.precision, &m_mainScreenAssets.precIcon() },
+            { "DMG", EnemyStatDmgY,   damage,          &m_mainScreenAssets.dmgIcon() },
+            { "DEF", EnemyStatDefY,   stats.defense,   &m_mainScreenAssets.defIcon() },
+            { "TGH", EnemyStatToughY, stats.toughness, &m_mainScreenAssets.toughIcon() },
+            { "HP",  EnemyStatHpY,    hp,              &m_mainScreenAssets.hpIcon() }
         };
 
         for (const EnemyStatSlot& slot : slots)
         {
-            DrawRectangleLinesEx(
-                toRaylibRectangle(
-                    iconX,
-                    slot.y,
-                    StatIconSize,
-                    StatIconSize),
-                1.0f,
-                GRAY);
-
-            DrawRectangleLinesEx(
-                toRaylibRectangle(
-                    numberX,
-                    slot.y,
-                    StatNumberSize,
-                    StatNumberSize),
-                1.0f,
-                GRAY);
-
-            drawFallbackText(
-                slot.label,
-                iconX,
-                slot.y,
-                StatIconSize,
-                StatIconSize,
-                10);
+            drawSlot(slot);
 
             const Texture2D& numberTexture =
                 m_mainScreenAssets.number(
@@ -2730,7 +2729,7 @@ namespace dungeon
 
         DrawRectangleRec(
             actionBar,
-            LIGHTGRAY);
+            DARKBROWN);
 
         DrawRectangleLinesEx(
             actionBar,
@@ -2828,7 +2827,7 @@ namespace dungeon
 
         DrawRectangleRec(
             actionBar,
-            LIGHTGRAY);
+            DARKPURPLE);
 
         DrawRectangleLinesEx(
             actionBar,
@@ -2897,7 +2896,7 @@ namespace dungeon
 
         DrawRectangleRec(
             actionBar,
-            LIGHTGRAY);
+            DARKBROWN);
 
         DrawRectangleLinesEx(
             actionBar,
@@ -2945,9 +2944,9 @@ namespace dungeon
             17);
     }
 
-// =========================================================================
-// Loot Reward Action Bar
-// =========================================================================
+    // =========================================================================
+    // Loot Reward Action Bar
+    // =========================================================================
 
     void Renderer::drawLootActionBar(
         const Game& game) const
@@ -2961,7 +2960,7 @@ namespace dungeon
 
         DrawRectangleRec(
             actionBar,
-            LIGHTGRAY);
+            DARKBROWN);
 
         DrawRectangleLinesEx(
             actionBar,
@@ -3013,7 +3012,7 @@ namespace dungeon
 
         DrawRectangleRec(
             actionBar,
-            LIGHTGRAY);
+            MAROON);
 
         DrawRectangleLinesEx(
             actionBar,
@@ -3081,8 +3080,8 @@ namespace dungeon
                 ActionBarWidth,
                 ActionBarHeight);
 
-        DrawRectangleRec(actionBar, LIGHTGRAY);
-        DrawRectangleLinesEx(actionBar, 1.0f, DARKGRAY);
+        DrawRectangleRec(actionBar, DARKBROWN);
+        DrawRectangleLinesEx(actionBar, 1.0f, LIGHTGRAY);
         drawFallbackText("INVENTORY ACTIONS", ActionBarX, ActionBarY + 145, ActionBarWidth, 35, 22);
         drawFallbackText("1  -  HEALTH POTION", ActionBarX + 25, ActionBarY + 85, 250, 35, 17);
         drawFallbackText("2  -  RAGE POTION", ActionBarX + 275, ActionBarY + 85, 250, 35, 17);
@@ -3277,7 +3276,7 @@ namespace dungeon
             else
             {
                 drawFallbackText(
-                    "You Stand before the Portal, the escape from Dungeon",
+                    "You See a Portal, a way out?",
                     PovRenderX,
                     PovRenderY + 210,
                     PovRenderWidth,
@@ -3461,15 +3460,16 @@ namespace dungeon
             }
             else
             {
-                drawFallbackText(
+                drawWrappedFallbackText(
                     showOpenedChest
                     ? "Opened Chest"
-                    : "Chest",
-                    PovRenderX,
-                    PovRenderY + 210,
-                    PovRenderWidth,
-                    50,
-                    28);
+                    : "Closed Chest",
+                    PovRenderX + 30,
+                    PovRenderY + 175,
+                    PovRenderWidth - 60,
+                    100,
+                    28,
+                    32);
             }
 
             return;
@@ -3787,12 +3787,12 @@ namespace dungeon
 
         DrawRectangleRec(
             die,
-            WHITE);
+            DARKGRAY);
 
         DrawRectangleLinesEx(
             die,
             3.0f,
-            BLACK);
+            WHITE);
 
         const float left =
             die.x +
@@ -3830,7 +3830,7 @@ namespace dungeon
                     static_cast<int>(px),
                     static_cast<int>(py),
                     radius,
-                    BLACK);
+                    WHITE);
             };
 
         switch (value)

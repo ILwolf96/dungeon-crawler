@@ -14,12 +14,12 @@ namespace dungeon
     {
         Color panelBackground()
         {
-            return RAYWHITE;
+            return BLACK;
         }
 
         Color panelBorder()
         {
-            return DARKGRAY;
+            return LIGHTGRAY;
         }
     }
 
@@ -36,7 +36,7 @@ namespace dungeon
     void LaunchMenuRenderer::draw(
         const LaunchMenu& launchMenu) const
     {
-        ClearBackground(RAYWHITE);
+        ClearBackground(BLACK);
 
         const bool usePngAssets = launchMenu.graphicPreview() == LaunchGraphicPreview::Png;
 
@@ -353,7 +353,7 @@ namespace dungeon
             textX,
             textY,
             fontSize,
-            BLACK);
+            RAYWHITE);
     }
 
     void LaunchMenuRenderer::drawWrappedFallbackText(
@@ -501,7 +501,7 @@ namespace dungeon
                 lineX,
                 currentY,
                 fontSize,
-                BLACK);
+                RAYWHITE);
 
             currentY +=
                 lineSpacing;
@@ -583,14 +583,14 @@ namespace dungeon
             PreviewY,
             PreviewWidth,
             PreviewHeight,
-            LIGHTGRAY);
+            DARKGRAY);
 
         DrawRectangleLines(
             PreviewX,
             PreviewY,
             PreviewWidth,
             PreviewHeight,
-            DARKGRAY);
+            RAYWHITE);
 
         if (launchMenu.graphicPreview() ==
             LaunchGraphicPreview::Png)
@@ -658,8 +658,8 @@ namespace dungeon
                         row == gridHeight - 1 ||
                         column == 0 ||
                         column == gridWidth - 1
-                        ? DARKGRAY
-                        : LIGHTGRAY
+                        ? LIGHTGRAY
+                        : DARKGRAY
                         );
 
                 DrawRectangle(

@@ -308,8 +308,21 @@ namespace
                 std::make_unique<
                 dungeon::RagePotion>());
 
+            const int damageBonus =
+                requiredInt(
+                    data,
+                    "gear.consumable.rage_potion",
+                    "damage_bonus");
+
             message =
-                "Loot: Rage Potion.";
+                buildLootMessage(
+                    requiredString(
+                        data,
+                        "gear.consumable.rage_potion",
+                        "name"),
+                    "+" +
+                    std::to_string(damageBonus) +
+                    " Damage On Use");
 
             return true;
         }
@@ -320,8 +333,21 @@ namespace
                 std::make_unique<
                 dungeon::HealthPotion>());
 
+            const int restoreAmount =
+                requiredInt(
+                    data,
+                    "gear.consumable.health_potion",
+                    "restore_amount");
+
             message =
-                "Loot: Health Potion.";
+                buildLootMessage(
+                    requiredString(
+                        data,
+                        "gear.consumable.health_potion",
+                        "name"),
+                    "+" +
+                    std::to_string(restoreAmount) +
+                    " HP On Use");
 
             return true;
         }
